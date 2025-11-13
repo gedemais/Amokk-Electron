@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,15 +50,32 @@ const Login = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="bg-input border-border focus:border-accent focus:ring-accent"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="bg-input border-border focus:border-accent focus:ring-accent pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  className="text-sm text-primary hover:text-primary/80 transition-colors"
+                >
+                  Mot de passe oublié ?
+                </button>
+              </div>
             </div>
             <Button 
               type="submit" 
@@ -66,6 +85,17 @@ const Login = () => {
               Login
             </Button>
           </form>
+          <div className="mt-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Pas encore de compte ?{" "}
+              <button
+                type="button"
+                className="text-primary hover:text-primary/80 font-medium transition-colors"
+              >
+                Créer un compte !
+              </button>
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
