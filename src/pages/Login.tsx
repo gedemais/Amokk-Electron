@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,17 +6,64 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { logger } from "@/utils/logger";
+import { useDebugPanel } from "@/hooks/useDebugPanel";
+
+const BACKEND_URL = 'http://127.0.0.1:8000';
 
 const Login = () => {
   const navigate = useNavigate();
+  const debug = useDebugPanel();
+  const isDev = import.meta.env.DEV;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // In dev mode, pre-fill with admin credentials
+  useEffect(() => {
+    if (isDev) {
+      setEmail("admin@amokk.fr");
+      setPassword("admin");
+    }
+  }, [isDev]);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // For now, just navigate to dashboard
-    navigate("/dashboard");
+    setIsLoading(true);
+    setErrorMessage("");
+
+    try {
+      logger.api("POST", "/login", { email, password });
+
+      const response = await fetch(`${BACKEND_URL}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Login failed");
+      }
+
+      debug.log("LOGIN RESPONSE", data);
+      logger.success("Login successful", data);
+
+      // Store token (optional - for future use)
+      localStorage.setItem("auth_token", data.token);
+
+      navigate("/dashboard");
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : "Login failed";
+      logger.error("Login error", errorMsg);
+      debug.log("LOGIN_ERROR", errorMsg);
+      setErrorMessage(errorMsg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -77,12 +124,18 @@ const Login = () => {
                 </button>
               </div>
             </div>
-            <Button 
-              type="submit" 
+            {errorMessage && (
+              <div className="p-3 rounded-lg bg-red-900/30 border border-red-500/50 text-red-400 text-sm">
+                {errorMessage}
+              </div>
+            )}
+            <Button
+              type="submit"
               variant="gaming"
               className="w-full text-lg h-12"
+              disabled={isLoading}
             >
-              Login
+              {isLoading ? "En cours..." : "Login"}
             </Button>
           </form>
           <div className="mt-6 text-center">

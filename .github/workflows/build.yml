@@ -1,0 +1,56 @@
+name: Build AMOKK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          npm install
+          cd backend
+          python -m venv venv
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            venv\Scripts\pip install -r requirements.txt
+          else
+            source venv/bin/activate
+            pip install -r requirements.txt
+          fi
+          cd ..
+
+      - name: Build
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            npm run dist:linux
+          elif [ "$RUNNER_OS" = "Windows" ]; then
+            npm run dist:win
+          elif [ "$RUNNER_OS" = "macOS" ]; then
+            npm run dist:mac
+          fi
+        shell: bash
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.os }}-build
+          path: release/

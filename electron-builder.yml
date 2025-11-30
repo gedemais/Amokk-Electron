@@ -1,0 +1,64 @@
+appId: com.amokk.app
+productName: AMOKK
+directories:
+  buildResources: assets
+  output: release
+
+files:
+  - dist/**/*
+  - dist-electron/**/*
+  - node_modules/**/*
+  - package.json
+
+# Package backend as extraResources (more reliable than files)
+extraResources:
+  - from: dist
+    to: dist
+  - from: dist-electron
+    to: dist-electron
+  - from: backend/dist
+    to: backend/dist
+  - from: backend/main.py
+    to: backend/main.py
+  - from: backend/requirements.txt
+    to: backend/requirements.txt
+  - from: assets
+    to: assets
+
+# Include Python runtime bundled with the app
+extraMetadata:
+  pythonBundled: true
+
+# Windows Configuration
+win:
+  target:
+    - nsis
+    - portable
+  icon: assets/icon.png
+  certificateFile: null
+  certificatePassword: null
+  sign: null
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: AMOKK
+
+# macOS Configuration
+mac:
+  target:
+    - dmg
+    - zip
+  icon: assets/icon.icns
+  category: public.app-category.productivity
+
+# Linux Configuration
+linux:
+  executableName: amokk
+  target:
+    - AppImage
+    - deb
+  icon: assets/icon.png
+  category: Utility

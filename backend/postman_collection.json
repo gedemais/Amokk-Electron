@@ -1,0 +1,140 @@
+{
+  "info": {
+    "name": "AMOKK Mock Backend API",
+    "description": "Test collection for AMOKK FastAPI mock backend endpoints",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Health & Status",
+      "item": [
+        {
+          "name": "Get Root Info",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8000/",
+            "description": "Get API information and available endpoints"
+          }
+        },
+        {
+          "name": "Get Status",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8000/status",
+            "description": "Get full application status and current state"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Data Retrieval",
+      "item": [
+        {
+          "name": "Get Local Data (Dashboard Refresh)",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8000/get_local_data",
+            "description": "Retrieve data for dashboard refresh (called every 5 seconds)\n\nReturns:\n- remaining_games: Number of coaching sessions left\n- first_launch: Whether this is user's first launch\n- game_timer: Current in-game timer in seconds"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Coach Configuration",
+      "item": [
+        {
+          "name": "Toggle Coach",
+          "request": {
+            "method": "PUT",
+            "url": "http://localhost:8000/coach_toggle",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"active\": true}"
+            },
+            "description": "Toggle the main coach status on/off\nAlso used for Proactive Coach toggle\n\nRequest: {\"active\": true/false}\nResponse: \"Updated coach toggle to true successfully\""
+          }
+        },
+        {
+          "name": "Toggle Assistant",
+          "request": {
+            "method": "PUT",
+            "url": "http://localhost:8000/assistant_toggle",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"active\": true}"
+            },
+            "description": "Toggle the assistant status on/off\n\nRequest: {\"active\": true/false}\nResponse: \"Updated assistant toggle to true successfully\""
+          }
+        },
+        {
+          "name": "Update PTT Key",
+          "request": {
+            "method": "PUT",
+            "url": "http://localhost:8000/update_ptt_key",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"ptt_key\": \"v\"}"
+            },
+            "description": "Update the Push-to-Talk key binding\n\nRequest: {\"ptt_key\": \"key_string\"}\nResponse: \"Updated push-to-talk key (v) successfully\"\n\nExamples:\n- \"v\"\n- \"shift+v\"\n- \"alt+v\"\n- \"ctrl+space\""
+          }
+        },
+        {
+          "name": "Update Volume",
+          "request": {
+            "method": "PUT",
+            "url": "http://localhost:8000/update_volume",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"volume\": 80}"
+            },
+            "description": "Update the volume level (0-100)\n\nRequest: {\"volume\": 0-100}\nResponse: \"Updated volume level to 80 successfully\"\n\nNote: Volume must be between 0 and 100"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Utility",
+      "item": [
+        {
+          "name": "Reset State (Testing)",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8000/reset",
+            "description": "Reset application state to defaults\n\nUseful for testing - resets all values to:\n- remaining_games: 42\n- first_launch: true\n- game_timer: 0\n- coach_active: true\n- assistant_active: true\n- ptt_key: 'v'\n- volume: 80"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ]
+}

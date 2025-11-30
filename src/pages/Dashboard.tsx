@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -7,25 +7,251 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Settings, HelpCircle, Power, CheckCircle, ChevronDown, Zap, Keyboard, Volume2, Sparkles, Target, Brain, Swords, Rocket, Check } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { useDebugPanel } from "@/hooks/useDebugPanel";
+import { logger } from "@/utils/logger";
+
+const BACKEND_URL = 'http://127.0.0.1:8000';
+const isDev = import.meta.env.DEV;
 
 const Dashboard = () => {
+  const debug = useDebugPanel();
+
   const [isActive, setIsActive] = useState(false);
   const [assistantEnabled, setAssistantEnabled] = useState(true);
   const [pushToTalkKey, setPushToTalkKey] = useState("V");
   const [proactiveCoachEnabled, setProactiveCoachEnabled] = useState(false);
   const [troubleshootOpen, setTroubleshootOpen] = useState(false);
-  const [remainingGames] = useState(42); // This would come from backend
+  const [remainingGames, setRemainingGames] = useState(42);
   const [isBindingKey, setIsBindingKey] = useState(false);
   const [volume, setVolume] = useState([70]);
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
 
+  // Fetch initial data on component mount (once)
+  useEffect(() => {
+    fetchLocalData();
+
+    // Optional: Poll data every 5 seconds
+    // const interval = setInterval(fetchLocalData, 5000);
+    // return () => clearInterval(interval);
+  }, []);
+
+  // =====================================================================
+  // Backend API Functions
+  // =====================================================================
+
+  const fetchLocalData = async () => {
+    try {
+      logger.api('GET', '/get_local_data');
+      const response = await fetch(`${BACKEND_URL}/get_local_data`);
+      const data = await response.json();
+
+      debug.log('GET_LOCAL_DATA', data);
+      logger.apiResponse('/get_local_data', response.status, data);
+
+      if (data.remaining_games !== undefined) {
+        setRemainingGames(data.remaining_games);
+      }
+    } catch (error) {
+      logger.error('GET_LOCAL_DATA failed', error);
+      debug.log('GET_LOCAL_DATA_ERROR', error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
+  const toggleCoach = async (newState: boolean) => {
+    try {
+      logger.api('PUT', '/coach_toggle', { active: newState });
+      const response = await fetch(`${BACKEND_URL}/coach_toggle`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: newState }),
+      });
+      const data = await response.json();
+
+      debug.log('COACH_TOGGLE', data);
+      logger.apiResponse('/coach_toggle', response.status, data);
+
+      if (data.success) {
+        setIsActive(newState);
+      }
+    } catch (error) {
+      logger.error('COACH_TOGGLE failed', error);
+      debug.log('COACH_TOGGLE_ERROR', error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
+  const toggleAssistant = async (newState: boolean) => {
+    try {
+      logger.api('PUT', '/assistant_toggle', { active: newState });
+      const response = await fetch(`${BACKEND_URL}/assistant_toggle`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: newState }),
+      });
+      const data = await response.json();
+
+      debug.log('ASSISTANT_TOGGLE', data);
+      logger.apiResponse('/assistant_toggle', response.status, data);
+
+      if (data.success) {
+        setAssistantEnabled(newState);
+      }
+    } catch (error) {
+      logger.error('ASSISTANT_TOGGLE failed', error);
+      debug.log('ASSISTANT_TOGGLE_ERROR', error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
+  const updateVolume = async (newVolume: number) => {
+    try {
+      logger.api('PUT', '/update_volume', { volume: newVolume });
+      const response = await fetch(`${BACKEND_URL}/update_volume`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ volume: newVolume }),
+      });
+      const data = await response.json();
+
+      debug.log('UPDATE_VOLUME', data);
+      logger.apiResponse('/update_volume', response.status, data);
+
+      if (data.success) {
+        setVolume([newVolume]);
+      }
+    } catch (error) {
+      logger.error('UPDATE_VOLUME failed', error);
+      debug.log('UPDATE_VOLUME_ERROR', error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
+  const updatePushToTalkKey = async (newKey: string) => {
+    try {
+      logger.api('PUT', '/update_ptt_key', { ptt_key: newKey });
+      const response = await fetch(`${BACKEND_URL}/update_ptt_key`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ptt_key: newKey }),
+      });
+      const data = await response.json();
+
+      debug.log('UPDATE_PTT_KEY', data);
+      logger.apiResponse('/update_ptt_key', response.status, data);
+
+      if (data.success) {
+        setPushToTalkKey(newKey);
+      }
+    } catch (error) {
+      logger.error('UPDATE_PTT_KEY failed', error);
+      debug.log('UPDATE_PTT_KEY_ERROR', error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
+  const selectPlan = async (planId: number) => {
+    try {
+      logger.api('POST', '/mock_select_plan', { plan_id: planId });
+      const response = await fetch(`${BACKEND_URL}/mock_select_plan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan_id: planId }),
+      });
+      const data = await response.json();
+
+      debug.log('MOCK_SELECT_PLAN', data);
+      logger.apiResponse('/mock_select_plan', response.status, data);
+
+      if (data.success) {
+        setRemainingGames(data.remaining_games);
+        setPricingDialogOpen(false);
+      }
+    } catch (error) {
+      logger.error('MOCK_SELECT_PLAN failed', error);
+      debug.log('MOCK_SELECT_PLAN_ERROR', error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
+  const toggleProactiveCoach = async (newState: boolean) => {
+    try {
+      logger.api('PUT', '/mock_proactive_coach_toggle', { active: newState });
+      const response = await fetch(`${BACKEND_URL}/mock_proactive_coach_toggle`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: newState }),
+      });
+      const data = await response.json();
+
+      debug.log('MOCK_PROACTIVE_COACH_TOGGLE', data);
+      logger.apiResponse('/mock_proactive_coach_toggle', response.status, data);
+
+      if (data.success) {
+        setProactiveCoachEnabled(newState);
+      }
+    } catch (error) {
+      logger.error('MOCK_PROACTIVE_COACH_TOGGLE failed', error);
+      debug.log('MOCK_PROACTIVE_COACH_TOGGLE_ERROR', error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
+  const contactSupport = async () => {
+    try {
+      logger.api('POST', '/mock_contact_support', { subject: 'Support Request' });
+      const response = await fetch(`${BACKEND_URL}/mock_contact_support`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject: 'Support Request', message: '' }),
+      });
+      const data = await response.json();
+
+      debug.log('MOCK_CONTACT_SUPPORT', data);
+      logger.apiResponse('/mock_contact_support', response.status, data);
+    } catch (error) {
+      logger.error('MOCK_CONTACT_SUPPORT failed', error);
+      debug.log('MOCK_CONTACT_SUPPORT_ERROR', error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
+  // =====================================================================
+  // UI Event Handlers
+  // =====================================================================
+
+  const handleCoachToggle = (checked: boolean) => {
+    toggleCoach(checked);
+  };
+
+  const handleAssistantToggle = (checked: boolean) => {
+    toggleAssistant(checked);
+  };
+
+  const handleVolumeChange = (values: number[]) => {
+    setVolume(values);
+    // Debounce API calls on slider drag
+    const newVolume = values[0];
+    updateVolume(newVolume);
+  };
+
   const handleBindKey = () => {
     setIsBindingKey(true);
-    // In a real implementation, this would listen for a key press
-    // For now, we'll just simulate it
-    setTimeout(() => {
+    logger.info('Listening for key press...');
+    debug.log('KEY_BINDING_STARTED', { message: 'Waiting for key press...' });
+
+    const handleKeyDown = async (event: KeyboardEvent) => {
+      event.preventDefault();
+      const newKey = event.key.toUpperCase();
+      logger.debug('Key pressed', newKey);
+
+      document.removeEventListener('keydown', handleKeyDown);
       setIsBindingKey(false);
-    }, 2000);
+
+      // Send to backend
+      await updatePushToTalkKey(newKey);
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Timeout after 5 seconds
+    setTimeout(() => {
+      document.removeEventListener('keydown', handleKeyDown);
+      setIsBindingKey(false);
+      debug.log('KEY_BINDING_TIMEOUT', { message: 'Key binding timeout - no key pressed' });
+    }, 5000);
   };
 
   const handleTestVolume = () => {
@@ -121,7 +347,11 @@ const Dashboard = () => {
                       </div>
                     </div>
 
-                    <Button className="w-full" variant="outline">
+                    <Button
+                      className="w-full"
+                      variant="outline"
+                      onClick={() => selectPlan(1)}
+                    >
                       Commencer
                     </Button>
                   </div>
@@ -170,7 +400,11 @@ const Dashboard = () => {
                       </div>
                     </div>
 
-                    <Button className="w-full" variant="outline">
+                    <Button
+                      className="w-full"
+                      variant="outline"
+                      onClick={() => selectPlan(2)}
+                    >
                       Commencer
                     </Button>
                   </div>
@@ -220,7 +454,11 @@ const Dashboard = () => {
                       </div>
                     </div>
 
-                    <Button className="w-full" variant="outline">
+                    <Button
+                      className="w-full"
+                      variant="outline"
+                      onClick={() => selectPlan(3)}
+                    >
                       Commencer
                     </Button>
                   </div>
@@ -368,7 +606,7 @@ const Dashboard = () => {
                 </span>
                 <Switch
                   checked={isActive}
-                  onCheckedChange={setIsActive}
+                  onCheckedChange={handleCoachToggle}
                   className="data-[state=checked]:bg-accent"
                 />
               </div>
@@ -412,7 +650,7 @@ const Dashboard = () => {
                     </div>
                     <Switch
                       checked={assistantEnabled}
-                      onCheckedChange={setAssistantEnabled}
+                      onCheckedChange={handleAssistantToggle}
                       className="data-[state=checked]:bg-accent ml-4"
                     />
                   </div>
@@ -450,7 +688,7 @@ const Dashboard = () => {
                     </div>
                     <Switch
                       checked={proactiveCoachEnabled}
-                      onCheckedChange={setProactiveCoachEnabled}
+                      onCheckedChange={toggleProactiveCoach}
                       className="data-[state=checked]:bg-accent ml-4"
                     />
                   </div>
@@ -468,7 +706,7 @@ const Dashboard = () => {
                       <Volume2 className="h-4 w-4 text-muted-foreground" />
                       <Slider
                         value={volume}
-                        onValueChange={setVolume}
+                        onValueChange={handleVolumeChange}
                         max={100}
                         step={1}
                         className="flex-1"
@@ -548,9 +786,10 @@ const Dashboard = () => {
                         <li>Redémarrez l'application si les problèmes persistent</li>
                       </ul>
                     </div>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full border-accent/50 hover:bg-accent/10"
+                      onClick={contactSupport}
                     >
                       Nous Contacter
                     </Button>
