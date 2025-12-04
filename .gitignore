@@ -22,6 +22,8 @@ release
 # AMOKK user data
 .amokk/
 ~/.amokk/
+release
+venv/
 
 # Electron
 out/
