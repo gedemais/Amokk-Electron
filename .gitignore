@@ -14,6 +14,15 @@ dist-electron
 release
 *.local
 
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# AMOKK user data
+.amokk/
+~/.amokk/
+
 # Electron
 out/
 

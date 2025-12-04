@@ -135,7 +135,7 @@ export function DebugPanel() {
   const [expandedPages, setExpandedPages] = useState<Set<string>>(new Set());
   const [expandedTests, setExpandedTests] = useState<Set<string>>(new Set());
   const headerRef = useRef<HTMLDivElement>(null);
-  const isDev = import.meta.env.VITE_DEV === 'true';
+  const isDev = import.meta.env.DEV;
 
   const togglePageExpand = (page: string) => {
     const newSet = new Set(expandedPages);

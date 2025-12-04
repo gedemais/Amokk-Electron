@@ -7,7 +7,7 @@
     "name": "AMOKK",
     "email": "contact@amokk.fr"
   },
-  "main": "dist-electron/main.js",
+  "main": "dist-electron/electron/main.js",
   "homepage": "./",
   "type": "module",
   "scripts": {
@@ -16,7 +16,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "tsc": "tsc -p tsconfig.electron.json",
+    "tsc": "tsc -p config/tsconfig.electron.json",
     "backend:pyinstaller": "cd backend && python3 build-exe.py",
     "electron": "NODE_ENV=development npm run tsc && (npm run dev &) && sleep 8 && electron .",
     "dist": "npm run build && npm run tsc && npm run backend:pyinstaller && electron-builder",

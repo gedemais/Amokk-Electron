@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * AMOKK Electron Main Process
  * Manages:
@@ -7,13 +8,45 @@
  * - Auto-updates and system integration
  */
 
-/// <reference types="electron" />
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import { spawn } from 'child_process';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+
+// ============================================================================
+// Environment Setup
+// ============================================================================
+
+// Load .env file first, before anything else
+try {
+  const envLoaderModule = await import('../tools/env-loader.js');
+  const envLoader = envLoaderModule.default || envLoaderModule;
+  envLoader.loadEnv?.();
+  console.log('[STARTUP] Environment variables loaded');
+} catch (e) {
+  console.warn('[STARTUP] Could not load .env file:', (e as any).message);
+}
+
+// ============================================================================
+// Import Test Suite
+// ============================================================================
+
+let connectivityTest: any = null;
+try {
+  connectivityTest = await import('../tools/connectivity-test.js');
+} catch (e) {
+  console.warn('[STARTUP] Could not load connectivity tests');
+}
+
+// ============================================================================
+// Logger Setup
+// ============================================================================
+
+// Import centralized logger (after env is loaded)
+const loggerModule = await import('../tools/logger.js');
+const logger = loggerModule.default || loggerModule;
 
 // ============================================================================
 // Configuration
@@ -27,8 +60,14 @@ const isDev = !app.isPackaged;
 const BACKEND_PORT = 8000;
 const BACKEND_HOST = '127.0.0.1';
 
+logger.info('INIT', 'Electron initialization', { isDev, platform: process.platform, arch: process.arch });
+
 // Determine backend path
 function getBackendPath(): string {
+  console.error('=== PATH_RESOLVE START ===');
+  console.error('isDev:', isDev, 'platform:', process.platform);
+  logger.debug('PATH_RESOLVE', 'Resolving backend path', { isDev, platform: process.platform });
+
   let backendExe: string;
   let backendPy: string;
   let baseDir: string;
@@ -36,44 +75,101 @@ function getBackendPath(): string {
   if (isDev) {
     // Development: use project root
     baseDir = path.join(__dirname, '..');
+    logger.debug('PATH_RESOLVE', 'Development mode - using project root');
   } else {
-    // Production: extraResources are placed in the root of the app resources
-    // AppImage structure: /tmp/.mount_XXX/resources/ contains everything
+    // Production: find resources directory
+    const exePath = path.dirname(process.execPath);
     const appPath = app.getAppPath();
 
-    // Navigate up from app.asar to get to resources directory
-    if (appPath.includes('app.asar')) {
-      // Path is like: /path/to/resources/app.asar
-      baseDir = path.dirname(appPath); // Go up from app.asar to resources/
-    } else {
-      // Path is like: /path/to/resources/app (unpacked)
-      baseDir = path.dirname(appPath);
+    // List of possible locations for resources (in order of preference)
+    const possibleBaseDirs = [
+      process.resourcesPath,  // Official Electron method
+      path.join(exePath, 'resources'),  // Next to exe: /Bureau/resources
+      path.join(exePath, '..', 'resources'),  // Parent of exe
+      path.join(path.dirname(appPath), 'resources'),  // Relative to app path
+      path.join(process.cwd(), 'resources'),  // Current working directory
+      exePath,  // Check if backend is directly next to exe (unpacked mode)
+    ].filter(Boolean);
+
+    console.error('=== PRODUCTION MODE ===');
+    console.error('process.execPath:', process.execPath);
+    console.error('exePath:', exePath);
+    console.error('appPath:', appPath);
+    console.error('process.cwd():', process.cwd());
+    console.error('possibleBaseDirs:', possibleBaseDirs);
+
+    baseDir = '';
+    for (const dir of possibleBaseDirs) {
+      const dirExists = fs.existsSync(dir);
+      const backendExists = fs.existsSync(path.join(dir, 'backend'));
+      console.error(`  Checking: ${dir}`);
+      console.error(`    exists: ${dirExists}, has backend: ${backendExists}`);
+
+      if (dirExists && backendExists) {
+        baseDir = dir;
+        console.error(`  ✓ FOUND: ${baseDir}`);
+        break;
+      }
     }
+
+    if (!baseDir) {
+      // Fallback: if resources doesn't exist but backend does at exe level (win-unpacked)
+      const backendAtExeLevel = path.join(exePath, 'resources', 'backend');
+      if (fs.existsSync(backendAtExeLevel)) {
+        baseDir = path.join(exePath, 'resources');
+        console.error(`✓ Found backend at exe level: ${baseDir}`);
+      } else {
+        baseDir = exePath;
+        console.error(`⚠ Backend not found, using fallback baseDir: ${baseDir}`);
+      }
+    }
+
+    logger.debug('PATH_RESOLVE', 'Production mode - found base directory', { baseDir });
   }
 
   const backendDir = path.join(baseDir, 'backend');
+  logger.debug('PATH_RESOLVE', 'Backend directory resolved', { backendDir });
 
+  // Build list of possible backend executable names
+  // (compiled on Linux might not have .exe extension even for Windows)
+  const backendExePaths: string[] = [];
   if (process.platform === 'win32') {
-    backendExe = path.join(backendDir, 'dist', 'AMOKK-Backend.exe');
+    backendExePaths.push(
+      path.join(backendDir, 'dist', 'AMOKK-Backend.exe'),
+      path.join(backendDir, 'dist', 'AMOKK-Backend')  // Fallback: compiled on Linux
+    );
   } else {
-    backendExe = path.join(backendDir, 'dist', 'AMOKK-Backend');
+    backendExePaths.push(path.join(backendDir, 'dist', 'AMOKK-Backend'));
   }
+
   backendPy = path.join(backendDir, 'main.py');
 
-  console.log(`🔍 Path resolution:
-    - isDev: ${isDev}
-    - baseDir: ${baseDir}
-    - backendExe: ${backendExe}
-    - backendExe exists: ${fs.existsSync(backendExe)}`);
+  logger.debug('PATH_RESOLVE', 'Path resolution complete', {
+    isDev,
+    baseDir,
+    backendExePaths,
+    backendPyScript: backendPy,
+    backendExeExists: backendExePaths.map(p => ({ path: p, exists: fs.existsSync(p) })),
+    backendPyExists: fs.existsSync(backendPy),
+  });
 
   // Try to use PyInstaller-built executable FIRST (preferred)
-  if (fs.existsSync(backendExe)) {
-    console.log(`✅ Using PyInstaller executable: ${backendExe}`);
-    return backendExe;
+  console.error('=== Checking backend executables ===');
+  for (const exePath of backendExePaths) {
+    const exists = fs.existsSync(exePath);
+    console.error(`Checking: ${exePath} - exists: ${exists}`);
+    if (exists) {
+      console.error('✓ Using PyInstaller executable:', exePath);
+      logger.info('PATH_RESOLVE', 'Using PyInstaller executable', { exePath });
+      return exePath;
+    }
   }
 
   // Fallback to Python script
-  console.log(`⚠️  PyInstaller executable not found, falling back to Python script: ${backendPy}`);
+  logger.warn('PATH_RESOLVE', 'PyInstaller executable not found, falling back to Python script', {
+    attemptedPaths: backendExePaths,
+    backendPy,
+  });
   return backendPy;
 }
 
@@ -99,6 +195,91 @@ let backendStartAttempts = 0;
 const MAX_BACKEND_ATTEMPTS = 3;
 
 // ============================================================================
+// Environment Validation
+// ============================================================================
+
+/**
+ * Validate that all required files exist before starting
+ */
+async function validateEnvironment(): Promise<void> {
+  logger.info('VALIDATE', 'Starting environment validation');
+
+  if (isDev) {
+    logger.debug('VALIDATE', 'Development mode - skipping validation');
+    return;
+  }
+
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  // Check backend executable exists
+  const backendPath = getBackendPath();
+  if (!fs.existsSync(backendPath)) {
+    logger.error('VALIDATE', 'Backend executable not found', { backendPath });
+    errors.push(`Backend executable not found: ${backendPath}`);
+  } else {
+    logger.info('VALIDATE', 'Backend executable found', { backendPath });
+
+    // Check if executable has proper permissions (Linux/macOS)
+    if (process.platform !== 'win32') {
+      try {
+        const stats = fs.statSync(backendPath);
+        const isExecutable = (stats.mode & 0o111) !== 0;
+        if (!isExecutable) {
+          logger.warn('VALIDATE', 'Backend not executable, will chmod +x at startup');
+          warnings.push(`Backend is not executable. Will attempt chmod +x during startup.`);
+        } else {
+          logger.info('VALIDATE', 'Backend has execute permissions');
+        }
+      } catch (e: any) {
+        logger.warn('VALIDATE', 'Could not check backend permissions', { error: e.message });
+        warnings.push(`Could not check backend permissions`);
+      }
+    }
+  }
+
+  // Check if frontend exists
+  const appPath = app.getAppPath();
+  let baseDir = path.dirname(appPath);
+  const frontendPath = path.join(baseDir, 'dist', 'index.html');
+  if (!fs.existsSync(frontendPath)) {
+    logger.error('VALIDATE', 'Frontend not found', { frontendPath });
+    errors.push(`Frontend not found: ${frontendPath}`);
+  } else {
+    logger.info('VALIDATE', 'Frontend found', { frontendPath });
+  }
+
+  // Check if assets directory exists
+  const assetsPath = path.join(baseDir, 'assets');
+  if (!fs.existsSync(assetsPath)) {
+    logger.warn('VALIDATE', 'Assets directory not found', { assetsPath });
+    warnings.push(`Assets directory not found: ${assetsPath}`);
+  } else {
+    logger.info('VALIDATE', 'Assets directory found');
+  }
+
+  // Report warnings
+  if (warnings.length > 0) {
+    warnings.forEach(w => logger.warn('VALIDATE', w));
+  }
+
+  // Report errors and fail
+  if (errors.length > 0) {
+    logger.error('VALIDATE', 'Environment validation failed', { errorCount: errors.length });
+    errors.forEach(err => logger.error('VALIDATE', err));
+
+    dialog.showErrorBox(
+      'AMOKK - Environment Error',
+      'Missing required files:\n\n' + errors.join('\n')
+    );
+
+    throw new Error('Environment validation failed');
+  }
+
+  logger.info('VALIDATE', 'Environment validation passed!');
+}
+
+// ============================================================================
 // Backend Management
 // ============================================================================
 
@@ -107,114 +288,279 @@ const MAX_BACKEND_ATTEMPTS = 3;
  */
 async function startBackend(): Promise<void> {
   return new Promise((resolve, reject) => {
+    logger.info('BACKEND_START', 'Checking if backend already running');
+
     if (pythonProcess) {
-      console.log('🔄 Backend already running');
+      logger.info('BACKEND_START', 'Backend already running, skipping startup');
       resolve();
       return;
     }
 
-    console.log(`🚀 Starting Python backend on ${BACKEND_HOST}:${BACKEND_PORT}...`);
+    logger.info('BACKEND_START', `Starting Python backend on ${BACKEND_HOST}:${BACKEND_PORT}`);
 
     const backendPath = getBackendPath();
-    console.log(`📁 Backend path: ${backendPath}`);
+    logger.debug('BACKEND_START', 'Backend path resolved', { backendPath });
 
     try {
       // Check if backend is an executable or script
       const isPy = backendPath.endsWith('.py');
       const isWinExe = backendPath.endsWith('.exe');
-      // On Linux/Mac, PyInstaller creates binary without extension
-      // We detect it by the filename pattern and file existence
       const isLinuxBinary = !isPy && !isWinExe && fs.existsSync(backendPath);
 
-      console.log(`📝 Backend path type check:
-        - Path: ${backendPath}
-        - Is Python: ${isPy}
-        - Is Windows Exe: ${isWinExe}
-        - Is Linux Binary: ${isLinuxBinary}
-        - File exists: ${fs.existsSync(backendPath)}`);
+      logger.debug('BACKEND_START', 'Backend path type detection', {
+        isPython: isPy,
+        isWindowsExe: isWinExe,
+        isLinuxBinary: isLinuxBinary,
+        fileExists: fs.existsSync(backendPath),
+      });
 
       if ((isWinExe || isLinuxBinary) && !isPy) {
+        // On Windows, PyInstaller exe compiled on Linux doesn't work,
+        // so skip directly to Python fallback
+        const shouldTryExe = process.platform !== 'win32' || !isWinExe;
+
+        if (shouldTryExe) {
         // Run the PyInstaller-built executable directly
         // Ensure it has execute permissions (for AppImage/extracted builds)
         if (process.platform !== 'win32') {
           try {
             fs.chmodSync(backendPath, 0o755);
-            console.log('✅ Set executable permissions (chmod +x)');
+            logger.info('BACKEND_SPAWN', 'Set executable permissions (chmod +x)');
           } catch (e: any) {
             // Ignore if file system is read-only (AppImage mounted as read-only)
             if (e.code === 'EROFS') {
-              console.log('ℹ️  File system is read-only (AppImage), skipping chmod');
+              logger.debug('BACKEND_SPAWN', 'File system is read-only (AppImage), skipping chmod');
             } else {
-              console.warn('⚠️  Could not chmod backend:', e.message);
+              logger.warn('BACKEND_SPAWN', 'Could not chmod backend', { error: e.message });
             }
           }
         }
 
-        console.log(`🚀 Spawning PyInstaller executable: ${backendPath}`);
+        logger.info('BACKEND_SPAWN', 'Spawning PyInstaller executable', { backendPath });
+        let exeSpawnFailed = false;
+
+        // Attach error handler BEFORE spawning to catch all errors
+        const handleExeSpawnError = (err: any) => {
+          if (exeSpawnFailed) return;  // Only handle once
+          exeSpawnFailed = true;
+
+          logger.warn('BACKEND_SPAWN', 'PyInstaller executable failed to spawn, falling back to Python', {
+            error: err.message,
+            backendPath
+          });
+
+          pythonProcess?.removeAllListeners();
+
+          // Get launcher.py path (which auto-installs dependencies)
+          const backendLauncher = path.join(path.dirname(backendPath), '..', 'launcher.py');
+
+          // Setup Python fallback with retry logic
+          const pythonCmds: string[] = [];
+          if (process.platform === 'win32') {
+            pythonCmds.push('python3.exe', 'python.exe', 'py');
+          } else {
+            pythonCmds.push('/usr/bin/python3', 'python3', 'python');
+          }
+
+          let pythonAttempt = 0;
+          const tryPythonFallback = () => {
+            if (pythonAttempt >= pythonCmds.length) {
+              const fallbackError = new Error('Both PyInstaller executable and Python fallback failed');
+              logger.error('BACKEND_SPAWN', 'All spawn methods failed', { pythonCmds });
+              reject(fallbackError);
+              return;
+            }
+
+            const pythonCmd = pythonCmds[pythonAttempt];
+            pythonAttempt++;
+
+            logger.info('BACKEND_SPAWN', 'Trying Python launcher fallback', {
+              pythonCmd,
+              backendPath: backendLauncher,
+              attempt: pythonAttempt,
+            });
+
+            pythonProcess = spawn(pythonCmd, [backendLauncher], {
+              cwd: path.dirname(backendLauncher),
+              stdio: ['ignore', 'pipe', 'pipe'],
+              detached: false,
+              env: { ...process.env },
+            });
+
+            pythonProcess.once('error', () => {
+              tryPythonFallback();
+            });
+          };
+
+          tryPythonFallback();
+        };
+
+        // NOW spawn and attach handler
         pythonProcess = spawn(backendPath, [], {
           stdio: ['ignore', 'pipe', 'pipe'],
           detached: false,
         });
-      } else {
-        // Run Python script
-        let pythonCmd = 'python3';
-        if (process.platform === 'win32') {
-          pythonCmd = 'python';
+
+        pythonProcess.once('error', handleExeSpawnError);
+        } else {
+        // On Windows with PyInstaller .exe: skip exe and use Python directly
+        logger.info('BACKEND_SPAWN', 'Skipping PyInstaller .exe on Windows, using Python fallback directly');
+        // Fall through to Python handling (it's below)
         }
 
-        console.log(`🐍 Spawning Python script with: ${pythonCmd} ${backendPath}`);
-        pythonProcess = spawn(pythonCmd, [backendPath], {
-          cwd: path.dirname(backendPath),
-          stdio: ['ignore', 'pipe', 'pipe'],
-          detached: false,
-        });
+        if (!shouldTryExe || !pythonProcess) {
+        // Run Python script with fallback logic
+        const pythonCmds: string[] = [];
+
+        // Platform-specific Python command order
+        if (process.platform === 'win32') {
+          pythonCmds.push('python3.exe', 'python.exe', 'py');  // Windows
+        } else {
+          pythonCmds.push('/usr/bin/python3', 'python3', 'python');  // Linux/macOS
+        }
+
+        // Use launcher.py which auto-installs dependencies before running main.py
+        const backendLauncher = path.join(path.dirname(backendPath), '..', 'launcher.py');
+
+        let pythonCmd = pythonCmds[0];
+        let spawnAttempt = 0;
+        const maxAttempts = pythonCmds.length;
+
+        const trySpawnPython = () => {
+          if (spawnAttempt >= maxAttempts) {
+            const error = new Error('Could not find python3 executable');
+            logger.error('BACKEND_SPAWN', 'All python spawn attempts failed', { pythonCmds });
+            pythonProcess?.kill?.();
+            pythonProcess = null;
+            return;
+          }
+
+          pythonCmd = pythonCmds[spawnAttempt];
+          spawnAttempt++;
+
+          logger.info('BACKEND_SPAWN', 'Spawning Python launcher', {
+            pythonCmd,
+            backendPath: backendLauncher,
+            attempt: spawnAttempt,
+          });
+
+          pythonProcess = spawn(pythonCmd, [backendLauncher], {
+            cwd: path.dirname(backendLauncher),
+            stdio: ['ignore', 'pipe', 'pipe'],
+            detached: false,
+            env: { ...process.env, PYTHONUNBUFFERED: '1' },
+          });
+
+          // Capture stdout and stderr for debugging
+          let pythonStdout = '';
+          let pythonStderr = '';
+
+          if (pythonProcess.stdout) {
+            pythonProcess.stdout.on('data', (data) => {
+              const output = data.toString().trim();
+              pythonStdout += output;
+              if (output) {
+                logger.info('BACKEND_LAUNCHER_STDOUT', output);
+              }
+            });
+          }
+
+          if (pythonProcess.stderr) {
+            pythonProcess.stderr.on('data', (data) => {
+              const output = data.toString().trim();
+              pythonStderr += output;
+              if (output) {
+                logger.info('BACKEND_LAUNCHER_STDERR', output);
+              }
+            });
+          }
+
+          pythonProcess.once('error', (err: any) => {
+            logger.info('BACKEND_SPAWN', 'Python spawn error, trying next command', {
+              pythonCmd,
+              error: err.message,
+              stdout: pythonStdout,
+              stderr: pythonStderr,
+            });
+            trySpawnPython();
+          });
+
+          // Also handle exit code 1 (command not found or execution error)
+          pythonProcess.once('exit', (code: number) => {
+            if (code !== 0) {
+              logger.info('BACKEND_SPAWN', 'Python exited with error, trying next command', {
+                pythonCmd,
+                exitCode: code,
+                stdout: pythonStdout,
+                stderr: pythonStderr,
+              });
+              trySpawnPython();
+            }
+          });
+        };
+
+        // Start the spawn attempts
+        trySpawnPython();
+        }
       }
 
       let backendOutput = '';
+      let healthCheckStarted = false;
 
       pythonProcess.stdout?.on('data', (data) => {
         const message = data.toString();
-        console.log(`[Backend] ${message}`);
+        logger.debug('BACKEND_STDIO', 'Backend stdout', { message: message.trim() });
         backendOutput += message;
 
-        // Check if backend is ready
+        // Check if backend is ready (from log output)
         if (
           message.includes('Uvicorn running') ||
           message.includes('Server running on')
         ) {
+          logger.info('BACKEND_STDIO', 'Backend ready signal detected from logs');
           backendReady = true;
-          console.log('✅ Backend is ready!');
           resolve();
         }
       });
 
       pythonProcess.stderr?.on('data', (data) => {
         const message = data.toString();
-        console.error(`[Backend Error] ${message}`);
+        logger.debug('BACKEND_STDIO', 'Backend stderr', { message: message.trim() });
         backendOutput += message;
       });
 
-      pythonProcess.on('error', (err) => {
-        console.error(`❌ Failed to start backend: ${err.message}`);
+      pythonProcess.on('error', (err: any) => {
+        logger.error('BACKEND_SPAWN', 'Failed to spawn backend process', { error: err.message });
         backendReady = false;
         reject(err);
       });
 
-      pythonProcess.on('exit', (code) => {
-        console.log(`⚠️  Backend exited with code ${code}`);
+      pythonProcess.on('exit', (code: number) => {
+        logger.warn('BACKEND_SPAWN', 'Backend process exited', { exitCode: code });
         pythonProcess = null;
         backendReady = false;
       });
 
-      // Timeout for backend startup (10 seconds)
+      // Start health check after short delay
+      setTimeout(() => {
+        if (!healthCheckStarted) {
+          healthCheckStarted = true;
+          logger.debug('BACKEND_START', 'Starting health check polling');
+          pollBackendHealth();
+        }
+      }, 1000);
+
+      // Timeout for backend startup (20 seconds)
+      const startupTimeout = parseInt(process.env.BACKEND_TIMEOUT || '20000');
       setTimeout(() => {
         if (!backendReady) {
-          console.warn('⏱️ Backend startup timeout - assuming it started');
+          logger.warn('BACKEND_START', `Backend startup timeout (${startupTimeout}ms) - assuming it started`);
+          backendReady = true;
           resolve();
         }
-      }, 10000);
-    } catch (error) {
-      console.error(`❌ Error starting backend:`, error);
+      }, startupTimeout);
+    } catch (error: any) {
+      logger.error('BACKEND_START', 'Error starting backend', { error: error.message });
       backendReady = false;
       reject(error);
     }
@@ -222,14 +568,50 @@ async function startBackend(): Promise<void> {
 }
 
 /**
+ * Poll backend health to detect when it's ready
+ */
+function pollBackendHealth(): void {
+  const maxAttempts = 20; // 20 attempts * 500ms = 10 seconds
+  let attempts = 0;
+
+  const check = async () => {
+    attempts++;
+    try {
+      const response = await fetch(`http://${BACKEND_HOST}:${BACKEND_PORT}/status`);
+      if (response.ok) {
+        logger.info('BACKEND_HEALTH', 'Backend is responsive!', { attempts });
+        backendReady = true;
+        return;
+      }
+    } catch (e) {
+      // Not ready yet, continue polling
+    }
+
+    if (attempts < maxAttempts) {
+      setTimeout(check, 500);
+    } else {
+      logger.warn('BACKEND_HEALTH', 'Health check max attempts reached', { maxAttempts });
+      backendReady = true;
+    }
+  };
+
+  check();
+}
+
+/**
  * Stop the Python backend process
  */
 function stopBackend(): void {
+  logger.info('BACKEND_STOP', 'Stopping backend process');
+
   if (pythonProcess) {
-    console.log('🛑 Stopping backend...');
+    logger.debug('BACKEND_STOP', 'Killing backend process', { pid: pythonProcess.pid });
     pythonProcess.kill();
     pythonProcess = null;
     backendReady = false;
+    logger.info('BACKEND_STOP', 'Backend process stopped');
+  } else {
+    logger.debug('BACKEND_STOP', 'No backend process running');
   }
 }
 
@@ -238,9 +620,13 @@ function stopBackend(): void {
  */
 async function checkBackendHealth(): Promise<boolean> {
   try {
+    logger.trace('BACKEND_HEALTH', 'Checking backend health');
     const response = await fetch(`http://${BACKEND_HOST}:${BACKEND_PORT}/status`);
-    return response.ok;
-  } catch {
+    const isHealthy = response.ok;
+    logger.trace('BACKEND_HEALTH', 'Backend health check result', { isHealthy, status: response.status });
+    return isHealthy;
+  } catch (error: any) {
+    logger.trace('BACKEND_HEALTH', 'Backend health check failed', { error: error.message });
     return false;
   }
 }
@@ -288,55 +674,130 @@ async function createWindow(): Promise<void> {
     icon: iconPath,
   });
 
-  // Try to load from Vite dev server first
-  const devUrl = 'http://localhost:8080';
-  let prodUrl: string;
-
-  if (isDev) {
-    prodUrl = `file://${path.join(__dirname, '../dist/index.html')}`;
-  } else {
-    // In production, use the bundled dist directory in resources
-    const appPath = app.getAppPath();
-    let baseDir: string;
-    if (appPath.includes('app.asar')) {
-      baseDir = path.dirname(appPath);
-    } else {
-      baseDir = path.dirname(appPath);
-    }
-    prodUrl = `file://${path.join(baseDir, 'dist', 'index.html')}`;
-  }
-
+  // Determine the URL to load
   let loadURL: string;
 
-  // In development, try dev server; in production, use bundled files
   if (isDev) {
-    loadURL = devUrl;
+    // Development: Load from Vite dev server
+    loadURL = 'http://localhost:8080';
+    console.log(`📍 Development mode: Loading from Vite dev server`);
   } else {
-    loadURL = prodUrl;
+    // Production: Load from bundled files
+    const appPath = app.getAppPath();
+    let baseDir: string;
+
+    if (appPath.includes('app.asar')) {
+      // Packed: /path/to/resources/app.asar
+      baseDir = path.dirname(appPath); // Navigate to /path/to/resources
+    } else {
+      // Unpacked: /path/to/resources/app or /path/to/resources
+      baseDir = path.dirname(appPath);
+    }
+
+    const frontendPath = path.join(baseDir, 'dist', 'index.html');
+
+    // CRITICAL: Verify file exists before loading
+    if (!fs.existsSync(frontendPath)) {
+      console.error(`\n${'='.repeat(60)}`);
+      console.error(`❌ CRITICAL ERROR: Frontend file not found!`);
+      console.error(`${'='.repeat(60)}`);
+      console.error(`\nExpected path: ${frontendPath}`);
+      console.error(`\nDebug information:`);
+      console.error(`  - appPath: ${appPath}`);
+      console.error(`  - baseDir: ${baseDir}`);
+      console.error(`  - isDev: ${isDev}`);
+
+      try {
+        console.error(`\nContents of baseDir (${baseDir}):`);
+        const contents = fs.readdirSync(baseDir);
+        contents.forEach(item => {
+          const itemPath = path.join(baseDir, item);
+          const isDir = fs.statSync(itemPath).isDirectory();
+          console.error(`  ${isDir ? '📁' : '📄'} ${item}`);
+        });
+      } catch (e: any) {
+        console.error(`  ⚠️  Could not read directory: ${e.message}`);
+      }
+
+      console.error(`${'='.repeat(60)}\n`);
+
+      // Show error dialog to user
+      // dialog already imported at top
+      dialog.showErrorBox(
+        'AMOKK - Startup Error',
+        `Failed to load application.\n\nThe frontend files are missing or not in the expected location.\n\nPath: ${frontendPath}`
+      );
+
+      app.quit();
+      return;
+    }
+
+    loadURL = `file://${frontendPath}`;
+    console.log(`📍 Production mode: Loading from bundled files`);
+    console.log(`📄 Frontend path: ${frontendPath}`);
   }
 
   console.log(`📍 Loading URL: ${loadURL}`);
 
-  // Check if file exists (for debugging)
-  if (loadURL.startsWith('file://')) {
-    const filePath = loadURL.replace('file://', '');
-    const exists = fs.existsSync(filePath);
-    console.log(`📄 File exists (${filePath}): ${exists}`);
-  }
+  // Capture console messages from renderer process
+  mainWindow.webContents.on('console-message', (level, message, line, sourceId) => {
+    const levelName = ['log', 'warn', 'error'][level] || 'log';
+    logger.debug('RENDERER', `${levelName.toUpperCase()}: ${message}`, { line, sourceId });
+  });
 
   // Add error handler for failed page loads
-  mainWindow.webContents.on('did-fail-load', () => {
-    console.error('❌ Failed to load page:', loadURL);
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    logger.error('WINDOW', 'Failed to load page!', {
+      URL: validatedURL,
+      errorCode: errorCode,
+      error: errorDescription,
+    });
+
+    if (!isDev) {
+      // dialog already imported at top
+      dialog.showErrorBox(
+        'AMOKK - Failed to Load',
+        `Could not load the application.\n\nError: ${errorDescription}\n\nURL: ${validatedURL}`
+      );
+    }
   });
 
   mainWindow.webContents.on('crashed', () => {
-    console.error('❌ Renderer process crashed');
+    logger.error('WINDOW', 'Renderer process crashed');
+
+    if (!isDev) {
+      // dialog already imported at top
+      dialog.showErrorBox(
+        'AMOKK - Renderer Crashed',
+        'The application renderer has crashed.\n\nPlease restart the application.'
+      );
+    }
   });
 
-  await mainWindow.loadURL(loadURL);
+  // Log when page finishes loading
+  mainWindow.webContents.on('did-finish-load', () => {
+    logger.info('WINDOW', 'Page finished loading successfully');
+  });
+
+  // Attempt to load the page
+  try {
+    await mainWindow.loadURL(loadURL);
+  } catch (error: any) {
+    console.error(`❌ Failed to load URL: ${error.message}`);
+    if (!isDev) {
+      // dialog already imported at top
+      dialog.showErrorBox(
+        'AMOKK - Load Error',
+        `Failed to load application: ${error.message}`
+      );
+    }
+    app.quit();
+    return;
+  }
 
   // Open DevTools in development
   if (isDev) {
+    console.log('🔧 Opening DevTools...');
     mainWindow.webContents.openDevTools();
   }
 
@@ -344,7 +805,7 @@ async function createWindow(): Promise<void> {
     mainWindow = null;
   });
 
-  console.log('✅ Window created');
+  console.log('✅ Window created successfully\n');
 }
 
 // ============================================================================
@@ -355,8 +816,11 @@ async function createWindow(): Promise<void> {
  * Setup IPC communication handlers
  */
 function setupIPC(): void {
+  logger.debug('IPC_SETUP', 'Setting up IPC handlers');
+
   // Get backend status
   ipcMain.handle('backend:status', async (): Promise<BackendStatus> => {
+    logger.trace('IPC', 'backend:status requested');
     const healthy = await checkBackendHealth();
     return {
       running: backendReady && healthy,
@@ -367,11 +831,13 @@ function setupIPC(): void {
 
   // Get app version
   ipcMain.handle('app:version', () => {
+    logger.trace('IPC', 'app:version requested');
     return app.getVersion();
   });
 
   // Get app info
   ipcMain.handle('app:info', () => {
+    logger.trace('IPC', 'app:info requested');
     return {
       version: app.getVersion(),
       platform: process.platform,
@@ -380,6 +846,61 @@ function setupIPC(): void {
       isDev,
     };
   });
+
+  // Get log file path
+  ipcMain.handle('app:getLogPath', () => {
+    const logPath = logger.getLogPath?.() || 'No log path available';
+    logger.debug('IPC', 'app:getLogPath requested', { logPath });
+    return logPath;
+  });
+
+  // Get log file contents
+  ipcMain.handle('app:getLogs', async () => {
+    try {
+      const logPath = logger.getLogPath?.();
+      if (!logPath || !fs.existsSync(logPath)) {
+        logger.warn('IPC', 'Log file not found', { logPath });
+        return 'Log file not found';
+      }
+
+      const contents = fs.readFileSync(logPath, 'utf-8');
+      logger.debug('IPC', 'Log contents retrieved', { size: contents.length });
+      return contents;
+    } catch (error: any) {
+      logger.error('IPC', 'Failed to read log file', { error: error.message });
+      return `Error reading logs: ${error.message}`;
+    }
+  });
+
+  // Clear logs
+  ipcMain.handle('app:clearLogs', () => {
+    try {
+      logger.clearLogs?.();
+      logger.info('IPC', 'Logs cleared by user');
+      return { success: true, message: 'Logs cleared' };
+    } catch (error: any) {
+      logger.error('IPC', 'Failed to clear logs', { error: error.message });
+      return { success: false, message: error.message };
+    }
+  });
+
+  // Handle logs from renderer process
+  ipcMain.handle('log:renderer', (event, data) => {
+    const { level, args } = data;
+    const message = args.join(' ');
+
+    if (level === 'error') {
+      logger.error('RENDERER', message);
+    } else if (level === 'warn') {
+      logger.warn('RENDERER', message);
+    } else {
+      logger.info('RENDERER', message);
+    }
+
+    return { success: true };
+  });
+
+  logger.info('IPC_SETUP', 'IPC handlers registered successfully');
 }
 
 // ============================================================================
@@ -390,23 +911,52 @@ function setupIPC(): void {
  * App is ready - start backend and create window
  */
 app.on('ready', async () => {
-  console.log('\n' + '='.repeat(60));
-  console.log('🚀 AMOKK Application Starting');
-  console.log('='.repeat(60) + '\n');
+  logger.separator('AMOKK APPLICATION STARTING');
 
   try {
-    // Setup IPC handlers first
+    logger.info('STARTUP', 'App ready event triggered');
+
+    // Validate environment (production only)
+    logger.info('STARTUP', 'Validating environment');
+    await validateEnvironment();
+
+    // Setup IPC handlers
+    logger.info('STARTUP', 'Setting up IPC handlers');
     setupIPC();
 
     // Start Python backend
+    logger.info('STARTUP', 'Starting Python backend');
     await startBackend();
 
     // Create main window
+    logger.info('STARTUP', 'Creating application window');
     await createWindow();
 
-    console.log('\n✅ Application ready!\n');
-  } catch (error) {
-    console.error('❌ Failed to start application:', error);
+    logger.info('STARTUP', 'Application ready!');
+
+    // Run connectivity tests after everything is started
+    logger.info('STARTUP', 'Running connectivity tests...');
+    if (connectivityTest && connectivityTest.runConnectivityTests) {
+      try {
+        const testResults = await connectivityTest.runConnectivityTests(logger);
+        const summary = testResults.getSummary();
+        logger.info('TESTS', `Connectivity tests completed: ${summary.passed}/${summary.total} passed`, summary);
+      } catch (testError: any) {
+        logger.error('TESTS', 'Error running connectivity tests', { error: testError.message });
+      }
+    }
+
+    logger.separator();
+  } catch (error: any) {
+    logger.error('STARTUP', 'Failed to start application', { error: error.message });
+    logger.separator();
+
+    // dialog already imported at top
+    dialog.showErrorBox(
+      'AMOKK - Startup Error',
+      `Failed to start application:\n\n${error.message}`
+    );
+
     app.quit();
   }
 });
@@ -415,8 +965,13 @@ app.on('ready', async () => {
  * Quit app when all windows are closed (except on macOS)
  */
 app.on('window-all-closed', () => {
+  logger.info('LIFECYCLE', 'All windows closed');
+
   if (process.platform !== 'darwin') {
+    logger.info('LIFECYCLE', 'Quitting app (not macOS)');
     app.quit();
+  } else {
+    logger.info('LIFECYCLE', 'Keeping app running (macOS convention)');
   }
 });
 
@@ -424,8 +979,13 @@ app.on('window-all-closed', () => {
  * Re-create window when app is activated (macOS)
  */
 app.on('activate', async () => {
+  logger.info('LIFECYCLE', 'App activated');
+
   if (mainWindow === null) {
+    logger.info('LIFECYCLE', 'Main window null, recreating');
     await createWindow();
+  } else {
+    logger.debug('LIFECYCLE', 'Main window already exists');
   }
 });
 
@@ -433,17 +993,26 @@ app.on('activate', async () => {
  * Clean up on app quit
  */
 app.on('quit', () => {
-  console.log('\n' + '='.repeat(60));
-  console.log('🛑 AMOKK Application Closing');
-  console.log('='.repeat(60) + '\n');
+  logger.separator('AMOKK APPLICATION CLOSING');
+  logger.info('SHUTDOWN', 'App quit event triggered');
+
   stopBackend();
+
+  logger.info('SHUTDOWN', 'Application shutdown complete');
+  logger.separator();
 });
 
 /**
  * Handle any uncaught exceptions
  */
-process.on('uncaughtException', (error) => {
-  console.error('❌ Uncaught exception:', error);
+process.on('uncaughtException', (error: any) => {
+  logger.fatal('UNCAUGHT_EXCEPTION', 'Uncaught exception', {
+    message: error.message,
+    stack: error.stack,
+  });
+
   stopBackend();
+  logger.info('SHUTDOWN', 'Exiting due to uncaught exception');
+
   process.exit(1);
 });

@@ -5,12 +5,12 @@ directories:
   output: release
 
 files:
-  - dist/**/*
   - dist-electron/**/*
   - node_modules/**/*
   - package.json
 
-# Package backend as extraResources (more reliable than files)
+# Package backend and assets as extraResources (more reliable than files)
+# Note: dist/ is in extraResources only (not duplicated in files)
 extraResources:
   - from: dist
     to: dist
@@ -18,6 +18,8 @@ extraResources:
     to: dist-electron
   - from: backend/dist
     to: backend/dist
+  - from: backend/launcher.py
+    to: backend/launcher.py
   - from: backend/main.py
     to: backend/main.py
   - from: backend/requirements.txt
@@ -34,10 +36,8 @@ win:
   target:
     - nsis
     - portable
-  icon: assets/icon.png
-  certificateFile: null
-  certificatePassword: null
-  sign: null
+  icon: assets/icon.ico
+  signAndEditExecutable: false
 
 nsis:
   oneClick: false
@@ -45,20 +45,12 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: AMOKK
-
-# macOS Configuration
-mac:
-  target:
-    - dmg
-    - zip
-  icon: assets/icon.icns
-  category: public.app-category.productivity
+  artifactName: AMOKK-Installer.exe
 
 # Linux Configuration
 linux:
   executableName: amokk
   target:
     - AppImage
-    - deb
   icon: assets/icon.png
   category: Utility
