@@ -24,6 +24,7 @@ release
 ~/.amokk/
 release
 venv/
+AMOKK-1.0.0.AppImage
 
 # Electron
 out/
