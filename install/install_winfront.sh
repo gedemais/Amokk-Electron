@@ -107,28 +107,28 @@ echo "Build complete (wine errors are normal on WSL2)"
 echo ""
 
 # Verify build succeeded
-if [ ! -d "release-frontend/win-unpacked" ]; then
-    echo "Error: Build failed - release-frontend/win-unpacked not found"
+if [ ! -d "release/windows_front/win-unpacked" ]; then
+    echo "Error: Build failed - release/windows_front/win-unpacked not found"
     echo "Check the build output above for errors"
     cleanup_exit 1
 fi
 
-echo "✓ Build verified: release-frontend/win-unpacked exists"
+echo "✓ Build verified: release/windows_front/win-unpacked exists"
 echo ""
 
 # Step 4: Clean destination
 echo "Step 4: Cleaning destination..."
-rm -rf "$DEST/release-frontend" 2>/dev/null
+rm -rf "$DEST/release" 2>/dev/null
 rm -f "$DEST/inno-setup-frontend.iss" 2>/dev/null
 
 # Step 5: Copy win-unpacked
 echo "Step 5: Copying frontend executable files..."
-if [ -d "release-frontend/win-unpacked" ]; then
-    mkdir -p "$DEST/release-frontend"
-    cp -r release-frontend/win-unpacked "$DEST/release-frontend/"
-    echo "  Copied: release-frontend/win-unpacked"
+if [ -d "release/windows_front/win-unpacked" ]; then
+    mkdir -p "$DEST/release/windows_front"
+    cp -r release/windows_front/win-unpacked "$DEST/release/windows_front/"
+    echo "  Copied: release/windows_front/win-unpacked"
 else
-    echo "Error: release-frontend/win-unpacked not found"
+    echo "Error: release/windows_front/win-unpacked not found"
     cleanup_exit 1
 fi
 
@@ -152,7 +152,7 @@ echo "Step 7: Verifying files..."
 echo ""
 echo "Files ready at: $DEST"
 ls -lh "$DEST/inno-setup-frontend.iss" 2>/dev/null && echo "  OK: inno-setup-frontend.iss"
-ls -lh "$DEST/release-frontend/win-unpacked/AMOKK-Frontend.exe" 2>/dev/null && echo "  OK: AMOKK-Frontend.exe"
+ls -lh "$DEST/release/windows_front/win-unpacked/AMOKK-Frontend.exe" 2>/dev/null && echo "  OK: AMOKK-Frontend.exe"
 echo ""
 echo "IMPORTANT: This is a frontend-only build."
 echo "The backend must be deployed and running separately on http://localhost:8000"

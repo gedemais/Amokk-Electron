@@ -1,0 +1,36 @@
+appId: com.amokk.app
+productName: AMOKK
+directories:
+  buildResources: assets
+  output: release/linux
+
+files:
+  - dist-electron/**/*
+  - node_modules/**/*
+  - package.json
+
+extraResources:
+  - from: dist
+    to: dist
+  - from: dist-electron
+    to: dist-electron
+  - from: backend/dist
+    to: backend/dist
+  - from: backend/launcher.py
+    to: backend/launcher.py
+  - from: backend/main.py
+    to: backend/main.py
+  - from: backend/requirements.txt
+    to: backend/requirements.txt
+  - from: assets
+    to: assets
+
+extraMetadata:
+  pythonBundled: true
+
+linux:
+  executableName: amokk
+  target:
+    - AppImage
+  icon: assets/icon.png
+  category: Utility

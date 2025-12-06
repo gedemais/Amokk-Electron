@@ -2,7 +2,7 @@ appId: com.amokk.app
 productName: AMOKK-Frontend
 directories:
   buildResources: assets
-  output: release-frontend
+  output: release/windows_front
 
 files:
   - dist-electron/**/*
