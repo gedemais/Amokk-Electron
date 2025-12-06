@@ -22,9 +22,34 @@ release
 # AMOKK user data
 .amokk/
 ~/.amokk/
-release
+
+# Build outputs and releases
+release/
+release-*/
+*.AppImage
+*.exe
+*.nsis.7z
+*.dmg
+*.deb
+*.rpm
+
+# Backend
+backend/dist/
+backend/venv/
+backend/__pycache__/
+backend/*.spec
+backend/build/
+
+# Python
 venv/
-AMOKK-1.0.0.AppImage
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
 
 # Electron
 out/
