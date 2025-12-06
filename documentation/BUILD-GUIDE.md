@@ -99,57 +99,8 @@ npm run dist:win_front
 Résultat:
 - `release-frontend/win-unpacked/` - Dossier frontend seul (sans backend)
 - `release-frontend/AMOKK-Frontend-Installer.exe` - Installateur NSIS
-- Taille: ~328 MB (20 MB de moins que le build complet)
 
-#### Étape 3: Script d'installation automatique
-
-Pour faciliter le déploiement:
-
-```bash
-./install/install_winfront.sh /mnt/c/Users/YourUser/Downloads
-```
-
-Ce script:
-1. Build le frontend-only
-2. Copie `release-frontend/win-unpacked/` vers la destination
-3. Crée `inno-setup-frontend.iss` adapté
-4. Prêt pour compilation avec Inno Setup
-
-**Important**: Le backend doit être déployé séparément et accessible à l'URL configurée dans `.env`.
-
-#### Architecture Frontend-Only
-
-```
-Client Windows                    Serveur Backend
-┌─────────────────┐              ┌──────────────┐
-│ AMOKK-Frontend  │──── HTTP ────│   FastAPI    │
-│     (React)     │              │   Backend    │
-└─────────────────┘              └──────────────┘
-  http://BACKEND_HOST:BACKEND_PORT
-```
-
-Voir `FRONTEND_ONLY_BUILD.md` pour la documentation complète.
-
-#### Étape 2: Transférer sur Windows
-
-1. Copier l'intégralité du dossier du projet vers Windows
-2. S'assurer que la structure est:
-   ```
-   AMOKK/
-   ├── inno-setup.iss
-   ├── assets/
-   │   └── icon.ico
-   ├── release/
-   │   ├── win-unpacked/
-   │   │   ├── AMOKK.exe
-   │   │   ├── ffmpeg.dll
-   │   │   ├── libEGL.dll
-   │   │   ├── libGLESv2.dll
-   │   │   └── (autres fichiers DLL)
-   │   └── (autres fichiers)
-   ```
-
-#### Étape 3: Compiler avec Inno Setup
+#### Compiler avec Inno Setup
 
 1. Installer Inno Setup depuis https://jrsoftware.org/isdl.php
 2. Lancer "Inno Setup Compiler"
