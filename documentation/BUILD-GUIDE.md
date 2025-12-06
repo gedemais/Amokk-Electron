@@ -57,7 +57,7 @@ L'application lance et affiche l'interface de connexion.
 
 ## Compilation Windows
 
-### Installer Inno Setup
+### Option 1: Build Complet (Frontend + Backend)
 
 #### Étape 1: Préparer la compilation
 
@@ -72,8 +72,63 @@ npm run dist:win
 ```
 
 Résultat:
-- `release/win-unpacked/` - Dossier avec tous les fichiers (DLL, exe, ressources)
-- `release/AMOKK-1.0.0.exe` - Exécutable portable Windows (non recommandé pour distribution)
+- `release/win-unpacked/` - Dossier avec tous les fichiers (DLL, exe, ressources, backend)
+- `release/AMOKK-Installer.exe` - Installateur NSIS
+- Taille: ~348 MB
+
+### Option 2: Build Frontend-Only (Sans Backend Embarqué)
+
+**Cas d'usage**: Backend déployé séparément sur un serveur
+
+#### Étape 1: Configuration Backend
+
+Modifier `.env` pour pointer vers le backend distant:
+```env
+VITE_BACKEND_HOST=api.amokk.fr
+VITE_BACKEND_PORT=8000
+```
+
+#### Étape 2: Compilation Frontend-Only
+
+```bash
+npm run dist:win_front
+```
+
+**Note**: Cette commande ne compile PAS le backend. Seul le frontend React est packagé.
+
+Résultat:
+- `release-frontend/win-unpacked/` - Dossier frontend seul (sans backend)
+- `release-frontend/AMOKK-Frontend-Installer.exe` - Installateur NSIS
+- Taille: ~328 MB (20 MB de moins que le build complet)
+
+#### Étape 3: Script d'installation automatique
+
+Pour faciliter le déploiement:
+
+```bash
+./install/install_winfront.sh /mnt/c/Users/YourUser/Downloads
+```
+
+Ce script:
+1. Build le frontend-only
+2. Copie `release-frontend/win-unpacked/` vers la destination
+3. Crée `inno-setup-frontend.iss` adapté
+4. Prêt pour compilation avec Inno Setup
+
+**Important**: Le backend doit être déployé séparément et accessible à l'URL configurée dans `.env`.
+
+#### Architecture Frontend-Only
+
+```
+Client Windows                    Serveur Backend
+┌─────────────────┐              ┌──────────────┐
+│ AMOKK-Frontend  │──── HTTP ────│   FastAPI    │
+│     (React)     │              │   Backend    │
+└─────────────────┘              └──────────────┘
+  http://BACKEND_HOST:BACKEND_PORT
+```
+
+Voir `FRONTEND_ONLY_BUILD.md` pour la documentation complète.
 
 #### Étape 2: Transférer sur Windows
 

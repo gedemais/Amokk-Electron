@@ -10,7 +10,10 @@ import logo from "@/assets/logo.png";
 import { useDebugPanel } from "@/hooks/useDebugPanel";
 import { logger } from "@/utils/logger";
 
-const BACKEND_URL = 'http://127.0.0.1:8000';
+// Backend API URL from environment variables
+const BACKEND_HOST = import.meta.env.VITE_BACKEND_HOST || '127.0.0.1';
+const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8000';
+const BACKEND_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}`;
 const isDev = import.meta.env.DEV;
 
 const Dashboard = () => {
@@ -53,7 +56,11 @@ const Dashboard = () => {
       }
     } catch (error) {
       logger.error('GET_LOCAL_DATA failed', error);
-      debug.log('GET_LOCAL_DATA_ERROR', error instanceof Error ? error.message : 'Unknown error');
+      debug.log('GET_LOCAL_DATA_ERROR', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        url: `${BACKEND_URL}/get_local_data`,
+        method: 'GET'
+      });
     }
   };
 
@@ -75,7 +82,11 @@ const Dashboard = () => {
       }
     } catch (error) {
       logger.error('COACH_TOGGLE failed', error);
-      debug.log('COACH_TOGGLE_ERROR', error instanceof Error ? error.message : 'Unknown error');
+      debug.log('COACH_TOGGLE_ERROR', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        url: `${BACKEND_URL}/coach_toggle`,
+        method: 'PUT'
+      });
     }
   };
 
@@ -97,7 +108,11 @@ const Dashboard = () => {
       }
     } catch (error) {
       logger.error('ASSISTANT_TOGGLE failed', error);
-      debug.log('ASSISTANT_TOGGLE_ERROR', error instanceof Error ? error.message : 'Unknown error');
+      debug.log('ASSISTANT_TOGGLE_ERROR', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        url: `${BACKEND_URL}/assistant_toggle`,
+        method: 'PUT'
+      });
     }
   };
 
@@ -119,7 +134,11 @@ const Dashboard = () => {
       }
     } catch (error) {
       logger.error('UPDATE_VOLUME failed', error);
-      debug.log('UPDATE_VOLUME_ERROR', error instanceof Error ? error.message : 'Unknown error');
+      debug.log('UPDATE_VOLUME_ERROR', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        url: `${BACKEND_URL}/update_volume`,
+        method: 'PUT'
+      });
     }
   };
 
@@ -141,7 +160,11 @@ const Dashboard = () => {
       }
     } catch (error) {
       logger.error('UPDATE_PTT_KEY failed', error);
-      debug.log('UPDATE_PTT_KEY_ERROR', error instanceof Error ? error.message : 'Unknown error');
+      debug.log('UPDATE_PTT_KEY_ERROR', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        url: `${BACKEND_URL}/update_ptt_key`,
+        method: 'PUT'
+      });
     }
   };
 
@@ -164,7 +187,11 @@ const Dashboard = () => {
       }
     } catch (error) {
       logger.error('MOCK_SELECT_PLAN failed', error);
-      debug.log('MOCK_SELECT_PLAN_ERROR', error instanceof Error ? error.message : 'Unknown error');
+      debug.log('MOCK_SELECT_PLAN_ERROR', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        url: `${BACKEND_URL}/mock_select_plan`,
+        method: 'POST'
+      });
     }
   };
 
@@ -186,7 +213,11 @@ const Dashboard = () => {
       }
     } catch (error) {
       logger.error('MOCK_PROACTIVE_COACH_TOGGLE failed', error);
-      debug.log('MOCK_PROACTIVE_COACH_TOGGLE_ERROR', error instanceof Error ? error.message : 'Unknown error');
+      debug.log('MOCK_PROACTIVE_COACH_TOGGLE_ERROR', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        url: `${BACKEND_URL}/mock_proactive_coach_toggle`,
+        method: 'PUT'
+      });
     }
   };
 
@@ -204,7 +235,11 @@ const Dashboard = () => {
       logger.apiResponse('/mock_contact_support', response.status, data);
     } catch (error) {
       logger.error('MOCK_CONTACT_SUPPORT failed', error);
-      debug.log('MOCK_CONTACT_SUPPORT_ERROR', error instanceof Error ? error.message : 'Unknown error');
+      debug.log('MOCK_CONTACT_SUPPORT_ERROR', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        url: `${BACKEND_URL}/mock_contact_support`,
+        method: 'POST'
+      });
     }
   };
 

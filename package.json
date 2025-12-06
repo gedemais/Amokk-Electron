@@ -21,6 +21,7 @@
     "electron": "NODE_ENV=development npm run tsc && (npm run dev &) && sleep 8 && electron .",
     "dist": "npm run build && npm run tsc && npm run backend:pyinstaller && electron-builder",
     "dist:win": "npm run build && npm run tsc && npm run backend:pyinstaller && electron-builder --win",
+    "dist:win_front": "npm run build && npm run tsc && electron-builder --win --config electron-builder-frontend.yml",
     "dist:mac": "npm run build && npm run tsc && npm run backend:pyinstaller && electron-builder --mac",
     "dist:linux": "npm run build && npm run tsc && npm run backend:pyinstaller && electron-builder --linux"
   },

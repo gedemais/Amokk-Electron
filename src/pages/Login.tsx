@@ -9,7 +9,10 @@ import logo from "@/assets/logo.png";
 import { logger } from "@/utils/logger";
 import { useDebugPanel } from "@/hooks/useDebugPanel";
 
-const BACKEND_URL = 'http://127.0.0.1:8000';
+// Backend API URL from environment variables
+const BACKEND_HOST = import.meta.env.VITE_BACKEND_HOST || '127.0.0.1';
+const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '8000';
+const BACKEND_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}`;
 
 const Login = () => {
   const navigate = useNavigate();
@@ -59,7 +62,11 @@ const Login = () => {
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "Login failed";
       logger.error("Login error", errorMsg);
-      debug.log("LOGIN_ERROR", errorMsg);
+      debug.log("LOGIN_ERROR", {
+        error: errorMsg,
+        url: `${BACKEND_URL}/login`,
+        method: "POST"
+      });
       setErrorMessage(errorMsg);
     } finally {
       setIsLoading(false);

@@ -12,6 +12,8 @@ Créer un fichier d'installation unique (AMOKK-Installer.exe) que les utilisateu
 
 ## Préparation des fichiers
 
+### Build Complet (Frontend + Backend)
+
 Avant de créer l'installateur, vérifier que la structure du projet est correcte:
 
 ```
@@ -24,6 +26,8 @@ AMOKK/
 │       ├── libEGL.dll
 │       ├── libGLESv2.dll
 │       ├── resources/
+│       │   ├── backend/dist/AMOKK-Backend.exe
+│       │   └── dist/ (frontend build)
 │       └── (tous les autres fichiers nécessaires)
 ├── assets/
 │   └── icon.ico
@@ -31,20 +35,69 @@ AMOKK/
 
 Le répertoire `release/win-unpacked/` doit contenir la totalité des fichiers compilés, y compris toutes les dépendances DLL et les ressources.
 
+### Build Frontend-Only (Sans Backend)
+
+Pour un build frontend-only, la structure est différente:
+
+```
+AMOKK/
+├── inno-setup-frontend.iss
+├── release-frontend/
+│   └── win-unpacked/
+│       ├── AMOKK-Frontend.exe
+│       ├── ffmpeg.dll
+│       ├── libEGL.dll
+│       ├── libGLESv2.dll
+│       ├── resources/
+│       │   └── dist/ (frontend build uniquement, PAS de backend)
+│       └── (tous les autres fichiers nécessaires)
+├── assets/
+│   └── icon.ico
+```
+
+**Important**: Le backend n'est PAS inclus dans le build frontend-only. L'application se connectera à un backend distant configuré via `.env`.
+
 ## Procédure de création de l'installateur
 
-### Étape 1: Ouvrir le fichier de configuration Inno Setup
+### Option 1: Installateur Complet (avec backend)
+
+#### Étape 1: Ouvrir le fichier de configuration Inno Setup
 
 1. Lancer Inno Setup Compiler
 2. Accéder à File > Open
 3. Sélectionner le fichier `inno-setup.iss`
 
-### Étape 2: Compiler l'installateur
+#### Étape 2: Compiler l'installateur
 
 1. Accéder au menu Build > Compile
 2. Ou utiliser le raccourci clavier Ctrl+F9
 
 À l'issue de la compilation, un fichier `AMOKK-Installer.exe` sera créé dans le répertoire du projet.
+
+### Option 2: Installateur Frontend-Only (sans backend)
+
+#### Script automatique
+
+Le plus simple est d'utiliser le script automatique:
+
+```bash
+./install/install_winfront.sh /mnt/c/Users/YourUser/Downloads
+```
+
+Ce script génère automatiquement `inno-setup-frontend.iss` adapté au build frontend-only.
+
+#### Compilation manuelle
+
+Si vous préférez compiler manuellement:
+
+1. Lancer Inno Setup Compiler
+2. Accéder à File > Open
+3. Sélectionner le fichier `inno-setup-frontend.iss`
+4. Build > Compile (Ctrl+F9)
+
+Résultat: `AMOKK-Frontend-Installer.exe`
+
+**Note**: L'application frontend-only requiert un backend accessible à l'URL configurée dans `.env`.
 
 ## Processus d'installation utilisateur
 

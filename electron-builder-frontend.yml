@@ -1,0 +1,49 @@
+appId: com.amokk.app
+productName: AMOKK-Frontend
+directories:
+  buildResources: assets
+  output: release-frontend
+
+files:
+  - dist-electron/**/*
+  - node_modules/**/*
+  - package.json
+
+# Frontend-only build: NO backend included
+# The frontend will connect to a separately running backend on localhost:8000
+extraResources:
+  - from: dist
+    to: dist
+  - from: dist-electron
+    to: dist-electron
+  - from: assets
+    to: assets
+
+# Include metadata indicating this is frontend-only
+extraMetadata:
+  frontendOnly: true
+  backendRequired: true
+
+# Windows Configuration
+win:
+  target:
+    - nsis
+    - portable
+  icon: assets/icon.ico
+  signAndEditExecutable: false
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: AMOKK Frontend
+  artifactName: AMOKK-Frontend-Installer.exe
+
+# Linux Configuration
+linux:
+  executableName: amokk-frontend
+  target:
+    - AppImage
+  icon: assets/icon.png
+  category: Utility

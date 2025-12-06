@@ -60,7 +60,15 @@ const isDev = !app.isPackaged;
 const BACKEND_PORT = 8000;
 const BACKEND_HOST = '127.0.0.1';
 
-logger.info('INIT', 'Electron initialization', { isDev, platform: process.platform, arch: process.arch });
+// Detect frontend-only mode (no embedded backend)
+// Check if backend directory exists in resources
+let isFrontendOnly = false;
+if (!isDev) {
+  const backendDir = path.join(process.resourcesPath, 'backend', 'dist');
+  isFrontendOnly = !fs.existsSync(backendDir);
+}
+
+logger.info('INIT', 'Electron initialization', { isDev, isFrontendOnly, platform: process.platform, arch: process.arch });
 
 // Determine backend path
 function getBackendPath(): string {
@@ -212,13 +220,14 @@ async function validateEnvironment(): Promise<void> {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Check backend executable exists
-  const backendPath = getBackendPath();
-  if (!fs.existsSync(backendPath)) {
-    logger.error('VALIDATE', 'Backend executable not found', { backendPath });
-    errors.push(`Backend executable not found: ${backendPath}`);
-  } else {
-    logger.info('VALIDATE', 'Backend executable found', { backendPath });
+  // Check backend executable exists (skip in frontend-only mode)
+  if (!isFrontendOnly) {
+    const backendPath = getBackendPath();
+    if (!fs.existsSync(backendPath)) {
+      logger.error('VALIDATE', 'Backend executable not found', { backendPath });
+      errors.push(`Backend executable not found: ${backendPath}`);
+    } else {
+      logger.info('VALIDATE', 'Backend executable found', { backendPath });
 
     // Check if executable has proper permissions (Linux/macOS)
     if (process.platform !== 'win32') {
@@ -236,6 +245,9 @@ async function validateEnvironment(): Promise<void> {
         warnings.push(`Could not check backend permissions`);
       }
     }
+  }
+  } else {
+    logger.info('VALIDATE', 'Frontend-only mode - skipping backend validation');
   }
 
   // Check if frontend exists
@@ -924,9 +936,14 @@ app.on('ready', async () => {
     logger.info('STARTUP', 'Setting up IPC handlers');
     setupIPC();
 
-    // Start Python backend
-    logger.info('STARTUP', 'Starting Python backend');
-    await startBackend();
+    // Start Python backend (skip if frontend-only mode)
+    if (isFrontendOnly) {
+      logger.info('STARTUP', 'Frontend-only mode: skipping backend startup');
+      logger.warn('STARTUP', 'Backend must be running separately on http://127.0.0.1:8000');
+    } else {
+      logger.info('STARTUP', 'Starting Python backend');
+      await startBackend();
+    }
 
     // Create main window
     logger.info('STARTUP', 'Creating application window');
