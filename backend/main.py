@@ -1,7 +1,6 @@
 """
 AMOKK Mock Backend - FastAPI Server
 Provides local coaching data endpoints for the React frontend
-Compliant with GUIDE.md and ANALYSE.md specifications
 """
 
 from fastapi import FastAPI, HTTPException, Request
