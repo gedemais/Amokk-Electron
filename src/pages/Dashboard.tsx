@@ -77,9 +77,7 @@ const Dashboard = () => {
       debug.log('COACH_TOGGLE', data);
       logger.apiResponse('/coach_toggle', response.status, data);
 
-      if (data.success) {
-        setIsActive(newState);
-      }
+      setIsActive(newState);
     } catch (error) {
       logger.error('COACH_TOGGLE failed', error);
       debug.log('COACH_TOGGLE_ERROR', {
@@ -103,9 +101,7 @@ const Dashboard = () => {
       debug.log('ASSISTANT_TOGGLE', data);
       logger.apiResponse('/assistant_toggle', response.status, data);
 
-      if (data.success) {
-        setAssistantEnabled(newState);
-      }
+      setAssistantEnabled(newState);
     } catch (error) {
       logger.error('ASSISTANT_TOGGLE failed', error);
       debug.log('ASSISTANT_TOGGLE_ERROR', {
@@ -129,9 +125,7 @@ const Dashboard = () => {
       debug.log('UPDATE_VOLUME', data);
       logger.apiResponse('/update_volume', response.status, data);
 
-      if (data.success) {
-        setVolume([newVolume]);
-      }
+      setVolume([newVolume]);
     } catch (error) {
       logger.error('UPDATE_VOLUME failed', error);
       debug.log('UPDATE_VOLUME_ERROR', {
@@ -155,9 +149,7 @@ const Dashboard = () => {
       debug.log('UPDATE_PTT_KEY', data);
       logger.apiResponse('/update_ptt_key', response.status, data);
 
-      if (data.success) {
-        setPushToTalkKey(newKey);
-      }
+      setPushToTalkKey(newKey);
     } catch (error) {
       logger.error('UPDATE_PTT_KEY failed', error);
       debug.log('UPDATE_PTT_KEY_ERROR', {
@@ -181,10 +173,8 @@ const Dashboard = () => {
       debug.log('MOCK_SELECT_PLAN', data);
       logger.apiResponse('/mock_select_plan', response.status, data);
 
-      if (data.success) {
-        setRemainingGames(data.remaining_games);
-        setPricingDialogOpen(false);
-      }
+      setRemainingGames(data.remaining_games);
+      setPricingDialogOpen(false);
     } catch (error) {
       logger.error('MOCK_SELECT_PLAN failed', error);
       debug.log('MOCK_SELECT_PLAN_ERROR', {
@@ -208,9 +198,7 @@ const Dashboard = () => {
       debug.log('MOCK_PROACTIVE_COACH_TOGGLE', data);
       logger.apiResponse('/mock_proactive_coach_toggle', response.status, data);
 
-      if (data.success) {
-        setProactiveCoachEnabled(newState);
-      }
+      setProactiveCoachEnabled(newState);
     } catch (error) {
       logger.error('MOCK_PROACTIVE_COACH_TOGGLE failed', error);
       debug.log('MOCK_PROACTIVE_COACH_TOGGLE_ERROR', {
