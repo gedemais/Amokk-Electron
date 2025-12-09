@@ -729,7 +729,7 @@ const Dashboard = () => {
                       <Volume2 className="h-4 w-4 text-muted-foreground" />
                       <Slider
                         value={volume}
-                        onValueChange={handleVolumeChange}
+                        onValueCommit={handleVolumeChange}
                         max={100}
                         step={1}
                         className="flex-1"
