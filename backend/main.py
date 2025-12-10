@@ -78,6 +78,11 @@ class LocalDataResponse(BaseModel):
     remaining_games: int
     first_launch: bool
     game_timer: int
+    email: str
+    coach_toggle: bool
+    assistant_toggle: bool
+    ptt_key: str
+    tts_volume: int
 
 
 # ============================================================================
@@ -121,6 +126,7 @@ class AppState:
                     self.ptt_key = data.get('ptt_key', 'v')
                     self.volume = data.get('volume', 80)
                     self.plan_id = data.get('plan_id', 1)
+                    self.email = data.get('email', '')
                     logger.info(f"✅ State loaded from {self.state_file}")
             except Exception as e:
                 logger.warning(f"⚠️  Error loading state: {e}. Using defaults.")
@@ -139,6 +145,7 @@ class AppState:
         self.ptt_key = 'v'
         self.volume = 80
         self.plan_id = 1  # Default: Starter plan
+        self.email = ''
 
     def save_state(self):
         """Save state to JSON file"""
@@ -153,6 +160,7 @@ class AppState:
                 'ptt_key': self.ptt_key,
                 'volume': self.volume,
                 'plan_id': self.plan_id,
+                'email': self.email,
             }
             with open(self.state_file, 'w') as f:
                 json.dump(state_dict, f, indent=2)
@@ -183,6 +191,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:8080",      # Vite dev server
         "http://127.0.0.1:8080",
+        "http://localhost:8081",      # Vite dev server (alternate)
+        "http://127.0.0.1:8081",
         "http://localhost:3000",       # Alternative dev port
         "http://127.0.0.1:3000",
         "http://localhost:5173",       # Vite default port
@@ -215,6 +225,7 @@ def root():
             "PUT  /update_volume",
             "POST /mock_select_plan",
             "POST /mock_contact_support",
+            "POST /logout",
             "POST /reset",
         ]
     }
@@ -257,6 +268,10 @@ def login(request: LoginRequest):
         # Generate token
         token = generate_mock_token(request.email)
 
+        # Store email in app state
+        app_state.email = request.email
+        app_state.save_state()
+
         logger.info(f"✅ Login successful: {request.email}")
 
         return LoginResponse(
@@ -286,18 +301,33 @@ def get_local_data():
     - remaining_games: Number of coaching sessions remaining
     - first_launch: Whether this is user's first launch
     - game_timer: Current in-game timer (seconds)
+    - email: User's email address
+    - coach_toggle: Main coach toggle state
+    - assistant_toggle: Assistant toggle state
+    - ptt_key: Push-to-talk key binding
+    - tts_volume: Text-to-speech volume level
 
     Returns:
         {
             "remaining_games": 42,
             "first_launch": true,
-            "game_timer": 0
+            "game_timer": 0,
+            "email": "admin@amokk.fr",
+            "coach_toggle": true,
+            "assistant_toggle": true,
+            "ptt_key": "v",
+            "tts_volume": 80
         }
     """
     return LocalDataResponse(
         remaining_games=app_state.remaining_games,
         first_launch=app_state.first_launch,
         game_timer=app_state.game_timer,
+        email=app_state.email,
+        coach_toggle=app_state.coach_active,
+        assistant_toggle=app_state.assistant_active,
+        ptt_key=app_state.ptt_key,
+        tts_volume=app_state.volume,
     )
 
 
@@ -562,6 +592,35 @@ def mock_contact_support(request: ContactSupportRequest):
 
 
 # ============================================================================
+# POST /logout
+# Logout user and clear session
+# ============================================================================
+
+@app.post("/logout", tags=["Auth"])
+def logout():
+    """
+    Logout user and clear session
+
+    Called when user closes the application window
+
+    Returns:
+        {
+            "success": true,
+            "message": "Logged out successfully"
+        }
+    """
+    try:
+        logger.info(f"👋 User logged out: {app_state.email if app_state.email else 'unknown'}")
+        return {
+            "success": True,
+            "message": "Logged out successfully"
+        }
+    except Exception as e:
+        logger.error(f"❌ Logout error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
 # POST /reset (Utility for testing)
 # Reset all state to defaults
 # ============================================================================
@@ -640,14 +699,13 @@ if __name__ == "__main__":
     import uvicorn
     import os
 
-    # Detect if running in development mode (from Electron)
-    is_dev = os.environ.get("NODE_ENV") == "development"
+    # Read port from environment variable set by Electron, with a fallback
+    port = int(os.environ.get("BACKEND_PORT", 8000))
 
     uvicorn.run(
         app,
         host="127.0.0.1",
-        port=8000,
-        reload=False,  # Reload disabled for direct script execution (Electron)
+        port=port,
+        reload=False,
         log_level="warning"
     )
-    logger.info("✅ Backend stopped")
