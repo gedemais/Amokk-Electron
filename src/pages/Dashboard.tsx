@@ -90,6 +90,11 @@ const Dashboard = () => {
         setAssistantToggle(data.assistant_toggle);
       }
 
+      // Load assistant toggle state (Configuration)
+      if (data.coach_toggle !== undefined) {
+        setProactiveCoachEnabled(data.coach_toggle);
+      }
+
       // Load push-to-talk key
       if (data.ptt_key !== undefined) {
         setPushToTalkKey(data.ptt_key);
