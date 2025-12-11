@@ -23,12 +23,42 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // In dev mode, pre-fill with admin credentials
+  // Fetch local data to autofill email
   useEffect(() => {
-    if (isDev) {
-      setEmail("admin@amokk.fr");
-      setPassword("admin");
-    }
+    const fetch_local_data = async () => {
+      try {
+        logger.api('GET', '/get_local_data');
+        const response = await fetch(`${BACKEND_URL}/get_local_data`);
+        const data = await response.json();
+
+        debug.log('GET_LOCAL_DATA', data);
+        logger.apiResponse('/get_local_data', response.status, data);
+
+        if (data.email) {
+          setEmail(data.email);
+        }
+
+        // In dev mode, also pre-fill password
+        if (isDev) {
+          setPassword("admin");
+        }
+      } catch (error) {
+        logger.error('GET_LOCAL_DATA failed', error);
+        debug.log('GET_LOCAL_DATA_ERROR', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          url: `${BACKEND_URL}/get_local_data`,
+          method: 'GET'
+        });
+
+        // Fallback to dev credentials if fetch fails in dev mode
+        if (isDev) {
+          setEmail("admin@amokk.fr");
+          setPassword("admin");
+        }
+      }
+    };
+
+    fetch_local_data();
   }, [isDev]);
   const [showPassword, setShowPassword] = useState(false);
 

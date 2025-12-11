@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -18,9 +18,9 @@ const isDev = import.meta.env.DEV;
 
 const Dashboard = () => {
   const debug = useDebugPanel();
+  const volumeDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const [isActive, setIsActive] = useState(false);
-  const [assistantEnabled, setAssistantEnabled] = useState(true);
   const [pushToTalkKey, setPushToTalkKey] = useState("V");
   const [proactiveCoachEnabled, setProactiveCoachEnabled] = useState(false);
   const [troubleshootOpen, setTroubleshootOpen] = useState(false);
@@ -28,6 +28,7 @@ const Dashboard = () => {
   const [isBindingKey, setIsBindingKey] = useState(false);
   const [volume, setVolume] = useState([70]);
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
+  const [progressDialogOpen, setProgressDialogOpen] = useState(false);
 
   // Fetch initial data on component mount (once)
   useEffect(() => {
@@ -36,6 +37,15 @@ const Dashboard = () => {
     // Optional: Poll data every 5 seconds
     // const interval = setInterval(fetchLocalData, 5000);
     // return () => clearInterval(interval);
+  }, []);
+
+  // Cleanup volume debounce timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (volumeDebounceRef.current) {
+        clearTimeout(volumeDebounceRef.current);
+      }
+    };
   }, []);
 
   // =====================================================================
@@ -51,8 +61,29 @@ const Dashboard = () => {
       debug.log('GET_LOCAL_DATA', data);
       logger.apiResponse('/get_local_data', response.status, data);
 
+      // Load remaining games
       if (data.remaining_games !== undefined) {
         setRemainingGames(data.remaining_games);
+      }
+
+      // Load coach toggle state (assistant uses the same state)
+      if (data.coach_toggle !== undefined) {
+        setIsActive(data.coach_toggle);
+      }
+
+      // Load push-to-talk key
+      if (data.ptt_key !== undefined) {
+        setPushToTalkKey(data.ptt_key);
+      }
+
+      // Load volume
+      if (data.tts_volume !== undefined) {
+        setVolume([data.tts_volume]);
+      }
+
+      // Show progress dialog if first launch
+      if (data.first_launch === true) {
+        setProgressDialogOpen(true);
       }
     } catch (error) {
       logger.error('GET_LOCAL_DATA failed', error);
@@ -88,29 +119,6 @@ const Dashboard = () => {
     }
   };
 
-  const toggleAssistant = async (newState: boolean) => {
-    try {
-      logger.api('PUT', '/assistant_toggle', { active: newState });
-      const response = await fetch(`${BACKEND_URL}/assistant_toggle`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ active: newState }),
-      });
-      const data = await response.json();
-
-      debug.log('ASSISTANT_TOGGLE', data);
-      logger.apiResponse('/assistant_toggle', response.status, data);
-
-      setAssistantEnabled(newState);
-    } catch (error) {
-      logger.error('ASSISTANT_TOGGLE failed', error);
-      debug.log('ASSISTANT_TOGGLE_ERROR', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        url: `${BACKEND_URL}/assistant_toggle`,
-        method: 'PUT'
-      });
-    }
-  };
 
   const updateVolume = async (newVolume: number) => {
     try {
@@ -239,15 +247,20 @@ const Dashboard = () => {
     toggleCoach(checked);
   };
 
-  const handleAssistantToggle = (checked: boolean) => {
-    toggleAssistant(checked);
-  };
-
   const handleVolumeChange = (values: number[]) => {
+    // Update local state immediately for visual feedback
     setVolume(values);
-    // Debounce API calls on slider drag
-    const newVolume = values[0];
-    updateVolume(newVolume);
+
+    // Clear existing timeout
+    if (volumeDebounceRef.current) {
+      clearTimeout(volumeDebounceRef.current);
+    }
+
+    // Set new timeout to call API after user stops dragging (500ms delay)
+    volumeDebounceRef.current = setTimeout(() => {
+      const newVolume = values[0];
+      updateVolume(newVolume);
+    }, 500);
   };
 
   const handleBindKey = () => {
@@ -492,7 +505,7 @@ const Dashboard = () => {
         </Dialog>
 
         {/* Progresse avec Amokk */}
-        <Dialog>
+        <Dialog open={progressDialogOpen} onOpenChange={setProgressDialogOpen}>
           <DialogTrigger asChild>
             <Card className="cursor-pointer hover:border-accent/50 transition-all hover:shadow-lg hover:shadow-accent/20 border-border/50 bg-card/95 backdrop-blur overflow-hidden group">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -664,7 +677,7 @@ const Dashboard = () => {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h4 className={`font-semibold transition-colors ${assistantEnabled ? 'text-accent' : 'text-foreground'}`}>
+                      <h4 className={`font-semibold transition-colors ${isActive ? 'text-accent' : 'text-foreground'}`}>
                         Assistant
                       </h4>
                       <p className="text-sm text-muted-foreground">
@@ -672,8 +685,8 @@ const Dashboard = () => {
                       </p>
                     </div>
                     <Switch
-                      checked={assistantEnabled}
-                      onCheckedChange={handleAssistantToggle}
+                      checked={isActive}
+                      onCheckedChange={handleCoachToggle}
                       className="data-[state=checked]:bg-accent ml-4"
                     />
                   </div>
@@ -729,7 +742,7 @@ const Dashboard = () => {
                       <Volume2 className="h-4 w-4 text-muted-foreground" />
                       <Slider
                         value={volume}
-                        onValueCommit={handleVolumeChange}
+                        onValueChange={handleVolumeChange}
                         max={100}
                         step={1}
                         className="flex-1"
