@@ -45,6 +45,10 @@ class AssistantToggleRequest(BaseModel):
     active: bool
 
 
+class AmokkToggleRequest(BaseModel):
+    active: bool
+
+
 class PTTKeyRequest(BaseModel):
     ptt_key: str
 
@@ -81,6 +85,7 @@ class LocalDataResponse(BaseModel):
     email: str
     coach_toggle: bool
     assistant_toggle: bool
+    amokk_toggle: bool
     ptt_key: str
     tts_volume: int
 
@@ -122,6 +127,7 @@ class AppState:
                     self.game_timer = data.get('game_timer', 0)
                     self.coach_active = data.get('coach_active', True)
                     self.assistant_active = data.get('assistant_active', True)
+                    self.amokk_toggle = data.get('amokk_toggle', True)
                     self.proactive_coach_active = data.get('proactive_coach_active', False)
                     self.ptt_key = data.get('ptt_key', 'v')
                     self.volume = data.get('volume', 80)
@@ -141,6 +147,7 @@ class AppState:
         self.game_timer = 0
         self.coach_active = True
         self.assistant_active = True
+        self.amokk_toggle = True
         self.proactive_coach_active = False  # Disabled by default
         self.ptt_key = 'v'
         self.volume = 80
@@ -156,6 +163,7 @@ class AppState:
                 'game_timer': self.game_timer,
                 'coach_active': self.coach_active,
                 'assistant_active': self.assistant_active,
+                'amokk_toggle': self.amokk_toggle,
                 'proactive_coach_active': self.proactive_coach_active,
                 'ptt_key': self.ptt_key,
                 'volume': self.volume,
@@ -220,6 +228,7 @@ def root():
             "GET  /get_local_data",
             "PUT  /coach_toggle",
             "PUT  /assistant_toggle",
+            "PUT  /amokk_toggle",
             "PUT  /mock_proactive_coach_toggle",
             "PUT  /update_ptt_key",
             "PUT  /update_volume",
@@ -326,6 +335,7 @@ def get_local_data():
         email=app_state.email,
         coach_toggle=app_state.coach_active,
         assistant_toggle=app_state.assistant_active,
+        amokk_toggle=app_state.amokk_toggle,
         ptt_key=app_state.ptt_key,
         tts_volume=app_state.volume,
     )
@@ -385,6 +395,37 @@ def assistant_toggle(request: AssistantToggleRequest):
         return {"success": True, "active": request.active}
     except Exception as e:
         logger.error(f"❌ Assistant toggle error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# PUT /amokk_toggle
+# Toggle the AMOKK assistant coach on/off
+# ============================================================================
+
+@app.put("/amokk_toggle", tags=["Config"])
+def amokk_toggle(request: AmokkToggleRequest):
+    """
+    Toggle the AMOKK assistant coach status on/off
+
+    Request:
+        {
+            "active": true
+        }
+
+    Returns:
+        {
+            "success": true,
+            "active": true/false
+        }
+    """
+    try:
+        app_state.amokk_toggle = request.active
+        app_state.save_state()
+        logger.info(f"🤖 AMOKK toggle: {request.active}")
+        return {"success": True, "active": request.active}
+    except Exception as e:
+        logger.error(f"❌ AMOKK toggle error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

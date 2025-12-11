@@ -20,7 +20,8 @@ const Dashboard = () => {
   const debug = useDebugPanel();
   const volumeDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  const [isActive, setIsActive] = useState(false);
+  const [amokkToggle, setAmokkToggle] = useState(false);
+  const [assistantToggle, setAssistantToggle] = useState(false);
   const [pushToTalkKey, setPushToTalkKey] = useState("V");
   const [proactiveCoachEnabled, setProactiveCoachEnabled] = useState(false);
   const [troubleshootOpen, setTroubleshootOpen] = useState(false);
@@ -37,6 +38,19 @@ const Dashboard = () => {
     // Optional: Poll data every 5 seconds
     // const interval = setInterval(fetchLocalData, 5000);
     // return () => clearInterval(interval);
+  }, []);
+
+  // Call logout when window is about to close
+  useEffect(() => {
+    const handle_before_unload = () => {
+      clean_exit();
+    };
+
+    window.addEventListener('beforeunload', handle_before_unload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handle_before_unload);
+    };
   }, []);
 
   // Cleanup volume debounce timeout on unmount
@@ -66,9 +80,14 @@ const Dashboard = () => {
         setRemainingGames(data.remaining_games);
       }
 
-      // Load coach toggle state (assistant uses the same state)
-      if (data.coach_toggle !== undefined) {
-        setIsActive(data.coach_toggle);
+      // Load AMOKK toggle state (Dashboard)
+      if (data.amokk_toggle !== undefined) {
+        setAmokkToggle(data.amokk_toggle);
+      }
+
+      // Load assistant toggle state (Configuration)
+      if (data.assistant_toggle !== undefined) {
+        setAssistantToggle(data.assistant_toggle);
       }
 
       // Load push-to-talk key
@@ -95,25 +114,49 @@ const Dashboard = () => {
     }
   };
 
-  const toggleCoach = async (newState: boolean) => {
+  const toggleAmokkCoach = async (newState: boolean) => {
     try {
-      logger.api('PUT', '/coach_toggle', { active: newState });
-      const response = await fetch(`${BACKEND_URL}/coach_toggle`, {
+      logger.api('PUT', '/amokk_toggle', { active: newState });
+      const response = await fetch(`${BACKEND_URL}/amokk_toggle`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ active: newState }),
       });
       const data = await response.json();
 
-      debug.log('COACH_TOGGLE', data);
-      logger.apiResponse('/coach_toggle', response.status, data);
+      debug.log('AMOKK_TOGGLE', data);
+      logger.apiResponse('/amokk_toggle', response.status, data);
 
-      setIsActive(newState);
+      setAmokkToggle(newState);
     } catch (error) {
-      logger.error('COACH_TOGGLE failed', error);
-      debug.log('COACH_TOGGLE_ERROR', {
+      logger.error('AMOKK_TOGGLE failed', error);
+      debug.log('AMOKK_TOGGLE_ERROR', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        url: `${BACKEND_URL}/coach_toggle`,
+        url: `${BACKEND_URL}/amokk_toggle`,
+        method: 'PUT'
+      });
+    }
+  };
+
+  const toggleAssistant = async (newState: boolean) => {
+    try {
+      logger.api('PUT', '/assistant_toggle', { active: newState });
+      const response = await fetch(`${BACKEND_URL}/assistant_toggle`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: newState }),
+      });
+      const data = await response.json();
+
+      debug.log('ASSISTANT_TOGGLE', data);
+      logger.apiResponse('/assistant_toggle', response.status, data);
+
+      setAssistantToggle(newState);
+    } catch (error) {
+      logger.error('ASSISTANT_TOGGLE failed', error);
+      debug.log('ASSISTANT_TOGGLE_ERROR', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        url: `${BACKEND_URL}/assistant_toggle`,
         method: 'PUT'
       });
     }
@@ -239,12 +282,37 @@ const Dashboard = () => {
     }
   };
 
+  const clean_exit = async () => {
+    try {
+      logger.api('POST', '/logout');
+      const response = await fetch(`${BACKEND_URL}/logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+
+      debug.log('LOGOUT', data);
+      logger.apiResponse('/logout', response.status, data);
+    } catch (error) {
+      logger.error('LOGOUT failed', error);
+      debug.log('LOGOUT_ERROR', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        url: `${BACKEND_URL}/logout`,
+        method: 'POST'
+      });
+    }
+  };
+
   // =====================================================================
   // UI Event Handlers
   // =====================================================================
 
-  const handleCoachToggle = (checked: boolean) => {
-    toggleCoach(checked);
+  const handleAmokkToggle = (checked: boolean) => {
+    toggleAmokkCoach(checked);
+  };
+
+  const handleAssistantToggle = (checked: boolean) => {
+    toggleAssistant(checked);
   };
 
   const handleVolumeChange = (values: number[]) => {
@@ -628,21 +696,21 @@ const Dashboard = () => {
           <Card className="border-border/50 bg-card/95 backdrop-blur">
             <CardHeader>
               <CardTitle className="text-2xl flex items-center gap-3">
-                <Power className={`h-6 w-6 ${isActive ? 'text-accent' : 'text-muted-foreground'}`} />
+                <Power className={`h-6 w-6 ${amokkToggle ? 'text-accent' : 'text-muted-foreground'}`} />
                 Statut du Coach
               </CardTitle>
               <CardDescription>
-                {isActive ? 'AMOKK est actif et prêt à vous coacher' : 'Activez AMOKK pour commencer le coaching'}
+                {amokkToggle ? 'AMOKK est actif et prêt à vous coacher' : 'Activez AMOKK pour commencer le coaching'}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between p-6 rounded-lg bg-muted/50 border border-border">
                 <span className="text-lg font-semibold">
-                  {isActive ? 'Actif' : 'Inactif'}
+                  {amokkToggle ? 'Actif' : 'Inactif'}
                 </span>
                 <Switch
-                  checked={isActive}
-                  onCheckedChange={handleCoachToggle}
+                  checked={amokkToggle}
+                  onCheckedChange={handleAmokkToggle}
                   className="data-[state=checked]:bg-accent"
                 />
               </div>
@@ -677,7 +745,7 @@ const Dashboard = () => {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h4 className={`font-semibold transition-colors ${isActive ? 'text-accent' : 'text-foreground'}`}>
+                      <h4 className={`font-semibold transition-colors ${assistantToggle ? 'text-accent' : 'text-foreground'}`}>
                         Assistant
                       </h4>
                       <p className="text-sm text-muted-foreground">
@@ -685,8 +753,8 @@ const Dashboard = () => {
                       </p>
                     </div>
                     <Switch
-                      checked={isActive}
-                      onCheckedChange={handleCoachToggle}
+                      checked={assistantToggle}
+                      onCheckedChange={handleAssistantToggle}
                       className="data-[state=checked]:bg-accent ml-4"
                     />
                   </div>

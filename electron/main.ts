@@ -611,6 +611,26 @@ function pollBackendHealth(): void {
 }
 
 /**
+ * Call backend logout endpoint before shutdown
+ */
+async function callBackendLogout(): Promise<void> {
+  try {
+    logger.info('BACKEND_LOGOUT', 'Calling logout endpoint');
+    const response = await fetch(`http://${BACKEND_HOST}:${BACKEND_PORT}/logout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (response.ok) {
+      logger.info('BACKEND_LOGOUT', 'Logout successful');
+    } else {
+      logger.warn('BACKEND_LOGOUT', 'Logout failed', { status: response.status });
+    }
+  } catch (error: any) {
+    logger.warn('BACKEND_LOGOUT', 'Failed to call logout endpoint', { error: error.message });
+  }
+}
+
+/**
  * Stop the Python backend process
  */
 function stopBackend(): void {
@@ -1007,10 +1027,29 @@ app.on('activate', async () => {
 });
 
 /**
+ * Handle app will-quit event to call logout before shutdown
+ */
+let logoutCalled = false;
+app.on('will-quit', async (event) => {
+  if (!logoutCalled) {
+    event.preventDefault();
+    logoutCalled = true;
+
+    logger.separator('AMOKK APPLICATION CLOSING');
+    logger.info('SHUTDOWN', 'App will-quit event triggered');
+
+    // Call backend logout endpoint
+    await callBackendLogout();
+
+    // Now actually quit
+    app.quit();
+  }
+});
+
+/**
  * Clean up on app quit
  */
 app.on('quit', () => {
-  logger.separator('AMOKK APPLICATION CLOSING');
   logger.info('SHUTDOWN', 'App quit event triggered');
 
   stopBackend();
@@ -1022,12 +1061,13 @@ app.on('quit', () => {
 /**
  * Handle any uncaught exceptions
  */
-process.on('uncaughtException', (error: any) => {
+process.on('uncaughtException', async (error: any) => {
   logger.fatal('UNCAUGHT_EXCEPTION', 'Uncaught exception', {
     message: error.message,
     stack: error.stack,
   });
 
+  await callBackendLogout();
   stopBackend();
   logger.info('SHUTDOWN', 'Exiting due to uncaught exception');
 
