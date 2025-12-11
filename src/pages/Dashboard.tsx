@@ -238,8 +238,8 @@ const Dashboard = () => {
 
   const toggleProactiveCoach = async (newState: boolean) => {
     try {
-      logger.api('PUT', '/mock_proactive_coach_toggle', { active: newState });
-      const response = await fetch(`${BACKEND_URL}/mock_proactive_coach_toggle`, {
+      logger.api('PUT', '/coach_toggle', { active: newState });
+      const response = await fetch(`${BACKEND_URL}/coach_toggle`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ active: newState }),
