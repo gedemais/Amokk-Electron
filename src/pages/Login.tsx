@@ -62,8 +62,7 @@ const Login = () => {
   }, [isDev]);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async () => {
     setIsLoading(true);
     setErrorMessage("");
 
@@ -119,7 +118,7 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -167,10 +166,11 @@ const Login = () => {
               </div>
             )}
             <Button
-              type="submit"
+              type="button"
               variant="gaming"
               className="w-full text-lg h-12"
               disabled={isLoading}
+              onClick={(e) => handleLogin(e as unknown as React.FormEvent)}
             >
               {isLoading ? "En cours..." : "Login"}
             </Button>
