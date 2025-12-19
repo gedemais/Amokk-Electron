@@ -1,0 +1,59 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Check } from "lucide-react";
+
+interface PlanCardProps {
+  title: string;
+  price: string;
+  period: string;
+  description: string;
+  features: (string | JSX.Element)[];
+  onSelect: () => void;
+  isUpgrade?: boolean;
+}
+
+const PlanCard = ({ title, price, period, description, features, onSelect, isUpgrade }: PlanCardProps) => {
+  return (
+    <Card className="border-border/50 hover:border-primary/50 transition-all cursor-pointer group relative overflow-hidden">
+      {isUpgrade && (
+        <div className="absolute top-0 right-0 bg-gradient-to-br from-primary to-primary text-white text-xs font-bold px-4 py-1 rounded-bl-lg">
+          UPGRADE
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      <CardContent className="pt-8 pb-8 relative">
+        <div className="text-center space-y-6">
+          <div>
+            <h3 className="text-2xl font-bold text-foreground mb-2">{title}</h3>
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-4xl font-bold">{price}</span>
+              <span className="text-muted-foreground">{period}</span>
+            </div>
+            <p className="text-sm text-muted-foreground mt-3">
+              {description}
+            </p>
+          </div>
+
+          <div className="space-y-3 text-left">
+            {features.map((feature, index) => (
+              <div key={index} className="flex gap-3 items-start">
+                <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                <span className="text-sm">{feature}</span>
+              </div>
+            ))}
+          </div>
+
+          <Button
+            className="w-full"
+            variant="outline"
+            onClick={onSelect}
+          >
+            Commencer
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default PlanCard;
