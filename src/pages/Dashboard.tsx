@@ -15,6 +15,7 @@ const Dashboard = () => {
     pushToTalkKey,
     proactiveCoachEnabled,
     remainingGames,
+    userPlanId,
     isBindingKey,
     volume,
     pricingDialogOpen,
@@ -47,6 +48,7 @@ const Dashboard = () => {
           open={pricingDialogOpen}
           onOpenChange={setPricingDialogOpen}
           onSelectPlan={selectPlan}
+          userPlanId={userPlanId}
         />
 
         <ProgressDialog

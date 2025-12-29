@@ -151,14 +151,6 @@ const Login = () => {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  className="text-sm text-primary hover:text-primary/80 transition-colors"
-                >
-                  Mot de passe oublié ?
-                </button>
-              </div>
             </div>
             {errorMessage && (
               <div className="p-3 rounded-lg bg-red-900/30 border border-red-500/50 text-red-400 text-sm">
@@ -178,12 +170,14 @@ const Login = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               Pas encore de compte ?{" "}
-              <button
-                type="button"
+              <a
+                href="https://amokk.fr/auth"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-primary hover:text-primary/80 font-medium transition-colors"
               >
                 Créer un compte !
-              </button>
+              </a>
             </p>
           </div>
         </CardContent>

@@ -10,9 +10,14 @@ interface PlanCardProps {
   features: (string | JSX.Element)[];
   onSelect: () => void;
   isUpgrade?: boolean;
+  showButton?: boolean;
+  planId: number;
 }
 
-const PlanCard = ({ title, price, period, description, features, onSelect, isUpgrade }: PlanCardProps) => {
+const PlanCard = ({ title, price, period, description, features, onSelect, isUpgrade, showButton = true, planId }: PlanCardProps) => {
+  const handle_select = () => {
+    window.open('https://amokk.fr/#pricing', '_blank', 'noopener,noreferrer');
+  };
   return (
     <Card className="border-border/50 hover:border-primary/50 transition-all cursor-pointer group relative overflow-hidden">
       {isUpgrade && (
@@ -29,6 +34,9 @@ const PlanCard = ({ title, price, period, description, features, onSelect, isUpg
               <span className="text-4xl font-bold">{price}</span>
               <span className="text-muted-foreground">{period}</span>
             </div>
+            <p className="text-xl font-bold text-muted-foreground mt-2">
+              Sans Engagement
+            </p>
             <p className="text-sm text-muted-foreground mt-3">
               {description}
             </p>
@@ -43,13 +51,15 @@ const PlanCard = ({ title, price, period, description, features, onSelect, isUpg
             ))}
           </div>
 
-          <Button
-            className="w-full"
-            variant="outline"
-            onClick={onSelect}
-          >
-            Commencer
-          </Button>
+          {showButton && (
+            <Button
+              className="w-full"
+              variant="outline"
+              onClick={handle_select}
+            >
+              Commencer
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

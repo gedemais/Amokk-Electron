@@ -22,7 +22,9 @@ export const updateVolume = (volume: number) => apiRequest('PUT', '/update_volum
 export const updatePttKey = (ptt_key: string) => apiRequest('PUT', '/update_ptt_key', { ptt_key });
 export const selectPlan = (plan_id: number) => apiRequest('POST', '/mock_select_plan', { plan_id });
 export const toggleProactiveCoach = (active: boolean) => apiRequest('PUT', '/coach_toggle', { active });
-export const contactSupport = () => apiRequest('POST', '/mock_contact_support', { subject: 'Support Request', message: '' });
+export const contactSupport = () => {
+    window.location.href = 'mailto:contact@amokk.fr';
+};
 export const logout = () => {
     const url = `${BACKEND_URL}/logout`;
     if (navigator.sendBeacon) {

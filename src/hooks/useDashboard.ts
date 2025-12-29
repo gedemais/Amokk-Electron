@@ -12,6 +12,7 @@ export const useDashboard = () => {
   const [pushToTalkKey, setPushToTalkKey] = useState("V");
   const [proactiveCoachEnabled, setProactiveCoachEnabled] = useState(false);
   const [remainingGames, setRemainingGames] = useState(42);
+  const [userPlanId, setUserPlanId] = useState(1);
   const [isBindingKey, setIsBindingKey] = useState(false);
   const [volume, setVolume] = useState([70]);
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
@@ -20,6 +21,12 @@ export const useDashboard = () => {
 
   useEffect(() => {
     fetchLocalData();
+
+    const interval_id = setInterval(() => {
+      fetchLocalData();
+    }, 10000);
+
+    return () => clearInterval(interval_id);
   }, []);
 
   useEffect(() => {
@@ -50,6 +57,7 @@ export const useDashboard = () => {
       logger.apiResponse('/get_local_data', 200, data);
 
       if (data.remaining_games !== undefined) setRemainingGames(data.remaining_games);
+      if (data.plan_id !== undefined) setUserPlanId(data.plan_id);
       if (data.amokk_toggle !== undefined) setAmokkToggle(data.amokk_toggle);
       if (data.assistant_toggle !== undefined) setAssistantToggle(data.assistant_toggle);
       if (data.coach_toggle !== undefined) setProactiveCoachEnabled(data.coach_toggle);
@@ -200,6 +208,7 @@ export const useDashboard = () => {
     pushToTalkKey,
     proactiveCoachEnabled,
     remainingGames,
+    userPlanId,
     isBindingKey,
     volume,
     pricingDialogOpen,

@@ -5,9 +5,10 @@ interface PricingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectPlan: (planId: number) => void;
+  userPlanId: number;
 }
 
-const PricingDialog = ({ open, onOpenChange, onSelectPlan }: PricingDialogProps) => {
+const PricingDialog = ({ open, onOpenChange, onSelectPlan, userPlanId }: PricingDialogProps) => {
   const plans = [
     {
       title: "Starter",
@@ -19,7 +20,6 @@ const PricingDialog = ({ open, onOpenChange, onSelectPlan }: PricingDialogProps)
         "Coach proactif durant toute la game",
         "Assistant Vocal en cours de partie (Push-To-Talk)",
         "Support en moins de 24h",
-        "Sans engagement",
       ],
       planId: 1,
     },
@@ -33,10 +33,8 @@ const PricingDialog = ({ open, onOpenChange, onSelectPlan }: PricingDialogProps)
         "Coach proactif durant toute la game",
         "Assistant Vocal en cours de partie (Push-To-Talk)",
         "Support en moins de 24h",
-        "Sans engagement",
       ],
       planId: 2,
-      isUpgrade: true,
     },
     {
       title: "Rush",
@@ -49,7 +47,6 @@ const PricingDialog = ({ open, onOpenChange, onSelectPlan }: PricingDialogProps)
         "Coach proactif durant toute la game",
         "Assistant Vocal en cours de partie (Push-To-Talk)",
         "Support en moins de 24h",
-        "Sans engagement",
       ],
       planId: 3,
     },
@@ -76,7 +73,9 @@ const PricingDialog = ({ open, onOpenChange, onSelectPlan }: PricingDialogProps)
               description={plan.description}
               features={plan.features}
               onSelect={() => onSelectPlan(plan.planId)}
-              isUpgrade={plan.isUpgrade}
+              isUpgrade={plan.planId > userPlanId}
+              showButton={plan.planId > userPlanId}
+              planId={plan.planId}
             />
           ))}
         </div>
