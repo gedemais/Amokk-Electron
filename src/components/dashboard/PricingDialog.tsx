@@ -75,6 +75,7 @@ const PricingDialog = ({ open, onOpenChange, onSelectPlan, userPlanId }: Pricing
               onSelect={() => onSelectPlan(plan.planId)}
               isUpgrade={plan.planId > userPlanId}
               showButton={plan.planId > userPlanId}
+              isCurrentPlan={plan.planId === userPlanId}
               planId={plan.planId}
             />
           ))}

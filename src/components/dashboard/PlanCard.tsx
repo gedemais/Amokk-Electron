@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check } from "lucide-react";
 
+
 interface PlanCardProps {
   title: string;
   price: string;
@@ -11,22 +12,40 @@ interface PlanCardProps {
   onSelect: () => void;
   isUpgrade?: boolean;
   showButton?: boolean;
+  isCurrentPlan?: boolean;
   planId: number;
 }
 
-const PlanCard = ({ title, price, period, description, features, onSelect, isUpgrade, showButton = true, planId }: PlanCardProps) => {
+const PlanCard = ({ title, price, period, description, features, onSelect, isUpgrade, showButton = true, isCurrentPlan, planId }: PlanCardProps) => {
   const handle_select = () => {
-    window.open('https://amokk.fr/#pricing', '_blank', 'noopener,noreferrer');
+    window.electronAPI.openExternal("https://amokk.fr/#pricing");
   };
   return (
     <Card className="border-border/50 hover:border-primary/50 transition-all cursor-pointer group relative overflow-hidden">
+      {/* Upgrade badge */}
       {isUpgrade && (
         <div className="absolute top-0 right-0 bg-gradient-to-br from-primary to-primary text-white text-xs font-bold px-4 py-1 rounded-bl-lg">
           UPGRADE
         </div>
       )}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-      <CardContent className="pt-8 pb-8 relative">
+
+      {/* Current plan badge */}
+      {isCurrentPlan && (
+        <div className="absolute top-0 left-0 bg-green-500 text-white text-xs font-bold px-4 py-1 rounded-br-lg z-20">
+          PLAN ACTUEL
+        </div>
+      )}
+
+      {/* Overlay on hover / current */}
+      <div
+        className={`
+          absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent transition-opacity 
+          ${isCurrentPlan ? "opacity-30" : "opacity-0 group-hover:opacity-100"}
+          pointer-events-none
+        `}
+      />
+
+      <CardContent className="pt-8 pb-8 relative z-10">
         <div className="text-center space-y-6">
           <div>
             <h3 className="text-2xl font-bold text-foreground mb-2">{title}</h3>
@@ -37,9 +56,7 @@ const PlanCard = ({ title, price, period, description, features, onSelect, isUpg
             <p className="text-xl font-bold text-muted-foreground mt-2">
               Sans Engagement
             </p>
-            <p className="text-sm text-muted-foreground mt-3">
-              {description}
-            </p>
+            <p className="text-sm text-muted-foreground mt-3">{description}</p>
           </div>
 
           <div className="space-y-3 text-left">
@@ -52,17 +69,14 @@ const PlanCard = ({ title, price, period, description, features, onSelect, isUpg
           </div>
 
           {showButton && (
-            <Button
-              className="w-full"
-              variant="outline"
-              onClick={handle_select}
-            >
+            <Button className="w-full" variant="outline" onClick={handle_select}>
               Commencer
             </Button>
           )}
         </div>
       </CardContent>
     </Card>
+
   );
 };
 
