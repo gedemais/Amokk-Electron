@@ -21,7 +21,7 @@ const PricingDialog = ({ open, onOpenChange, onSelectPlan, userPlanId }: Pricing
         "Assistant Vocal en cours de partie (Push-To-Talk)",
         "Support en moins de 24h",
       ],
-      planId: 1,
+      planId: 3,
     },
     {
       title: "Try-Hard",
@@ -34,7 +34,7 @@ const PricingDialog = ({ open, onOpenChange, onSelectPlan, userPlanId }: Pricing
         "Assistant Vocal en cours de partie (Push-To-Talk)",
         "Support en moins de 24h",
       ],
-      planId: 2,
+      planId: 4,
     },
     {
       title: "Rush",
@@ -48,7 +48,7 @@ const PricingDialog = ({ open, onOpenChange, onSelectPlan, userPlanId }: Pricing
         "Assistant Vocal en cours de partie (Push-To-Talk)",
         "Support en moins de 24h",
       ],
-      planId: 3,
+      planId: 5,
     },
   ];
 
