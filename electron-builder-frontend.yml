@@ -25,6 +25,7 @@ extraMetadata:
 win:
   target: portable
   icon: assets/icon.ico
+  artifactName: 'frontend.exe'
   signAndEditExecutable: false
 
 linux:

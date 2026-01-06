@@ -36,6 +36,7 @@ win:
   target:
     - portable
   icon: assets/icon.ico
+  artifactName: 'frontend.exe'
   signAndEditExecutable: false
 
 # Linux Configuration
