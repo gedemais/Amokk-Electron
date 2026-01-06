@@ -674,9 +674,31 @@ async function createWindow(): Promise<void> {
   console.log('🪟 Creating application window...');
 
   // Determine correct preload path
-  // In both dev (compiled) and prod (asar), preload.js is in the same directory as main.js
-  const preloadPath = path.join(__dirname, 'preload.js');
-  
+  let preloadPath: string;
+  if (isDev) {
+    // Development: preload.js is in the same directory as main.js (both compiled to dist-electron/electron)
+    preloadPath = path.join(__dirname, 'preload.js');
+  } else {
+    // Production: preload.js must be loaded from extraResources (not from app.asar)
+    // Electron requires preload scripts to be on the real filesystem
+    preloadPath = path.join(process.resourcesPath, 'dist-electron', 'electron', 'preload.js');
+  }
+
+  // Verify preload file exists
+  logger.debug('WINDOW', 'Preload path resolved', { preloadPath, exists: fs.existsSync(preloadPath) });
+  if (!fs.existsSync(preloadPath)) {
+    logger.error('WINDOW', 'Preload script not found!', { preloadPath });
+    console.error(`❌ CRITICAL: Preload script not found at: ${preloadPath}`);
+
+    dialog.showErrorBox(
+      'AMOKK - Preload Error',
+      `Preload script not found.\n\nExpected path: ${preloadPath}\n\nPlease reinstall the application.`
+    );
+
+    app.quit();
+    return;
+  }
+
   let iconPath: string;
   if (isDev) {
     iconPath = path.join(__dirname, '../../assets/icon.png');

@@ -19,10 +19,15 @@ interface PlanCardProps {
 
 const PlanCard = ({ title, price, period, description, features, onSelect, isUpgrade, showButton = true, isCurrentPlan, planId }: PlanCardProps) => {
   const { t } = useLanguage();
-  const handle_select = () => {
-    if (window.electronAPI) {
-      window.electronAPI.openExternal("https://amokk.fr/#pricing");
-    } else {
+  const handle_select = async () => {
+    try {
+      if (window.electronAPI && window.electronAPI.openExternal) {
+        await window.electronAPI.openExternal("https://amokk.fr/#pricing");
+      } else {
+        window.open("https://amokk.fr/#pricing", "_blank");
+      }
+    } catch (error) {
+      console.error("Failed to open external link:", error);
       window.open("https://amokk.fr/#pricing", "_blank");
     }
   };
