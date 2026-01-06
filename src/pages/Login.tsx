@@ -8,6 +8,7 @@ import { Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { logger } from "@/utils/logger";
 import { useDebugPanel } from "@/hooks/useDebugPanel";
+import { shell } from "electron";
 
 // Backend API URL from environment variables
 const BACKEND_HOST = import.meta.env.VITE_BACKEND_HOST || '127.0.0.1';

@@ -18,7 +18,7 @@ interface PlanCardProps {
 
 const PlanCard = ({ title, price, period, description, features, onSelect, isUpgrade, showButton = true, isCurrentPlan, planId }: PlanCardProps) => {
   const handle_select = () => {
-    window.electronAPI.openExternal("https://amokk.fr/#pricing");
+    window.open('https://amokk.fr/#pricing', '_blank', 'noopener,noreferrer');
   };
   return (
     <Card className="border-border/50 hover:border-primary/50 transition-all cursor-pointer group relative overflow-hidden">
