@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import frData from '../../amok_fr.json';
-import enData from '../../amok_en.json';
+import frData from '../langues/fr.json';
+import enData from '../langues/en.json';
 
 type Language = 'fr' | 'en';
 type Translations = typeof frData;

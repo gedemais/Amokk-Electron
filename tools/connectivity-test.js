@@ -8,8 +8,20 @@
  * 4. API endpoints are functional
  */
 
-const BACKEND_HOST = process.env.BACKEND_HOST || '127.0.0.1';
-const BACKEND_PORT = process.env.BACKEND_PORT || 8000;
+const getEnv = (key, fallback) => {
+  // Check import.meta.env (Vite)
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
+    return import.meta.env[key];
+  }
+  // Check process.env (Node.js/Electron Main)
+  if (typeof process !== 'undefined' && process.env && process.env[key]) {
+    return process.env[key];
+  }
+  return fallback;
+};
+
+const BACKEND_HOST = getEnv('VITE_BACKEND_HOST', '127.0.0.1');
+const BACKEND_PORT = getEnv('VITE_BACKEND_PORT', '8000');
 const BACKEND_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}`;
 
 // ============================================================================
