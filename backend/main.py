@@ -328,7 +328,7 @@ def get_local_data():
             "tts_volume": 80
         }
     """
-    return LocalDataResponse(
+    response = LocalDataResponse(
         remaining_games=app_state.remaining_games,
         first_launch=app_state.first_launch,
         game_timer=app_state.game_timer,
@@ -339,6 +339,14 @@ def get_local_data():
         ptt_key=app_state.ptt_key,
         tts_volume=app_state.volume,
     )
+
+    # Disable first_launch for subsequent calls to prevent dialog from reopening
+    if app_state.first_launch:
+        logger.info("ℹ️  First launch flag sent, disabling for future requests")
+        app_state.first_launch = False
+        app_state.save_state()
+
+    return response
 
 
 # ============================================================================

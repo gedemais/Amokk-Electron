@@ -674,23 +674,15 @@ async function createWindow(): Promise<void> {
   console.log('🪟 Creating application window...');
 
   // Determine correct preload path
-  let preloadPath: string;
+  // In both dev (compiled) and prod (asar), preload.js is in the same directory as main.js
+  const preloadPath = path.join(__dirname, 'preload.js');
+  
   let iconPath: string;
-
   if (isDev) {
-    preloadPath = path.join(__dirname, 'preload.ts');
-    iconPath = path.join(__dirname, '../assets/icon.png');
+    iconPath = path.join(__dirname, '../../assets/icon.png');
   } else {
     // In production, use the resources directory
-    const appPath = app.getAppPath();
-    let baseDir: string;
-    if (appPath.includes('app.asar')) {
-      baseDir = path.dirname(appPath); // Go up from app.asar to resources/
-    } else {
-      baseDir = path.dirname(appPath);
-    }
-    preloadPath = path.join(baseDir, 'dist-electron', 'preload.js');
-    iconPath = path.join(baseDir, 'assets', 'icon.png');
+    iconPath = path.join(process.resourcesPath, 'assets', 'icon.png');
   }
 
   mainWindow = new BrowserWindow({

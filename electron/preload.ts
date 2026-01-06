@@ -5,12 +5,16 @@
  */
 
 /// <reference types="electron" />
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, shell } from 'electron';
 
 /**
  * Expose backend status and app info to renderer
  * All IPC calls go through here for security
  */
+contextBridge.exposeInMainWorld('electronAPI', {
+  openExternal: (url: string) => shell.openExternal(url),
+});
+
 contextBridge.exposeInMainWorld('api', {
   // Backend management
   backend: {
