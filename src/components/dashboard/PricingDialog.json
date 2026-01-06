@@ -1,0 +1,35 @@
+{
+  "dialog_title": "Choisissez votre plan",
+  "dialog_desc": "Débloquez tout le potentiel d'Amokk avec un plan premium",
+  "starter_title": "Starter",
+  "starter_price": "5,99€",
+  "starter_period": "/mois",
+  "starter_desc": "Idéal pour progresser tranquillement.",
+  "starter_features": [
+    "10 games coachées / mois",
+    "Coach proactif durant toute la game",
+    "Assistant Vocal en cours de partie (Push-To-Talk)",
+    "Support en moins de 24h"
+  ],
+  "tryhard_title": "Try-Hard",
+  "tryhard_price": "24,99€",
+  "tryhard_period": "/mois",
+  "tryhard_desc": "Tout ce qu'il faut pour grind et progresser rapidement !",
+  "tryhard_features": [
+    "50 games coachées / mois",
+    "Coach proactif durant toute la game",
+    "Assistant Vocal en cours de partie (Push-To-Talk)",
+    "Support en moins de 24h"
+  ],
+  "rush_title": "Rush",
+  "rush_price": "89,99€",
+  "rush_period": "/mois",
+  "rush_desc": "Pour ceux qui veulent profiter d'Amokk à chaque game !",
+  "rush_features": [
+    "ILLIMITÉ",
+    "Accès anticipé aux nouveautés",
+    "Coach proactif durant toute la game",
+    "Assistant Vocal en cours de partie (Push-To-Talk)",
+    "Support en moins de 24h"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "card_title": "Configuration",
+  "card_desc": "Personnalisez les paramètres de votre coach",
+  "dialog_title": "Configuration",
+  "dialog_desc": "Personnalisez la façon dont AMOKK vous coach",
+  "assistant_title": "Assistant",
+  "assistant_desc": "Activez l'assistant IA pour fournir des conseils et analyses en temps réel pendant le jeu",
+  "ptt_title": "Raccourci Push-to-Talk",
+  "ptt_desc": "Maintenez le bouton push-to-talk pendant 1 seconde pendant que AMOKK parle pour interrompre les conseils",
+  "ptt_btn_binding": "Appuyez sur une touche...",
+  "proactive_title": "Coach Proactif (V1.9.6)",
+  "proactive_desc": "AMOKK identifiera de manière proactive les opportunités et les erreurs sans attendre que vous demandiez",
+  "volume_title": "Volume",
+  "volume_desc": "Ajustez le niveau du volume de la voix",
+  "test_volume_btn": "Tester le Volume"
+}

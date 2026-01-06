@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 
 interface PlanCardProps {
@@ -17,6 +18,7 @@ interface PlanCardProps {
 }
 
 const PlanCard = ({ title, price, period, description, features, onSelect, isUpgrade, showButton = true, isCurrentPlan, planId }: PlanCardProps) => {
+  const { t } = useLanguage();
   const handle_select = () => {
     window.electronAPI.openExternal("https://amokk.fr/#pricing");
   };
@@ -25,14 +27,14 @@ const PlanCard = ({ title, price, period, description, features, onSelect, isUpg
       {/* Upgrade badge */}
       {isUpgrade && (
         <div className="absolute top-0 right-0 bg-gradient-to-br from-primary to-primary text-white text-xs font-bold px-4 py-1 rounded-bl-lg">
-          UPGRADE
+          {t('components.dashboard.PlanCard.upgrade_badge')}
         </div>
       )}
 
       {/* Current plan badge */}
       {isCurrentPlan && (
         <div className="absolute top-0 left-0 bg-green-500 text-white text-xs font-bold px-4 py-1 rounded-br-lg z-20">
-          PLAN ACTUEL
+          {t('components.dashboard.PlanCard.current_plan_badge')}
         </div>
       )}
 
@@ -54,7 +56,7 @@ const PlanCard = ({ title, price, period, description, features, onSelect, isUpg
               <span className="text-muted-foreground">{period}</span>
             </div>
             <p className="text-xl font-bold text-muted-foreground mt-2">
-              Sans Engagement
+              {t('components.dashboard.PlanCard.no_commitment')}
             </p>
             <p className="text-sm text-muted-foreground mt-3">{description}</p>
           </div>
@@ -70,7 +72,7 @@ const PlanCard = ({ title, price, period, description, features, onSelect, isUpg
 
           {showButton && (
             <Button className="w-full" variant="outline" onClick={handle_select}>
-              Commencer
+              {t('components.dashboard.PlanCard.start_btn')}
             </Button>
           )}
         </div>

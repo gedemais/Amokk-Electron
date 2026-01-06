@@ -3,7 +3,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent } from "@/components/ui/card";
-import { Settings, Keyboard, Volume2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Settings, Keyboard, Volume2, Globe } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface ConfigurationDialogProps {
   assistantToggle: boolean;
@@ -30,6 +32,8 @@ const ConfigurationDialog = ({
   onVolumeChange,
   onTestVolume,
 }: ConfigurationDialogProps) => {
+  const { t, language, setLanguage } = useLanguage();
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -40,29 +44,54 @@ const ConfigurationDialog = ({
                 <Settings className="h-6 w-6 text-accent" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Configuration</h3>
-                <p className="text-sm text-muted-foreground">Personnalisez les paramètres de votre coach</p>
+                <h3 className="font-semibold text-lg">{t('components.dashboard.ConfigurationDialog.card_title')}</h3>
+                <p className="text-sm text-muted-foreground">{t('components.dashboard.ConfigurationDialog.card_desc')}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </DialogTrigger>
-      <DialogContent className="bg-card border-border/50">
+      <DialogContent className="bg-card border-border/50 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Configuration</DialogTitle>
+          <DialogTitle className="text-2xl">{t('components.dashboard.ConfigurationDialog.dialog_title')}</DialogTitle>
           <DialogDescription>
-            Personnalisez la façon dont AMOKK vous coach
+            {t('components.dashboard.ConfigurationDialog.dialog_desc')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6 py-4">
+          
+          {/* Language Selection */}
+          <div className="space-y-3">
+             <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h4 className="font-semibold flex items-center gap-2">
+                   <Globe className="h-4 w-4" />
+                   {t('components.dashboard.ConfigurationDialog.language_title')}
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  {t('components.dashboard.ConfigurationDialog.language_desc')}
+                </p>
+              </div>
+              <Select value={language} onValueChange={(val: any) => setLanguage(val)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fr">Français</SelectItem>
+                  <SelectItem value="en">English</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <h4 className={`font-semibold transition-colors ${assistantToggle ? 'text-accent' : 'text-foreground'}`}>
-                  Assistant
+                  {t('components.dashboard.ConfigurationDialog.assistant_title')}
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  Activez l'assistant IA pour fournir des conseils et analyses en temps réel pendant le jeu
+                  {t('components.dashboard.ConfigurationDialog.assistant_desc')}
                 </p>
               </div>
               <Switch
@@ -76,9 +105,9 @@ const ConfigurationDialog = ({
           <div className="space-y-3">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <h4 className="font-semibold">Raccourci Push-to-Talk</h4>
+                <h4 className="font-semibold">{t('components.dashboard.ConfigurationDialog.ptt_title')}</h4>
                 <p className="text-sm text-muted-foreground">
-                  Maintenez le bouton push-to-talk pendant 1 seconde pendant que AMOKK parle pour interrompre les conseils
+                  {t('components.dashboard.ConfigurationDialog.ptt_desc')}
                 </p>
               </div>
               <Button
@@ -88,7 +117,7 @@ const ConfigurationDialog = ({
                 className="border-accent/50 hover:bg-accent/10 min-w-[100px]"
               >
                 <Keyboard className="h-4 w-4 mr-2" />
-                {isBindingKey ? "Appuyez sur une touche..." : pushToTalkKey}
+                {isBindingKey ? t('components.dashboard.ConfigurationDialog.ptt_btn_binding') : pushToTalkKey}
               </Button>
             </div>
           </div>
@@ -97,10 +126,10 @@ const ConfigurationDialog = ({
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <h4 className={`font-semibold transition-colors ${proactiveCoachEnabled ? 'text-accent' : 'text-foreground'}`}>
-                  Coach Proactif (V1.9.6)
+                  {t('components.dashboard.ConfigurationDialog.proactive_title')}
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  AMOKK identifiera de manière proactive les opportunités et les erreurs sans attendre que vous demandiez
+                  {t('components.dashboard.ConfigurationDialog.proactive_desc')}
                 </p>
               </div>
               <Switch
@@ -114,9 +143,9 @@ const ConfigurationDialog = ({
           <div className="space-y-3">
             <div className="flex flex-col gap-4">
               <div className="flex-1">
-                <h4 className="font-semibold">Volume</h4>
+                <h4 className="font-semibold">{t('components.dashboard.ConfigurationDialog.volume_title')}</h4>
                 <p className="text-sm text-muted-foreground">
-                  Ajustez le niveau du volume de la voix
+                  {t('components.dashboard.ConfigurationDialog.volume_desc')}
                 </p>
               </div>
               <div className="flex items-center gap-4">
@@ -137,7 +166,7 @@ const ConfigurationDialog = ({
                 className="border-accent/50 hover:bg-accent/10"
               >
                 <Volume2 className="h-4 w-4 mr-2" />
-                Tester le Volume
+                {t('components.dashboard.ConfigurationDialog.test_volume_btn')}
               </Button>
             </div>
           </div>

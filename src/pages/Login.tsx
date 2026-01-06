@@ -8,6 +8,7 @@ import { Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { logger } from "@/utils/logger";
 import { useDebugPanel } from "@/hooks/useDebugPanel";
+import { useLanguage } from "@/context/LanguageContext";
 
 // Backend API URL from environment variables
 const BACKEND_HOST = import.meta.env.VITE_BACKEND_HOST || '127.0.0.1';
@@ -17,6 +18,7 @@ const BACKEND_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}`;
 const Login = () => {
   const navigate = useNavigate();
   const debug = useDebugPanel();
+  const { t } = useLanguage();
   const isDev = import.meta.env.DEV;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -78,7 +80,7 @@ const Login = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || "Login failed");
+        throw new Error(data.detail || t('pages.Login.login_failed_default'));
       }
 
       debug.log("LOGIN RESPONSE", data);
@@ -89,7 +91,7 @@ const Login = () => {
 
       navigate("/dashboard");
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "Login failed";
+      const errorMsg = error instanceof Error ? error.message : t('pages.Login.login_failed_default');
       logger.error("Login error", errorMsg);
       debug.log("LOGIN_ERROR", {
         error: errorMsg,
@@ -112,19 +114,19 @@ const Login = () => {
           <div className="flex justify-center">
             <img src={logo} alt="AMOKK Logo" className="h-20 w-20" />
           </div>
-          <CardTitle className="text-3xl font-bold glow-text">Welcome to AMOKK</CardTitle>
+          <CardTitle className="text-3xl font-bold glow-text">{t('pages.Login.welcome_title')}</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Your AI coach for League of Legends
+            {t('pages.Login.welcome_description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('pages.Login.email_label')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="your@email.com"
+                placeholder={t('pages.Login.email_placeholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -132,12 +134,12 @@ const Login = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('pages.Login.password_label')}</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder={t('pages.Login.password_placeholder')}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -164,19 +166,19 @@ const Login = () => {
               disabled={isLoading}
               onClick={(e) => handleLogin(e as unknown as React.FormEvent)}
             >
-              {isLoading ? "En cours..." : "Login"}
+              {isLoading ? t('pages.Login.login_button_loading') : t('pages.Login.login_button')}
             </Button>
           </form>
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              Pas encore de compte ?{" "}
+              {t('pages.Login.no_account')}{" "}
               <a
                 href="https://amokk.fr/auth"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:text-primary/80 font-medium transition-colors"
               >
-                Créer un compte !
+                {t('pages.Login.create_account')}
               </a>
             </p>
           </div>

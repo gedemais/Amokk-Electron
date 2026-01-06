@@ -1,17 +1,20 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/context/LanguageContext";
 
 const QuickStartGuide = () => {
+  const { t } = useLanguage();
+
   const tutorialSteps = [
-    { step: 'A', title: 'Configurez votre coach', description: 'Configurez vos préférences dans les paramètres' },
-    { step: 'B', title: 'Activez AMOKK', description: 'Basculez l\'interrupteur ci-dessus pour activer le coaching' },
-    { step: 'C', title: 'Lancez une partie', description: 'Commencez simplement à jouer - AMOKK sera là pendant vos parties' },
-    { step: 'D', title: 'Contrôlez les conseils', description: 'Maintenez push-to-talk pendant 1 seconde pendant que AMOKK parle pour interrompre' }
+    { step: 'A', title: t('components.dashboard.QuickStartGuide.step_a_title'), description: t('components.dashboard.QuickStartGuide.step_a_desc') },
+    { step: 'B', title: t('components.dashboard.QuickStartGuide.step_b_title'), description: t('components.dashboard.QuickStartGuide.step_b_desc') },
+    { step: 'C', title: t('components.dashboard.QuickStartGuide.step_c_title'), description: t('components.dashboard.QuickStartGuide.step_c_desc') },
+    { step: 'D', title: t('components.dashboard.QuickStartGuide.step_d_title'), description: t('components.dashboard.QuickStartGuide.step_d_desc') }
   ];
 
   return (
     <Card className="border-border/50 bg-card/95 backdrop-blur">
       <CardHeader>
-        <CardTitle className="text-xl">Tutoriel de Démarrage Rapide</CardTitle>
+        <CardTitle className="text-xl">{t('components.dashboard.QuickStartGuide.title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {tutorialSteps.map((item, index) => (

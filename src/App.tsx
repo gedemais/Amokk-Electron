@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import { DebugPanel } from "@/components/DebugPanel";
 import { DebugProvider } from "@/context/DebugContext";
+import { LanguageProvider } from "@/context/LanguageContext";
 import { useEffect } from "react";
 
 const queryClient = new QueryClient();
@@ -43,25 +44,27 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <DebugProvider>
-          <Toaster />
-          <Sonner />
+      <LanguageProvider>
+        <TooltipProvider>
+          <DebugProvider>
+            <Toaster />
+            <Sonner />
 
-          <HashRouter>
-            <Routes>
-              <Route path="/" element={<Navigate to="/login" replace />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </HashRouter>
+            <HashRouter>
+              <Routes>
+                <Route path="/" element={<Navigate to="/login" replace />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </HashRouter>
 
-          {/* Debug panel visible only in dev mode */}
-          <DebugPanel />
-        </DebugProvider>
-      </TooltipProvider>
+            {/* Debug panel visible only in dev mode */}
+            <DebugPanel />
+          </DebugProvider>
+        </TooltipProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 };
