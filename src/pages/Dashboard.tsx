@@ -20,6 +20,8 @@ const Dashboard = () => {
     volume,
     pricingDialogOpen,
     setPricingDialogOpen,
+    configurationDialogOpen,
+    setConfigurationDialogOpen,
     progressDialogOpen,
     setProgressDialogOpen,
     troubleshootOpen,
@@ -62,6 +64,8 @@ const Dashboard = () => {
             onToggle={handleAmokkToggle}
           />
           <ConfigurationDialog
+            configurationDialogOpen={configurationDialogOpen}
+            onConfigurationDialogOpenChange={setConfigurationDialogOpen}
             assistantToggle={assistantToggle}
             onAssistantToggle={handleAssistantToggle}
             pushToTalkKey={pushToTalkKey}

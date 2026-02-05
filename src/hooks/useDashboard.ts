@@ -7,6 +7,7 @@ export const useDashboard = () => {
   const debug = useDebugPanel();
   const volumeDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
+  const [isFirstLaunch, setIsFirstLaunch] = useState(false);
   const [amokkToggle, setAmokkToggle] = useState(false);
   const [assistantToggle, setAssistantToggle] = useState(false);
   const [pushToTalkKey, setPushToTalkKey] = useState("V");
@@ -18,6 +19,7 @@ export const useDashboard = () => {
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
   const [progressDialogOpen, setProgressDialogOpen] = useState(false);
   const [troubleshootOpen, setTroubleshootOpen] = useState(false);
+  const [configurationDialogOpen, setConfigurationDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchLocalData();
@@ -28,6 +30,13 @@ export const useDashboard = () => {
 
     return () => clearInterval(interval_id);
   }, []);
+
+  useEffect(() => {
+    if (!progressDialogOpen && isFirstLaunch) {
+      // Progress fermé, ouvrir la configuration
+      setConfigurationDialogOpen(true);
+    }
+  }, [progressDialogOpen, isFirstLaunch]);
 
   useEffect(() => {
     const handle_before_unload = () => {
@@ -63,7 +72,11 @@ export const useDashboard = () => {
       if (data.coach_toggle !== undefined) setProactiveCoachEnabled(data.coach_toggle);
       if (data.ptt_key !== undefined) setPushToTalkKey(data.ptt_key);
       if (data.tts_volume !== undefined) setVolume([data.tts_volume]);
-      if (data.first_launch === true) setProgressDialogOpen(true);
+      if (data.first_launch === true) {
+          setIsFirstLaunch(true);
+          setProgressDialogOpen(true);
+        }
+
     } catch (error) {
       logger.error('GET_LOCAL_DATA failed', error);
       debug.log('GET_LOCAL_DATA_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
@@ -200,6 +213,8 @@ const handleVolumeChange = async (values: number[]) => {
     volume,
     pricingDialogOpen,
     setPricingDialogOpen,
+    configurationDialogOpen,
+    setConfigurationDialogOpen,
     progressDialogOpen,
     setProgressDialogOpen,
     troubleshootOpen,

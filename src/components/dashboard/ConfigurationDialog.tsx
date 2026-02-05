@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Settings, Keyboard, Volume2 } from "lucide-react";
 
 interface ConfigurationDialogProps {
+  configurationDialogOpen: boolean;
+  onConfigurationDialogOpenChange: (open: boolean) => void;
   assistantToggle: boolean;
   onAssistantToggle: (checked: boolean) => void;
   pushToTalkKey: string;
@@ -19,6 +21,8 @@ interface ConfigurationDialogProps {
 }
 
 const ConfigurationDialog = ({
+  configurationDialogOpen,
+  onConfigurationDialogOpenChange,
   assistantToggle,
   onAssistantToggle,
   pushToTalkKey,
@@ -31,7 +35,7 @@ const ConfigurationDialog = ({
   onTestVolume,
 }: ConfigurationDialogProps) => {
   return (
-    <Dialog>
+    <Dialog open={configurationDialogOpen} onOpenChange={onConfigurationDialogOpenChange}>
       <DialogTrigger asChild>
         <Card className="cursor-pointer hover:border-accent/50 transition-colors border-border/50 bg-card/95 backdrop-blur h-full">
           <CardContent className="pt-6 h-full flex items-center">

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { url } from "inspector/promises";
 import { Check } from "lucide-react";
 
 
@@ -25,7 +26,23 @@ const PlanCard = ({ title, price, period, description, features, onSelect, isUpg
       5: 'https://amokkcoaching.lemonsqueezy.com/checkout/buy/fd35a47d-f594-4c39-ae32-34aac151d923', // Rush LemonSqueezy link
     }
 
-    window.open(links[planId], '_blank', 'noopener,noreferrer');
+    const plans_names = {
+      3: 'starter',
+      4: 'try_hard',
+      5: 'rush',
+    }
+
+    const userEmail = localStorage.getItem("user_email");
+
+    const url = new URL(links[planId]);
+
+    if (userEmail) {
+      url.searchParams.set("checkout[custom][email]", userEmail);
+    }
+
+    url.searchParams.set("checkout[custom][plan_name]", plans_names[planId]);
+
+    window.open(url.toString(), '_blank', 'noopener,noreferrer');
   };
   return (
     <Card className="border-border/50 hover:border-primary/50 transition-all cursor-pointer group relative overflow-hidden">

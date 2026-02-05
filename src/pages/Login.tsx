@@ -83,6 +83,8 @@ const Login = () => {
       logger.success("Login successful", data);
       debug.log("LOGIN_RESPONSE", data);
 
+      localStorage.setItem("user_email", email);
+
       navigate("/dashboard");
     } catch (error) {
       const errorMsg =
