@@ -96,25 +96,12 @@ export const useDashboard = () => {
     }
   };
 
-  const handleVolumeChange = (values: number[]) => {
-    setVolume(values);
-    if (volumeDebounceRef.current) {
-      clearTimeout(volumeDebounceRef.current);
-    }
-    volumeDebounceRef.current = setTimeout(async () => {
-      try {
-        const newVolume = values[0];
-        logger.api('PUT', '/update_volume', { volume: newVolume });
-        const data = await api.updateVolume(newVolume);
-        debug.log('UPDATE_VOLUME', data);
-        logger.apiResponse('/update_volume', 200, data);
-        setVolume([newVolume]);
-      } catch (error) {
-        logger.error('UPDATE_VOLUME failed', error);
-        debug.log('UPDATE_VOLUME_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
-      }
-    }, 500);
-  };
+const handleVolumeChange = async (values: number[]) => {
+  setVolume(values);
+  await api.updateVolume(values[0]);
+};
+
+
   
   const handleBindKey = () => {
     setIsBindingKey(true);

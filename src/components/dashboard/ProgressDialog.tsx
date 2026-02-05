@@ -90,6 +90,18 @@ const ProgressDialog = ({ open, onOpenChange }: ProgressDialogProps) => {
                       <Target className="h-7 w-7 text-white" />
                     </div>
                     <div className="flex-1">
+                      <h5 className="text-lg font-bold text-foreground mb-2">Se poser les bonnes questions</h5>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Pour obtenir les bons conseils d’AMOKK, vous devrez apprendre à lui poser les bonnes questions
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 p-6 rounded-2xl bg-gradient-to-br from-primary/20 via-accent/10 to-transparent border border-primary/30 shadow-lg hover:shadow-primary/20 transition-all hover:scale-[1.02]">
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg flex-shrink-0">
+                      <Target className="h-7 w-7 text-white" />
+                    </div>
+                    <div className="flex-1">
                       <h5 className="text-lg font-bold text-foreground mb-2">Optimiser vos décisions</h5>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         Recevez des conseils sur le placement, le timing et les stratégies macro pour améliorer votre impact
@@ -108,6 +120,31 @@ const ProgressDialog = ({ open, onOpenChange }: ProgressDialogProps) => {
                       </p>
                     </div>
                   </div>
+
+                  <div className="flex gap-4 p-6 rounded-2xl bg-gradient-to-br from-primary/20 via-accent/10 to-transparent border border-primary/30 shadow-lg hover:shadow-primary/20 transition-all hover:scale-[1.02]">
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg flex-shrink-0">
+                      <Target className="h-7 w-7 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h5 className="text-lg font-bold text-foreground mb-2">Adapter son build d’items intelligement</h5>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        AMOKK suit la partie, et vous explique quel item choisir et pour quelles raisons
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 p-6 rounded-2xl bg-gradient-to-br from-primary/20 via-accent/10 to-transparent border border-primary/30 shadow-lg hover:shadow-primary/20 transition-all hover:scale-[1.02]">
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg flex-shrink-0">
+                      <Target className="h-7 w-7 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h5 className="text-lg font-bold text-foreground mb-2">Comprendre réellement la game</h5>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        AMOKK vous permet de comprendre l’évolution et la dynamique de chaque game, pour que vous puissiez ne rien rater et bien choisir vos actions
+                      </p>
+                    </div>
+                  </div>
+
                 </div>
               </div>
 

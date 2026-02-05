@@ -698,6 +698,7 @@ async function createWindow(): Promise<void> {
     height: 800,
     minWidth: 800,
     minHeight: 600,
+    autoHideMenuBar: true,
     webPreferences: {
       preload: preloadPath,
       nodeIntegration: false,
@@ -705,6 +706,22 @@ async function createWindow(): Promise<void> {
     },
     icon: iconPath,
   });
+
+mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+  return {
+    action: "allow",
+    overrideBrowserWindowOptions: {
+      width: 1600,
+      height: 900,
+      minWidth: 900,
+      minHeight: 700,
+      autoHideMenuBar: true,
+      resizable: true,
+      center: true,
+      title: "Amokk - External Link",
+    },
+  };
+});
 
   // Determine the URL to load
   let loadURL: string;

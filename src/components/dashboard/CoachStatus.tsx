@@ -16,7 +16,7 @@ const CoachStatus = ({ amokkToggle, onToggle }: CoachStatusProps) => {
           Statut du Coach
         </CardTitle>
         <CardDescription>
-          {amokkToggle ? 'AMOKK est actif et prêt à vous coacher' : 'Activez AMOKK pour commencer le coaching'}
+          {amokkToggle ? 'AMOKK est actif, tu peux lancer une game pour qu\'il commence à te coacher !' : 'Activez AMOKK pour commencer le coaching'}
         </CardDescription>
       </CardHeader>
       <CardContent>

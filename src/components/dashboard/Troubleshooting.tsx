@@ -36,10 +36,12 @@ const Troubleshooting = ({ open, onOpenChange, onContactSupport }: Troubleshooti
                   Solutions Courantes
                 </h4>
                 <ul className="text-sm text-muted-foreground space-y-1 ml-6 list-disc">
-                  <li>Assurez-vous que League of Legends est en cours d'exécution</li>
-                  <li>Vérifiez les autorisations de votre microphone</li>
-                  <li>Vérifiez que AMOKK est défini sur Actif</li>
-                  <li>Redémarrez l'application si les problèmes persistent</li>
+                  <li>Assurez-vous qu’une partie de League of Legends est bien en cours</li>
+                  <li>Vérifiez que l’application dispose des autorisations nécessaires pour accéder au microphone</li>
+                  <li>Assurez-vous que le volume sonore du logiciel est suffisamment élevé</li>
+                  <li>Vérifiez que les paramètres d’AMOKK sont correctement configurés</li>
+                  <li>Assurez-vous qu’AMOKK est bien configuré en mode « Actif »</li>
+                  <li>Redémarrez l’application si le problème persiste</li>
                 </ul>
               </div>
               <Button

@@ -14,11 +14,18 @@ interface PlanCardProps {
   showButton?: boolean;
   isCurrentPlan?: boolean;
   planId: number;
+  link: string;
 }
 
-const PlanCard = ({ title, price, period, description, features, onSelect, isUpgrade, showButton = true, isCurrentPlan, planId }: PlanCardProps) => {
+const PlanCard = ({ title, price, period, description, features, onSelect, isUpgrade, showButton = true, isCurrentPlan, planId, link }: PlanCardProps) => {
   const handle_select = () => {
-    window.open('https://amokk.fr/#pricing', '_blank', 'noopener,noreferrer');
+    const links = {
+      3: 'https://amokkcoaching.lemonsqueezy.com/checkout/buy/812bef86-3ada-4a98-9fe8-05518f3cec4e', // Starter LemonSqueezy link
+      4: 'https://amokkcoaching.lemonsqueezy.com/checkout/buy/6155b329-917a-41f3-a77d-fdb17a72cac7', // Try-Hard LemonSqueezy link
+      5: 'https://amokkcoaching.lemonsqueezy.com/checkout/buy/fd35a47d-f594-4c39-ae32-34aac151d923', // Rush LemonSqueezy link
+    }
+
+    window.open(links[planId], '_blank', 'noopener,noreferrer');
   };
   return (
     <Card className="border-border/50 hover:border-primary/50 transition-all cursor-pointer group relative overflow-hidden">

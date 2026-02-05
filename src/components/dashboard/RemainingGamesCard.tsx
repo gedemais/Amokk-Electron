@@ -17,8 +17,8 @@ const RemainingGamesCard = ({ remainingGames, onUpgradeClick }: RemainingGamesCa
               <Zap className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h3 className="text-2xl font-bold">{remainingGames} Parties Coachées Restantes</h3>
-              <p className="text-sm text-muted-foreground">Déverrouillez le coaching illimité avec un plan premium</p>
+              <h3 className="text-2xl font-bold">{remainingGames} Parties coachées restantes</h3>
+              <p className="text-sm text-muted-foreground">Débloquez plus de coachings avec un plan supérieur.</p>
             </div>
           </div>
           <Button

@@ -62,7 +62,7 @@ const ConfigurationDialog = ({
                   Assistant
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  Activez l'assistant IA pour fournir des conseils et analyses en temps réel pendant le jeu
+                  Activez l’assistant pour pouvoir pour pouvoir poser n’importe quelle question pendant une game en maintenant le bouton push-to-talk.
                 </p>
               </div>
               <Switch
@@ -78,7 +78,7 @@ const ConfigurationDialog = ({
               <div className="flex-1">
                 <h4 className="font-semibold">Raccourci Push-to-Talk</h4>
                 <p className="text-sm text-muted-foreground">
-                  Maintenez le bouton push-to-talk pendant 1 seconde pendant que AMOKK parle pour interrompre les conseils
+                  Configurez le bouton à maintenir pour parler à AMOKK une fois l'assistant activé. <br />Vous pouvez aussi utiliser ce bouton pour interrompre AMOKK en le pressant brièvement pendant qu'il parle.
                 </p>
               </div>
               <Button
@@ -97,10 +97,10 @@ const ConfigurationDialog = ({
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <h4 className={`font-semibold transition-colors ${proactiveCoachEnabled ? 'text-accent' : 'text-foreground'}`}>
-                  Coach Proactif (V1.9.6)
+                  Coach Proactif (V2.5)
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  AMOKK identifiera de manière proactive les opportunités et les erreurs sans attendre que vous demandiez
+                  AMOKK identifiera de manière proactive des opportunités de conseils, mais priorisera malgré tout les questions que vous lui poserez.
                 </p>
               </div>
               <Switch
