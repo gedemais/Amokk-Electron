@@ -1,0 +1,146 @@
+{
+  "pages": {
+    "Login": {
+      "welcome_title": "Willkommen bei AMOKK",
+      "welcome_description": "Dein KI-Coach für League of Legends",
+      "email_label": "E-Mail",
+      "email_placeholder": "deine@email.com",
+      "password_label": "Passwort",
+      "password_placeholder": "••••••••",
+      "login_button_loading": "Wird verarbeitet...",
+      "login_button": "Anmelden",
+      "no_account": "Noch kein Konto?",
+      "create_account": "Konto erstellen!",
+      "login_failed_default": "Anmeldung fehlgeschlagen"
+    },
+    "NotFound": {
+      "title": "404",
+      "message": "Hoppla! Seite nicht gefunden",
+      "link": "Zurück zur Startseite"
+    }
+  },
+  "components": {
+    "dashboard": {
+      "CoachStatus": {
+        "title": "Coach-Status",
+        "active_desc": "AMOKK ist aktiv, starte ein Spiel, damit er mit dem Coaching beginnt!",
+        "inactive_desc": "Aktiviere AMOKK, um das Coaching zu starten",
+        "status_active": "Aktiv",
+        "status_inactive": "Inaktiv"
+      },
+      "ConfigurationDialog": {
+        "card_title": "Konfiguration",
+        "card_desc": "Personalisiere deine Coach-Einstellungen",
+        "dialog_title": "Konfiguration",
+        "dialog_desc": "Passe an, wie AMOKK dich coacht",
+        "language_title": "Sprache",
+        "language_desc": "Wähle die Sprache der Benutzeroberfläche",
+        "assistant_title": "Assistent",
+        "assistant_desc": "Aktiviere den Assistenten, um während des Spiels Fragen zu stellen, indem du die Push-to-Talk-Taste gedrückt hältst.",
+        "ptt_title": "Push-to-Talk Kürzel",
+        "ptt_desc": "Konfiguriere die Taste zum Sprechen mit AMOKK, sobald der Assistent aktiviert ist.",
+        "ptt_desc2": "Du kannst diese Taste auch verwenden, um AMOKK zu unterbrechen, indem du sie kurz drückst, während er spricht.",
+        "ptt_btn_binding": "Taste drücken...",
+        "proactive_title": "Proaktiver Coach (V2.5)",
+        "proactive_desc": "AMOKK wird proaktiv Ratschläge geben, priorisiert aber weiterhin deine gestellten Fragen.",
+        "volume_title": "Lautstärke",
+        "volume_desc": "Passe die Lautstärke der Stimme an",
+        "test_volume_btn": "Lautstärke testen"
+      },
+      "DashboardHeader": {
+        "title": "AMOKK"
+      },
+      "PlanCard": {
+        "no_commitment": "Ohne Bindung",
+        "start_btn": "Starten",
+        "upgrade_badge": "UPGRADE",
+        "current_plan_badge": "AKTUELLER PLAN"
+      },
+      "PricingDialog": {
+        "dialog_title": "Wähle deinen Plan",
+        "dialog_desc": "Schalte das volle Potenzial von Amokk mit einem Premium-Plan frei",
+        "starter_title": "Starter",
+        "starter_price": "5,99€",
+        "starter_period": "/Monat",
+        "starter_desc": "Ideal, um in Ruhe Fortschritte zu machen.",
+        "starter_features": [
+          "10 gecoachte Spiele / Monat",
+          "Proaktiver Coach während des gesamten Spiels",
+          "Sprachassistent im Spiel (Push-To-Talk)",
+          "Support in weniger als 24 Std."
+        ],
+        "tryhard_title": "Try-Hard",
+        "tryhard_price": "24,99€",
+        "tryhard_period": "/Monat",
+        "tryhard_desc": "Alles, was du brauchst, um schnell zu grindem!",
+        "tryhard_features": [
+          "50 gecoachte Spiele / Monat",
+          "Proaktiver Coach während des gesamten Spiels",
+          "Sprachassistent im Spiel (Push-To-Talk)",
+          "Support in weniger als 24 Std."
+        ],
+        "rush_title": "Rush",
+        "rush_price": "89,99€",
+        "rush_period": "/Monat",
+        "rush_desc": "Für alle, die Amokk in jedem Spiel dabei haben wollen!",
+        "rush_features": [
+          "UNBEGRENZT",
+          "Frühzeitiger Zugriff auf Neuerungen",
+          "Proaktiver Coach während des gesamten Spiels",
+          "Sprachassistent im Spiel (Push-To-Talk)",
+          "Support in weniger als 24 Std."
+        ]
+      },
+      "ProgressDialog": {
+        "card_title": "Wie man mit Amokk Fortschritte macht",
+        "card_desc": "Entdecke, wie Amokk dein Spiel transformiert",
+        "dialog_title": "Fortschritt mit Amokk",
+        "dialog_desc": "Dein ultimativer Begleiter, um League of Legends zu dominieren",
+        "why_title": "Warum Amokk?",
+        "why_text": "Amokk wurde entwickelt, um die Art und Weise zu verändern, wie du League of Legends lernst. Wir wissen, dass dieses Spiel überwältigend sein kann. Deshalb haben wir einen persönlichen KI-Coach entwickelt.",
+        "what_title": "Was Amokk dir zu meistern hilft",
+        "feature1_title": "Die 170 Champions kennen",
+        "feature1_desc": "Verstehe Stärken, Schwächen und Fähigkeiten jedes Champions",
+        "feature2_title": "Matchups spielen",
+        "feature2_desc": "Lerne, wie du jede Begegnung meisterst, wann du aggressiv und wann vorsichtig spielst",
+        "feature3_title": "Die richtigen Fragen stellen",
+        "feature3_desc": "Um gute Ratschläge zu erhalten, musst du lernen, AMOKK die richtigen Fragen zu stellen",
+        "feature4_title": "Entscheidungen optimieren",
+        "feature4_desc": "Erhalte Ratschläge zu Positionierung, Timing und Makro-Strategien",
+        "feature5_title": "Fehler in Echtzeit korrigieren",
+        "feature5_desc": "Identifiziere und korrigiere Fehler sofort, um schneller voranzukommen",
+        "feature6_title": "Intelligente Item-Build Anpassung",
+        "feature6_desc": "AMOKK verfolgt das Spiel und erklärt, welches Item du warum wählen solltest",
+        "feature7_title": "Das Spiel wirklich verstehen",
+        "feature7_desc": "AMOKK lässt dich die Dynamik jedes Spiels verstehen, damit du nichts verpasst",
+        "cta_text": "Jedes Spiel mit Amokk ist eine Chance, besser zu werden.\nAktiviere das Coaching und beginne deinen Aufstieg!"
+      },
+      "QuickStartGuide": {
+        "title": "Schnellstart-Anleitung",
+        "step_a_title": "Coach konfigurieren",
+        "step_a_desc": "Konfiguriere deine Vorlieben in den Einstellungen",
+        "step_b_title": "AMOKK aktivieren",
+        "step_b_desc": "Schalte den Schalter oben um, um das Coaching zu aktivieren",
+        "step_c_title": "Spiel starten",
+        "step_c_desc": "Fange einfach an zu spielen - AMOKK wird während deiner Spiele da sein",
+        "step_d_title": "Ratschläge steuern",
+        "step_d_desc": "Halte Push-to-Talk 1 Sekunde lang gedrückt, während AMOKK spricht, um ihn zu unterbrechen"
+      },
+      "RemainingGamesCard": {
+        "games_remaining_suffix": "Verbleibende gecoachte Spiele",
+        "games_remaining_desc": "Schalte unbegrenztes Coaching mit einem Premium-Plan frei",
+        "upgrade_btn": "Plan upgraden"
+      },
+      "Troubleshooting": {
+        "title": "Ein Problem?",
+        "subtitle": "Finde Lösungen für gängige Probleme",
+        "solutions_title": "Gängige Lösungen",
+        "solution_1": "Stelle sicher, dass League of Legends läuft",
+        "solution_2": "Überprüfe deine Mikrofonberechtigungen",
+        "solution_3": "Überprüfe, ob AMOKK auf Aktiv gesetzt ist",
+        "solution_4": "Starte die App neu, wenn die Probleme weiterhin bestehen",
+        "contact_btn": "Kontaktieren Sie uns"
+      }
+    }
+  }
+}
