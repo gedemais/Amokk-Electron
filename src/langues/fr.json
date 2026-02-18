@@ -23,7 +23,11 @@
     "dashboard": {
       "CoachStatus": {
         "title": "Statut du Coach",
+<<<<<<< HEAD
         "active_desc": "AMOKK est actif, tu peux lancer une game pour qu'il commence à te coacher !",
+=======
+        "active_desc": "AMOKK est actif et prêt à vous coacher",
+>>>>>>> e0fb8bcf57171d5e3ee9d5a811d677bb84fe26fe
         "inactive_desc": "Activez AMOKK pour commencer le coaching",
         "status_active": "Actif",
         "status_inactive": "Inactif"
@@ -36,6 +40,7 @@
         "language_title": "Langue",
         "language_desc": "Choisissez la langue de l'interface",
         "assistant_title": "Assistant",
+<<<<<<< HEAD
         "assistant_desc": "Activez l’assistant pour pouvoir pour pouvoir poser n’importe quelle question pendant une game en maintenant le bouton push-to-talk.",
         "ptt_title": "Raccourci Push-to-Talk",
         "ptt_desc": "Configurez le bouton à maintenir pour parler à AMOKK une fois l'assistant activé.",
@@ -43,6 +48,14 @@
         "ptt_btn_binding": "Appuyez sur une touche...",
         "proactive_title": "Coach Proactif (V2.5)",
         "proactive_desc": "AMOKK identifiera de manière proactive des opportunités de conseils, mais priorisera malgré tout les questions que vous lui poserez.",
+=======
+        "assistant_desc": "Activez l'assistant IA pour fournir des conseils et analyses en temps réel pendant le jeu",
+        "ptt_title": "Raccourci Push-to-Talk",
+        "ptt_desc": "Maintenez le bouton push-to-talk pendant 1 seconde pendant que AMOKK parle pour interrompre les conseils",
+        "ptt_btn_binding": "Appuyez sur une touche...",
+        "proactive_title": "Coach Proactif (V1.9.6)",
+        "proactive_desc": "AMOKK identifiera de manière proactive les opportunités et les erreurs sans attendre que vous demandiez",
+>>>>>>> e0fb8bcf57171d5e3ee9d5a811d677bb84fe26fe
         "volume_title": "Volume",
         "volume_desc": "Ajustez le niveau du volume de la voix",
         "test_volume_btn": "Tester le Volume"
@@ -103,6 +116,7 @@
         "feature1_desc": "Comprenez les forces, faiblesses et capacités de chaque champion pour anticiper les actions adverses",
         "feature2_title": "Jouer les matchups",
         "feature2_desc": "Apprenez comment gérer chaque affrontement, quand être agressif et quand jouer prudemment",
+<<<<<<< HEAD
         "feature3_title": "Se poser les bonnes questions",
         "feature3_desc": "Pour obtenir les bons conseils d’AMOKK, vous devrez apprendre à lui poser les bonnes questions",
         "feature4_title": "Optimiser vos décisions",
@@ -113,6 +127,12 @@
         "feature6_desc": "AMOKK suit la partie, et vous explique quel item choisir et pour quelles raisons",
         "feature7_title": "Comprendre réellement la game",
         "feature7_desc": "AMOKK vous permet de comprendre l’évolution et la dynamique de chaque game, pour que vous puissiez ne rien rater et bien choisir vos actions",
+=======
+        "feature3_title": "Optimiser vos décisions",
+        "feature3_desc": "Recevez des conseils sur le placement, le timing et les stratégies macro pour améliorer votre impact",
+        "feature4_title": "Corriger vos erreurs en temps réel",
+        "feature4_desc": "Identifiez et corrigez vos erreurs instantanément pour progresser plus rapidement",
+>>>>>>> e0fb8bcf57171d5e3ee9d5a811d677bb84fe26fe
         "cta_text": "Chaque partie avec Amokk est une opportunité de devenir meilleur.\nActivez le coaching et commencez votre ascension !"
       },
       "QuickStartGuide": {
@@ -127,18 +147,32 @@
         "step_d_desc": "Maintenez push-to-talk pendant 1 seconde pendant que AMOKK parle pour interrompre"
       },
       "RemainingGamesCard": {
+<<<<<<< HEAD
         "games_remaining_suffix": "Parties Coachées Restantes",
         "games_remaining_desc": "Déverrouillez le coaching illimité avec un plan premium",
+=======
+        "games_remaining_suffix": "Parties coachées restantes",
+        "games_remaining_desc": "Débloquez plus de coachings avec un plan supérieur.",
+>>>>>>> e0fb8bcf57171d5e3ee9d5a811d677bb84fe26fe
         "upgrade_btn": "Améliorer le Plan"
       },
       "Troubleshooting": {
         "title": "Un problème ?",
         "subtitle": "Trouvez des solutions aux problèmes courants",
         "solutions_title": "Solutions Courantes",
+<<<<<<< HEAD
         "solution_1": "Assurez-vous que League of Legends est en cours d'exécution",
         "solution_2": "Vérifiez les autorisations de votre microphone",
         "solution_3": "Vérifiez que AMOKK est défini sur Actif",
         "solution_4": "Redémarrez l'application si les problèmes persistent",
+=======
+        "solution_1": "Assurez-vous qu’une partie de League of Legends est bien en cours",
+        "solution_2": "Vérifiez que l’application dispose des autorisations nécessaires pour accéder",
+        "solution_3": "Assurez-vous que le volume sonore du logiciel est suffisamment élevé",
+        "solution_4": "Vérifiez que les paramètres d’AMOKK sont correctement configurés",
+        "solution_5": "Assurez-vous qu’AMOKK est bien configuré en mode « Actif »",
+        "solution_6": "Redémarrez l'application si les problèmes persistent",
+>>>>>>> e0fb8bcf57171d5e3ee9d5a811d677bb84fe26fe
         "contact_btn": "Nous Contacter"
       }
     }
