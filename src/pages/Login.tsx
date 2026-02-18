@@ -14,7 +14,8 @@ import { Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { logger } from "@/utils/logger";
 import { useDebugPanel } from "@/hooks/useDebugPanel";
-import LanguageSelector from "@/components/LanguageSelector";
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from "@/components/LanguageSelector.tsx";
 
 // Backend API URL
 const BACKEND_HOST = import.meta.env.VITE_BACKEND_HOST || "127.0.0.1";
@@ -22,6 +23,7 @@ const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || "8000";
 const BACKEND_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}`;
 
 const Login = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const debug = useDebugPanel();
   const isDev = import.meta.env.DEV;
@@ -109,21 +111,21 @@ const Login = () => {
             <img src={logo} alt="AMOKK Logo" className="h-20 w-20" />
           </div>
           <CardTitle className="text-3xl font-bold glow-text">
-            Welcome to AMOKK
+            {t('pages.Login.welcome_title')}
           </CardTitle>
           <CardDescription className="text-muted-foreground">
-            Your AI coach for League of Legends
+            {t('pages.Login.welcome_description')}
           </CardDescription>
         </CardHeader>
 
         <CardContent>
           <form className="space-y-4" onSubmit={handleLogin}>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('pages.Login.email_label')}</Label>
               <Input
                 id="email"
                 type="email"
-                /*placeholder="your@email.com"*/
+                placeholder={t('pages.Login.email_placeholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -131,7 +133,7 @@ const Login = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('pages.Login.password_label')}</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -168,20 +170,20 @@ const Login = () => {
               className="w-full text-lg h-12"
               disabled={isLoading}
             >
-              {isLoading ? "En cours..." : "Login"}
+              {isLoading ? t('pages.Login.login_button_loading') : t('pages.Login.login_button')}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              Pas encore de compte ?{" "}
+              {t('pages.Login.no_account')}{" "}
               <a
                 href="https://amokk.fr/auth"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary hover:text-primary/80 font-medium transition-colors"
               >
-                Créer un compte !
+                {t('pages.Login.create_account')}
               </a>
             </p>
           </div>
