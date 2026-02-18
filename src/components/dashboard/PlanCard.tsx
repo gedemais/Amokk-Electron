@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { url } from "inspector/promises";
 import { Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 
 interface PlanCardProps {
@@ -19,6 +20,7 @@ interface PlanCardProps {
 }
 
 const PlanCard = ({ title, price, period, description, features, onSelect, isUpgrade, showButton = true, isCurrentPlan, planId, link }: PlanCardProps) => {
+  const { t } = useTranslation();
   const handle_select = () => {
     const links = {
       3: 'https://amokkcoaching.lemonsqueezy.com/checkout/buy/812bef86-3ada-4a98-9fe8-05518f3cec4e', // Starter LemonSqueezy link
@@ -49,14 +51,14 @@ const PlanCard = ({ title, price, period, description, features, onSelect, isUpg
       {/* Upgrade badge */}
       {isUpgrade && (
         <div className="absolute top-0 right-0 bg-gradient-to-br from-primary to-primary text-white text-xs font-bold px-4 py-1 rounded-bl-lg">
-          UPGRADE
+          {t('components.dashboard.PlanCard.upgrade_badge')}
         </div>
       )}
 
       {/* Current plan badge */}
       {isCurrentPlan && (
         <div className="absolute top-0 left-0 bg-green-500 text-white text-xs font-bold px-4 py-1 rounded-br-lg z-20">
-          PLAN ACTUEL
+          {t('components.dashboard.PlanCard.current_plan_badge')}
         </div>
       )}
 
@@ -78,7 +80,7 @@ const PlanCard = ({ title, price, period, description, features, onSelect, isUpg
               <span className="text-muted-foreground">{period}</span>
             </div>
             <p className="text-xl font-bold text-muted-foreground mt-2">
-              Sans Engagement
+              {t('components.dashboard.PlanCard.no_commitment')}
             </p>
             <p className="text-sm text-muted-foreground mt-3">{description}</p>
           </div>
@@ -94,7 +96,7 @@ const PlanCard = ({ title, price, period, description, features, onSelect, isUpg
 
           {showButton && (
             <Button className="w-full" variant="outline" onClick={handle_select}>
-              Commencer
+              {t('components.dashboard.PlanCard.start_btn')}
             </Button>
           )}
         </div>
