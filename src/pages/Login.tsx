@@ -87,8 +87,7 @@ const Login = () => {
 
       navigate("/dashboard");
     } catch (error) {
-      const errorMsg =
-        error instanceof Error ? error.message : "Login failed";
+      const errorMsg = error instanceof Error ? error.message : "Login failed";
       setErrorMessage(errorMsg);
       logger.error("Login error", errorMsg);
     } finally {
@@ -123,6 +122,7 @@ const Login = () => {
               <Input
                 id="email"
                 type="email"
+                /*placeholder="your@email.com"*/
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -135,6 +135,7 @@ const Login = () => {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
