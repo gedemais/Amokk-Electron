@@ -1,5 +1,5 @@
 import logo from "@/assets/logo.png";
-import LanguageSelector from "@/components/ui/langage-selector.tsx";
+import LanguageSelector from "@/components/LanguageSelector";
 
 const DashboardHeader = () => {
   return (

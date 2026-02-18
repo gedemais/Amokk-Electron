@@ -14,7 +14,7 @@ import { Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { logger } from "@/utils/logger";
 import { useDebugPanel } from "@/hooks/useDebugPanel";
-import LanguageSelector from "@/components/ui/langage-selector";
+import LanguageSelector from "@/components/LanguageSelector";
 
 // Backend API URL
 const BACKEND_HOST = import.meta.env.VITE_BACKEND_HOST || "127.0.0.1";
