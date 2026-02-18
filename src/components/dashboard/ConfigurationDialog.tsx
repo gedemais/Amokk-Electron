@@ -28,7 +28,6 @@ interface ConfigurationDialogProps {
   onTestVolume: () => void;
 }
 
-const { t } = useTranslation();
 const ConfigurationDialog = ({
   configurationDialogOpen,
   onConfigurationDialogOpenChange,
@@ -43,6 +42,7 @@ const ConfigurationDialog = ({
   onVolumeChange,
   onTestVolume,
 }: ConfigurationDialogProps) => {
+  const { t } = useTranslation();
   return (
     <Dialog
       open={configurationDialogOpen}

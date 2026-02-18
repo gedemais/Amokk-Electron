@@ -15,14 +15,13 @@ interface PricingDialogProps {
   userPlanId: number;
 }
 
-const { t } = useTranslation();
-
 const PricingDialog = ({
   open,
   onOpenChange,
   onSelectPlan,
   userPlanId,
 }: PricingDialogProps) => {
+  const { t } = useTranslation();
   const plans = [
     {
       title: t("pages.PricingDialog.starter_title"),
@@ -72,10 +71,10 @@ const PricingDialog = ({
       <DialogContent className="bg-card border-border/50 max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold text-center bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Choisissez votre plan
+            {t("pages.PricingDialog.dialog_title")}
           </DialogTitle>
           <DialogDescription className="text-center text-base">
-            Débloquez tout le potentiel d'Amokk avec un plan premium
+            {t("pages.PricingDialog.dialog_desc")}
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-6">
