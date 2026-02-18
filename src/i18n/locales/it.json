@@ -8,15 +8,15 @@
       "password_label": "Password",
       "password_placeholder": "••••••••",
       "login_button_loading": "In corso...",
-      "login_button": "login",
+      "login_button": "Accedi",
       "no_account": "Non hai ancora un account?",
       "create_account": "Crea un account!",
-      "login_failed_default": "Login failed"
+      "login_failed_default": "Accesso fallito"
     },
     "NotFound": {
       "title": "404",
-      "message": "Oops! Page not found",
-      "link": "Return to Home"
+      "message": "Ops! Pagina non trovata",
+      "link": "Torna alla Home"
     }
   },
   "components": {
@@ -122,9 +122,7 @@
         "step_b_title": "Attiva AMOKK",
         "step_b_desc": "Attiva l'interruttore sopra per abilitare il coaching",
         "step_c_title": "Lancia una partita",
-        "step_c_desc": "Inizia semplicemente a giocare - AMOKK sarà lì con te",
-        "step_d_title": "Controlla i consigli",
-        "step_d_desc": "Tieni premuto push-to-talk per 1 secondo mentre AMOKK parla per interromperlo"
+        "step_c_desc": "Inizia semplicemente a giocare - AMOKK sarà lì con te"
       },
       "RemainingGamesCard": {
         "games_remaining_suffix": "Partite Coachate Rimanenti",

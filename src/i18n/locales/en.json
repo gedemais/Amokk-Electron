@@ -122,9 +122,7 @@
         "step_b_title": "Activate AMOKK",
         "step_b_desc": "Toggle the switch above to enable coaching",
         "step_c_title": "Launch a game",
-        "step_c_desc": "Just start playing - AMOKK will be there during your games",
-        "step_d_title": "Control the advice",
-        "step_d_desc": "Hold push-to-talk for 1 second while AMOKK speaks to interrupt"
+        "step_c_desc": "Just start playing - AMOKK will be there during your games"
       },
       "RemainingGamesCard": {
         "games_remaining_suffix": "Coached Games Remaining",

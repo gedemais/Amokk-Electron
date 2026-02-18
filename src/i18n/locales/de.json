@@ -5,18 +5,18 @@
       "welcome_description": "Dein KI-Coach für League of Legends",
       "email_label": "E-Mail",
       "email_placeholder": "deine@email.com",
-      "password_label": "Password",
+      "password_label": "Passwort",
       "password_placeholder": "••••••••",
       "login_button_loading": "Wird verarbeitet...",
-      "login_button": "login",
+      "login_button": "Anmelden",
       "no_account": "Noch kein Konto?",
       "create_account": "Konto erstellen!",
-      "login_failed_default": "Login failed"
+      "login_failed_default": "Anmeldung fehlgeschlagen"
     },
     "NotFound": {
       "title": "404",
-      "message": "Oops! Page not found",
-      "link": "Return to Home"
+      "message": "Hoppla! Seite nicht gefunden",
+      "link": "Zurück zur Startseite"
     }
   },
   "components": {
@@ -122,9 +122,7 @@
         "step_b_title": "AMOKK aktivieren",
         "step_b_desc": "Schalte den Schalter oben um, um das Coaching zu aktivieren",
         "step_c_title": "Spiel starten",
-        "step_c_desc": "Fange einfach an zu spielen - AMOKK wird während deiner Spiele da sein",
-        "step_d_title": "Ratschläge steuern",
-        "step_d_desc": "Halte Push-to-Talk 1 Sekunde lang gedrückt, während AMOKK spricht, um ihn zu unterbrechen"
+        "step_c_desc": "Fange einfach an zu spielen - AMOKK wird während deiner Spiele da sein"
       },
       "RemainingGamesCard": {
         "games_remaining_suffix": "Verbleibende gecoachte Spiele",

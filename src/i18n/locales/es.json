@@ -5,18 +5,18 @@
       "welcome_description": "Tu coach de IA para League of Legends",
       "email_label": "Correo electrónico",
       "email_placeholder": "tu@email.com",
-      "password_label": "Password",
+      "password_label": "Contraseña",
       "password_placeholder": "••••••••",
       "login_button_loading": "Cargando...",
-      "login_button": "login",
+      "login_button": "Iniciar sesión",
       "no_account": "¿Aún no tienes cuenta?",
       "create_account": "¡Crear una cuenta!",
-      "login_failed_default": "Login failed"
+      "login_failed_default": "Error al iniciar sesión"
     },
     "NotFound": {
       "title": "404",
-      "message": "Oops! Page not found",
-      "link": "Return to Home"
+      "message": "¡Ups! Página no encontrada",
+      "link": "Volver al inicio"
     }
   },
   "components": {
@@ -122,9 +122,7 @@
         "step_b_title": "Activa AMOKK",
         "step_b_desc": "Activa el interruptor de arriba para habilitar el coaching",
         "step_c_title": "Inicia una partida",
-        "step_c_desc": "Simplemente empieza a jugar - AMOKK estará allí durante tus partidas",
-        "step_d_title": "Controla los consejos",
-        "step_d_desc": "Mantén push-to-talk por 1 segundo mientras AMOKK habla para interrumpirlo"
+        "step_c_desc": "Simplemente empieza a jugar - AMOKK estará allí durante tus partidas"
       },
       "RemainingGamesCard": {
         "games_remaining_suffix": "Partidas Entrenadas Restantes",
