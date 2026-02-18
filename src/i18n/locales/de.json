@@ -63,8 +63,8 @@
         "starter_price": "5,99€",
         "starter_period": "/Monat",
         "starter_desc": "Ideal, um in Ruhe Fortschritte zu machen.",
-        "starter_features": [
-          "10 gecoachte Spiele / Monat",
+        "starter_features": "gecoachte Spiele / Monat",
+        "starter_features2": [
           "Proaktiver Coach während des gesamten Spiels",
           "Sprachassistent im Spiel (Push-To-Talk)",
           "Support in weniger als 24 Std."
@@ -73,8 +73,8 @@
         "tryhard_price": "24,99€",
         "tryhard_period": "/Monat",
         "tryhard_desc": "Alles, was du brauchst, um schnell zu grindem!",
-        "tryhard_features": [
-          "50 gecoachte Spiele / Monat",
+        "tryhard_features": "gecoachte Spiele / Monat",
+        "tryhard_features2": [
           "Proaktiver Coach während des gesamten Spiels",
           "Sprachassistent im Spiel (Push-To-Talk)",
           "Support in weniger als 24 Std."
@@ -83,8 +83,8 @@
         "rush_price": "89,99€",
         "rush_period": "/Monat",
         "rush_desc": "Für alle, die Amokk in jedem Spiel dabei haben wollen!",
-        "rush_features": [
-          "UNBEGRENZT",
+        "rush_features": "UNBEGRENZT",
+        "rush_features2": [
           "Frühzeitiger Zugriff auf Neuerungen",
           "Proaktiver Coach während des gesamten Spiels",
           "Sprachassistent im Spiel (Push-To-Talk)",

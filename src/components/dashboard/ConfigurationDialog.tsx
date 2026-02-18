@@ -1,7 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Settings, Keyboard, Volume2 } from "lucide-react";
 
@@ -20,6 +28,7 @@ interface ConfigurationDialogProps {
   onTestVolume: () => void;
 }
 
+const { t } = useTranslation();
 const ConfigurationDialog = ({
   configurationDialogOpen,
   onConfigurationDialogOpenChange,
@@ -35,7 +44,10 @@ const ConfigurationDialog = ({
   onTestVolume,
 }: ConfigurationDialogProps) => {
   return (
-    <Dialog open={configurationDialogOpen} onOpenChange={onConfigurationDialogOpenChange}>
+    <Dialog
+      open={configurationDialogOpen}
+      onOpenChange={onConfigurationDialogOpenChange}
+    >
       <DialogTrigger asChild>
         <Card className="cursor-pointer hover:border-accent/50 transition-colors border-border/50 bg-card/95 backdrop-blur h-full">
           <CardContent className="pt-6 h-full flex items-center">
@@ -44,8 +56,12 @@ const ConfigurationDialog = ({
                 <Settings className="h-6 w-6 text-accent" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Configuration</h3>
-                <p className="text-sm text-muted-foreground">Personnalisez les paramètres de votre coach</p>
+                <h3 className="font-semibold text-lg">
+                  {t("pages.ConfigurationDialog.card_title")}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {t("pages.ConfigurationDialog.card_desc")}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -53,20 +69,24 @@ const ConfigurationDialog = ({
       </DialogTrigger>
       <DialogContent className="bg-card border-border/50">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Configuration</DialogTitle>
+          <DialogTitle className="text-2xl">
+            {t("pages.ConfigurationDialog.dialog_title")}
+          </DialogTitle>
           <DialogDescription>
-            Personnalisez la façon dont AMOKK vous coach
+            {t("pages.ConfigurationDialog.dialog_desc")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6 py-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <h4 className={`font-semibold transition-colors ${assistantToggle ? 'text-accent' : 'text-foreground'}`}>
-                  Assistant
+                <h4
+                  className={`font-semibold transition-colors ${assistantToggle ? "text-accent" : "text-foreground"}`}
+                >
+                  {t("pages.ConfigurationDialog.assistant_title")}
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  Activez l’assistant pour pouvoir pour pouvoir poser n’importe quelle question pendant une game en maintenant le bouton push-to-talk.
+                  {t("pages.ConfigurationDialog.assistant_desc")}
                 </p>
               </div>
               <Switch
@@ -80,9 +100,12 @@ const ConfigurationDialog = ({
           <div className="space-y-3">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <h4 className="font-semibold">Raccourci Push-to-Talk</h4>
+                <h4 className="font-semibold">
+                  {t("pages.ConfigurationDialog.ptt_title")}
+                </h4>
                 <p className="text-sm text-muted-foreground">
-                  Configurez le bouton à maintenir pour parler à AMOKK une fois l'assistant activé. <br />Vous pouvez aussi utiliser ce bouton pour interrompre AMOKK en le pressant brièvement pendant qu'il parle.
+                  {t("pages.ConfigurationDialog.ptt_desc")} <br />
+                  {t("pages.ConfigurationDialog.ptt_desc2")}
                 </p>
               </div>
               <Button
@@ -92,7 +115,9 @@ const ConfigurationDialog = ({
                 className="border-accent/50 hover:bg-accent/10 min-w-[100px]"
               >
                 <Keyboard className="h-4 w-4 mr-2" />
-                {isBindingKey ? "Appuyez sur une touche..." : pushToTalkKey}
+                {isBindingKey
+                  ? t("pages.ConfigurationDialog.ptt_btn_binding")
+                  : pushToTalkKey}
               </Button>
             </div>
           </div>
@@ -100,11 +125,13 @@ const ConfigurationDialog = ({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <h4 className={`font-semibold transition-colors ${proactiveCoachEnabled ? 'text-accent' : 'text-foreground'}`}>
-                  Coach Proactif (V2.5)
+                <h4
+                  className={`font-semibold transition-colors ${proactiveCoachEnabled ? "text-accent" : "text-foreground"}`}
+                >
+                  {t("pages.ConfigurationDialog.proactive_title")}
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  AMOKK identifiera de manière proactive des opportunités de conseils, mais priorisera malgré tout les questions que vous lui poserez.
+                  {t("pages.ConfigurationDialog.proactive_desc")}
                 </p>
               </div>
               <Switch
@@ -118,9 +145,11 @@ const ConfigurationDialog = ({
           <div className="space-y-3">
             <div className="flex flex-col gap-4">
               <div className="flex-1">
-                <h4 className="font-semibold">Volume</h4>
+                <h4 className="font-semibold">
+                  {t("pages.ConfigurationDialog.volume_title")}
+                </h4>
                 <p className="text-sm text-muted-foreground">
-                  Ajustez le niveau du volume de la voix
+                  {t("pages.ConfigurationDialog.volume_desc")}
                 </p>
               </div>
               <div className="flex items-center gap-4">
@@ -132,7 +161,9 @@ const ConfigurationDialog = ({
                   step={1}
                   className="flex-1"
                 />
-                <span className="text-sm font-medium min-w-[3ch]">{volume[0]}</span>
+                <span className="text-sm font-medium min-w-[3ch]">
+                  {volume[0]}
+                </span>
               </div>
               <Button
                 variant="outline"
@@ -141,7 +172,7 @@ const ConfigurationDialog = ({
                 className="border-accent/50 hover:bg-accent/10"
               >
                 <Volume2 className="h-4 w-4 mr-2" />
-                Tester le Volume
+                {t("pages.ConfigurationDialog.test_volume_btn")}
               </Button>
             </div>
           </div>

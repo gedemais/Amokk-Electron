@@ -63,8 +63,8 @@
         "starter_price": "5,99€",
         "starter_period": "/mese",
         "starter_desc": "Ideale per progredire con calma.",
-        "starter_features": [
-          "10 partite coachate / mese",
+        "starter_features": "partite coachate / mese",
+        "starter_features2": [
           "Coach proattivo durante tutta la partita",
           "Assistente Vocale in partita (Push-To-Talk)",
           "Supporto in meno di 24 ore"
@@ -73,8 +73,8 @@
         "tryhard_price": "24,99€",
         "tryhard_period": "/mese",
         "tryhard_desc": "Tutto il necessario per scalare e progredire velocemente!",
-        "tryhard_features": [
-          "50 partite coachate / mese",
+        "tryhard_features": "partite coachate / mese",
+        "tryhard_features2": [
           "Coach proattivo durante tutta la partita",
           "Assistente Vocale in partita (Push-To-Talk)",
           "Supporto in meno di 24 ore"
@@ -83,8 +83,8 @@
         "rush_price": "89,99€",
         "rush_period": "/mese",
         "rush_desc": "Per chi vuole godersi Amokk in ogni partita!",
-        "rush_features": [
-          "ILLIMITATO",
+        "rush_features": "ILLIMITATO",
+        "rush_features2": [
           "Accesso anticipato alle novità",
           "Coach proattivo durante tutta la partita",
           "Assistente Vocale in partita (Push-To-Talk)",

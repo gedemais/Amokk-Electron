@@ -1,5 +1,12 @@
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import PlanCard from "./PlanCard";
+import { useTranslation } from "react-i18next";
 
 interface PricingDialogProps {
   open: boolean;
@@ -8,45 +15,53 @@ interface PricingDialogProps {
   userPlanId: number;
 }
 
-const PricingDialog = ({ open, onOpenChange, onSelectPlan, userPlanId }: PricingDialogProps) => {
+const { t } = useTranslation();
+
+const PricingDialog = ({
+  open,
+  onOpenChange,
+  onSelectPlan,
+  userPlanId,
+}: PricingDialogProps) => {
   const plans = [
     {
-      title: "Starter",
-      price: "5,99€",
-      period: "/mois",
-      description: "Idéal pour progresser tranquillement.",
+      title: t("pages.PricingDialog.starter_title"),
+      price: t("pages.PricingDialog.starter_price"),
+      period: t("pages.PricingDialog.starter_period"),
+      description: t("pages.PricingDialog.starter_desc"),
       features: [
-        <><span className="font-bold text-primary">10</span> games coachées / mois</>,
-        "Coach proactif durant toute la game",
-        "Assistant Vocal en cours de partie (Push-To-Talk)",
-        "Support en moins de 24h",
+        <>
+          <span className="font-bold text-primary">10</span>{" "}
+          {t("pages.PricingDialog.starter_features")}
+        </>,
+        t("pages.PricingDialog.starter_features2"),
       ],
       planId: 3,
     },
     {
-      title: "Try-Hard",
-      price: "24,99€",
-      period: "/mois",
-      description: "Tout ce qu'il faut pour grind et progresser rapidement !",
+      title: t("pages.PricingDialog.tryhard_title"),
+      price: t("pages.PricingDialog.tryhard_price"),
+      period: t("pages.PricingDialog.tryhard_period"),
+      description: t("pages.PricingDialog.tryhard_desc"),
       features: [
-        <><span className="font-bold text-primary">50</span> games coachées / mois</>,
-        "Coach proactif durant toute la game",
-        "Assistant Vocal en cours de partie (Push-To-Talk)",
-        "Support en moins de 24h",
+        <>
+          <span className="font-bold text-primary"> 50 </span>{" "}
+          {t("pages.PricingDialog.tryhard_features")}
+        </>,
+        t("pages.PricingDialog.tryhard_features2"),
       ],
       planId: 4,
     },
     {
-      title: "Rush",
-      price: "89,99€",
-      period: "/mois",
-      description: "Pour ceux qui veulent profiter d'Amokk à chaque game !",
+      title: t("pages.PricingDialog.rush_title"),
+      price: t("pages.PricingDialog.rush_price"),
+      period: t("pages.PricingDialog.rush_period"),
+      description: t("pages.PricingDialog.rush_desc"),
       features: [
-        <span className="font-bold text-primary">ILLIMITÉ</span>,
-        "Accès anticipé aux nouveautés",
-        "Coach proactif durant toute la game",
-        "Assistant Vocal en cours de partie (Push-To-Talk)",
-        "Support en moins de 24h",
+        <span className="font-bold text-primary">
+          {t("pages.PricingDialog.rush_features")}
+        </span>,
+        t("pages.PricingDialog.rush_features2"),
       ],
       planId: 5,
     },
