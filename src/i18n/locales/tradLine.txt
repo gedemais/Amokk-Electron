@@ -1,0 +1,129 @@
+Login.tsx : pages.Login
+
+ligne 79 / 14
+ligne 90 / 14
+ligne 111 / 4
+ligne 114 / 5
+ligne 121 / 6
+ligne 125 / 7
+ligne 133 / 8
+ligne 138 / 9
+ligne 170 *2 / 10 - 11
+ligne 176 / 12
+ligne 183 / 13
+
+NotFound.tsx : pages.NotFound
+
+ligne 14 / 17
+ligne 15 / 18
+ligne 17 / 19
+
+CoachStatus.tsx : components.dashboard.CoachStatus
+
+ligne 16 / 25
+ligne 19 / 26
+ligne 25 *2 / 28 - 29
+
+ConfigurationDialog.tsx : components.dashboard.configurationDialog
+
+ligne 47 / 32
+ligne 48 / 33
+ligne 56 / 34
+ligne 58 / 35
+36 et 37 du json pour le changement de langue
+ligne 66 / 38
+ligne 69 / 39
+ligne 83 / 40
+ligne 85 / 41
+ligne 95 / 43
+ligne 104 / 44
+ligne 107 / 45
+ligne 121 / 46
+ligne 123 / 47
+ligne 144 / 48
+
+DashboardHeader.tsx : components.dashboard.DashboardHeader
+
+ligne 8 / 51
+
+PlanCard.tsx : components.dashboard.PlanCard
+
+ligne 52 / 56
+ligne 59 / 57
+ligne 81 / 54
+ligne 97 / 55
+
+PricingDialog.tsx : components.dashboard.PricingDialog
+
+ligne 14 / 62
+ligne 15 / 63
+ligne 16 / 64
+ligne 17 / 65
+ligne 18 / 66
+ligne 27 / 72
+ligne 28 / 73
+ligne 29 / 74
+ligne 30 / 75
+ligne 31 / 76
+ligne 40 / 82
+ligne 41 / 83
+ligne 42 / 84
+ligne 43 / 85
+ligne 44 / 86
+ligne 60 / 60
+ligne 63 / 61
+
+ProgressDialog.tsx : components.dashboard.ProgressDialog
+
+ligne 24 / 95
+ligne 26 / 96
+ligne 43 / 97
+ligne 46 / 98
+ligne 53 to 57 / 100
+ligne 62 / 101
+ligne 69 / 102
+ligne 71 / 103
+ligne 81 / 104
+ligne 83 / 105
+ligne 93 / 106
+ligne 95 / 107
+ligne 105 / 108
+ligne 107 / 109
+ligne 117 / 110
+ligne 119 / 111
+ligne 129 / 112
+ligne 131 / 113
+ligne 141 / 114
+ligne 143 / 115
+ligne 156 - 157 / 116
+
+QuickStartGuide.tsx : components.dashboard.QuickStartGuide
+
+ligne 7 / 120
+ligne 8 / 121
+ligne 12 / 122
+ligne 13 / 123
+ligne 17 / 124
+ligne 19 / 125
+ligne 23 / 126
+ligne 24 / 127
+ligne 32 / 119
+
+RemainingGamesCard.tsx : components.dashboard.RemainingGamesCard
+
+ligne 20 / 130
+ligne 21 / 131
+ligne 30 / 132
+
+Troubleshooting.tsx : components.dashboard.Troubleshooting
+
+ligne 24 / 135
+ligne 25 / 136
+ligne 36 / 137
+ligne 39 / 138
+ligne 40 / 139
+ligne 41 / 140
+ligne 42 / 141
+ligne 43 / 142
+ligne 44 / 143
+ligne 52 / 144

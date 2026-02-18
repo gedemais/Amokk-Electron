@@ -58,7 +58,7 @@ const LanguageSelector: React.FC = () => {
                         {languages.map((language) => (
                             <button
                                 key={language.code}
-                                // onClick={() => changeLanguage(language.code)}
+                                onClick={() => changeLanguage(language.code)}
                                 className={`w-full flex items-center space-x-3 px-4 py-3 text-sm hover:bg-gray-800 transition-colors first:rounded-t-lg last:rounded-b-lg ${(currentLanguage ?? languages[0]).code === language.code
                                     ? "text-blue-400 bg-gray-800/50"
                                     : "text-gray-300 hover:text-white"

@@ -5,18 +5,18 @@
       "welcome_description": "Dein KI-Coach für League of Legends",
       "email_label": "E-Mail",
       "email_placeholder": "deine@email.com",
-      "password_label": "Passwort",
+      "password_label": "Password",
       "password_placeholder": "••••••••",
       "login_button_loading": "Wird verarbeitet...",
-      "login_button": "Anmelden",
+      "login_button": "login",
       "no_account": "Noch kein Konto?",
       "create_account": "Konto erstellen!",
-      "login_failed_default": "Anmeldung fehlgeschlagen"
+      "login_failed_default": "Login failed"
     },
     "NotFound": {
       "title": "404",
-      "message": "Hoppla! Seite nicht gefunden",
-      "link": "Zurück zur Startseite"
+      "message": "Oops! Page not found",
+      "link": "Return to Home"
     }
   },
   "components": {

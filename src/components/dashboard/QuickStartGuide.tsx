@@ -2,9 +2,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const QuickStartGuide = () => {
   const tutorialSteps = [
-    { step: 'A', title: 'Configurez votre coach', description: 'Configurez vos préférences dans les paramètres' },
-    { step: 'B', title: 'Activez AMOKK', description: 'Basculez l\'interrupteur ci-dessus pour activer le coaching' },
-    { step: 'C', title: 'Lancez une partie', description: 'Commencez simplement à jouer - AMOKK sera là pendant vos parties' }
+    {
+      step: "A",
+      title: "Configurez votre coach",
+      description: "Configurez vos préférences dans les paramètres",
+    },
+    {
+      step: "B",
+      title: "Activez AMOKK",
+      description: "Basculez l'interrupteur ci-dessus pour activer le coaching",
+    },
+    {
+      step: "C",
+      title: "Lancez une partie",
+      description:
+        "Commencez simplement à jouer - AMOKK sera là pendant vos parties",
+    },
+    /*{
+      step: "D",
+      title: "Contrôlez les conseils",
+      description:
+        "Maintenez push-to-talk pendant 1 seconde pendant que AMOKK parle pour interrompre",
+    },*/
   ];
 
   return (
@@ -20,7 +39,9 @@ const QuickStartGuide = () => {
             </div>
             <div>
               <h3 className="font-semibold text-foreground">{item.title}</h3>
-              <p className="text-sm text-muted-foreground">{item.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {item.description}
+              </p>
             </div>
           </div>
         ))}
