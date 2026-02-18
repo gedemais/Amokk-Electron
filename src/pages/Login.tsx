@@ -14,6 +14,7 @@ import { Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { logger } from "@/utils/logger";
 import { useDebugPanel } from "@/hooks/useDebugPanel";
+import LanguageSelector from "@/components/ui/langage-selector";
 
 // Backend API URL
 const BACKEND_HOST = import.meta.env.VITE_BACKEND_HOST || "127.0.0.1";
@@ -102,7 +103,7 @@ const Login = () => {
         className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-accent/20 animate-pulse"
         style={{ animationDuration: "8s" }}
       />
-
+      <LanguageSelector />
       <Card className="w-full max-w-md relative z-10 border-border/50 bg-card/95 backdrop-blur">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">

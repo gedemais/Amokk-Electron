@@ -1,4 +1,5 @@
 import logo from "@/assets/logo.png";
+import LanguageSelector from "@/components/ui/langage-selector.tsx";
 
 const DashboardHeader = () => {
   return (
@@ -7,6 +8,7 @@ const DashboardHeader = () => {
         <img src={logo} alt="AMOKK" className="h-12 w-12" />
         <h1 className="text-3xl font-bold glow-text">AMOKK</h1>
       </div>
+      <LanguageSelector />
     </header>
   );
 };
