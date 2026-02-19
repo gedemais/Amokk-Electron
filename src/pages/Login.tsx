@@ -99,12 +99,14 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center flex-col justify-center p-4 relative overflow-hidden">
       <div
         className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-accent/20 animate-pulse"
         style={{ animationDuration: "8s" }}
       />
-      <LanguageSelector />
+      <header className=" justify-end mb-8 self-end">
+        <LanguageSelector />
+      </header>
       <Card className="w-full max-w-md relative z-10 border-border/50 bg-card/95 backdrop-blur">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">

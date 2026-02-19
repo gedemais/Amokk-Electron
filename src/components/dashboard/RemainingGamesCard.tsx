@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
-const { t } = useTranslation();
+
 
 interface RemainingGamesCardProps {
   remainingGames: number;
@@ -13,6 +13,7 @@ const RemainingGamesCard = ({
   remainingGames,
   onUpgradeClick,
 }: RemainingGamesCardProps) => {
+  const { t } = useTranslation();
   return (
     <Card className="border-border/50 bg-card/95 backdrop-blur">
       <CardContent className="pt-6">

@@ -9,7 +9,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles, Rocket, Brain, Swords, Target, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
-const { t } = useTranslation();
+
 
 interface ProgressDialogProps {
   open: boolean;
@@ -17,6 +17,7 @@ interface ProgressDialogProps {
 }
 
 const ProgressDialog = ({ open, onOpenChange }: ProgressDialogProps) => {
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
