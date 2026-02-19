@@ -23,20 +23,20 @@ const CoachStatus = ({ amokkToggle, onToggle }: CoachStatusProps) => {
           <Power
             className={`h-6 w-6 ${amokkToggle ? "text-accent" : "text-muted-foreground"}`}
           />
-          {t("pages.CoachStatus.title")}
+          {t("components.dashboard.CoachStatus.title")}
         </CardTitle>
         <CardDescription>
           {amokkToggle
-            ? t("pages.CoachStatus.active_desc")
-            : t("pages.CoachStatus.inactive_desc")}
+            ? t("components.dashboard.CoachStatus.active_desc")
+            : t("components.dashboard.CoachStatus.inactive_desc")}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex items-center justify-between p-6 rounded-lg bg-muted/50 border border-border">
           <span className="text-lg font-semibold">
             {amokkToggle
-              ? t("pages.CoachStatus.status_active")
-              : t("pages.CoachStatus.status_inactive")}
+              ? t("components.dashboard.CoachStatus.status_active")
+              : t("components.dashboard.CoachStatus.status_inactive")}
           </span>
           <Switch
             checked={amokkToggle}

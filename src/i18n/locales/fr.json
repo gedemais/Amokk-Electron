@@ -64,11 +64,7 @@
         "starter_period": "/mois",
         "starter_desc": "Idéal pour progresser tranquillement.",
         "starter_features": "games coachées / mois",
-        "starter_features2": [
-          "Coach proactif durant toute la game",
-          "Assistant Vocal en cours de partie (Push-To-Talk)",
-          "Support en moins de 24h"
-        ],
+        "starter_features2": "Coach proactif durant toute la game\n Assistant Vocal en cours de partie (Push-To-Talk)\n Support en moins de 24h",
         "tryhard_title": "Try-Hard",
         "tryhard_price": "24,99€",
         "tryhard_period": "/mois",
