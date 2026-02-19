@@ -64,32 +64,26 @@
         "starter_period": "/mois",
         "starter_desc": "Idéal pour progresser tranquillement.",
         "starter_features": "games coachées / mois",
-        "starter_features2": [
-          "Coach proactif durant toute la game",
-          "Assistant Vocal en cours de partie (Push-To-Talk)",
-          "Support en moins de 24h"
-        ],
+        "starter_features2.1": "Coach proactif durant toute la game",
+        "starter_features2.2": "Assistant Vocal en cours de partie (Push-To-Talk)",
+        "starter_features2.3": "Support en moins de 24h",
         "tryhard_title": "Try-Hard",
         "tryhard_price": "24,99€",
         "tryhard_period": "/mois",
         "tryhard_desc": "Tout ce qu'il faut pour grind et progresser rapidement !",
         "tryhard_features": "games coachées / mois",
-        "tryhard_features2": [
-          "Coach proactif durant toute la game",
-          "Assistant Vocal en cours de partie (Push-To-Talk)",
-          "Support en moins de 24h"
-        ],
+        "tryhard_features2.1": "Coach proactif durant toute la game",
+        "tryhard_features2.2": "Assistant Vocal en cours de partie (Push-To-Talk)",
+        "tryhard_features2.3": "Support en moins de 24h",
         "rush_title": "Rush",
         "rush_price": "89,99€",
         "rush_period": "/mois",
         "rush_desc": "Pour ceux qui veulent profiter d'Amokk à chaque game !",
         "rush_features": "ILLIMITÉ",
-        "rush_features2": [
-          "Accès anticipé aux nouveautés",
-          "Coach proactif durant toute la game",
-          "Assistant Vocal en cours de partie (Push-To-Talk)",
-          "Support en moins de 24h"
-        ]
+        "rush_features2.1": "Accès anticipé aux nouveautés",
+        "rush_features2.2": "Coach proactif durant toute la game",
+        "rush_features2.3": "Assistant Vocal en cours de partie (Push-To-Talk)",
+        "rush_features2.4": "Support en moins de 24h"
       },
       "ProgressDialog": {
         "card_title": "Comment progresser avec Amokk ?",

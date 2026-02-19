@@ -57,10 +57,10 @@ const ConfigurationDialog = ({
               </div>
               <div>
                 <h3 className="font-semibold text-lg">
-                  {t("pages.ConfigurationDialog.card_title")}
+                  {t("components.dashboard.ConfigurationDialog.card_title")}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  {t("pages.ConfigurationDialog.card_desc")}
+                  {t("components.dashboard.ConfigurationDialog.card_desc")}
                 </p>
               </div>
             </div>
@@ -70,10 +70,10 @@ const ConfigurationDialog = ({
       <DialogContent className="bg-card border-border/50">
         <DialogHeader>
           <DialogTitle className="text-2xl">
-            {t("pages.ConfigurationDialog.dialog_title")}
+            {t("components.dashboard.ConfigurationDialog.dialog_title")}
           </DialogTitle>
           <DialogDescription>
-            {t("pages.ConfigurationDialog.dialog_desc")}
+            {t("components.dashboard.ConfigurationDialog.dialog_desc")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6 py-4">
@@ -83,10 +83,12 @@ const ConfigurationDialog = ({
                 <h4
                   className={`font-semibold transition-colors ${assistantToggle ? "text-accent" : "text-foreground"}`}
                 >
-                  {t("pages.ConfigurationDialog.assistant_title")}
+                  {t(
+                    "components.dashboard.ConfigurationDialog.assistant_title",
+                  )}
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  {t("pages.ConfigurationDialog.assistant_desc")}
+                  {t("components.dashboard.ConfigurationDialog.assistant_desc")}
                 </p>
               </div>
               <Switch
@@ -101,11 +103,12 @@ const ConfigurationDialog = ({
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <h4 className="font-semibold">
-                  {t("pages.ConfigurationDialog.ptt_title")}
+                  {t("components.dashboard.ConfigurationDialog.ptt_title")}
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  {t("pages.ConfigurationDialog.ptt_desc")} <br />
-                  {t("pages.ConfigurationDialog.ptt_desc2")}
+                  {t("components.dashboard.ConfigurationDialog.ptt_desc")}{" "}
+                  <br />
+                  {t("components.dashboard.ConfigurationDialog.ptt_desc2")}
                 </p>
               </div>
               <Button
@@ -116,7 +119,9 @@ const ConfigurationDialog = ({
               >
                 <Keyboard className="h-4 w-4 mr-2" />
                 {isBindingKey
-                  ? t("pages.ConfigurationDialog.ptt_btn_binding")
+                  ? t(
+                      "components.dashboard.ConfigurationDialog.ptt_btn_binding",
+                    )
                   : pushToTalkKey}
               </Button>
             </div>
@@ -128,10 +133,12 @@ const ConfigurationDialog = ({
                 <h4
                   className={`font-semibold transition-colors ${proactiveCoachEnabled ? "text-accent" : "text-foreground"}`}
                 >
-                  {t("pages.ConfigurationDialog.proactive_title")}
+                  {t(
+                    "components.dashboard.ConfigurationDialog.proactive_title",
+                  )}
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  {t("pages.ConfigurationDialog.proactive_desc")}
+                  {t("components.dashboard.ConfigurationDialog.proactive_desc")}
                 </p>
               </div>
               <Switch
@@ -146,10 +153,10 @@ const ConfigurationDialog = ({
             <div className="flex flex-col gap-4">
               <div className="flex-1">
                 <h4 className="font-semibold">
-                  {t("pages.ConfigurationDialog.volume_title")}
+                  {t("components.dashboard.ConfigurationDialog.volume_title")}
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  {t("pages.ConfigurationDialog.volume_desc")}
+                  {t("components.dashboard.ConfigurationDialog.volume_desc")}
                 </p>
               </div>
               <div className="flex items-center gap-4">
@@ -172,7 +179,7 @@ const ConfigurationDialog = ({
                 className="border-accent/50 hover:bg-accent/10"
               >
                 <Volume2 className="h-4 w-4 mr-2" />
-                {t("pages.ConfigurationDialog.test_volume_btn")}
+                {t("components.dashboard.ConfigurationDialog.test_volume_btn")}
               </Button>
             </div>
           </div>
