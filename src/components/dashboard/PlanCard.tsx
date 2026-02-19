@@ -71,8 +71,8 @@ const PlanCard = ({ title, price, period, description, features, onSelect, isUpg
         `}
       />
 
-      <CardContent className="pt-8 pb-8 relative z-10">
-        <div className="text-center space-y-6">
+      <CardContent className="pt-8 pb-8 relative z-10 h-full">
+        <div className="text-center space-y-6 flex flex-col h-full">
           <div>
             <h3 className="text-2xl font-bold text-foreground mb-2">{title}</h3>
             <div className="flex items-baseline justify-center gap-1">
@@ -95,7 +95,7 @@ const PlanCard = ({ title, price, period, description, features, onSelect, isUpg
           </div>
 
           {showButton && (
-            <Button className="w-full" variant="outline" onClick={handle_select}>
+            <Button className="w-full self-end" variant="outline" onClick={handle_select}>
               {t('components.dashboard.PlanCard.start_btn')}
             </Button>
           )}

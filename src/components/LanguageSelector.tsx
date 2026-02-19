@@ -7,7 +7,7 @@ const languages = [
   { code: "en", name: "English", flag: "🇺🇸" },
   { code: "de", name: "Deutsch", flag: "🇩🇪" },
   { code: "es", name: "Español", flag: "🇪🇸" },
-  { code: "it", name: "Italiano", flag: "🇮🇹" },
+  { code: "it", name: "Italiano", flag: "🇮🇹", },
 ];
 
 const LanguageSelector: React.FC = () => {
@@ -43,9 +43,8 @@ const LanguageSelector: React.FC = () => {
           {(currentLanguage ?? languages[0]).name}
         </span>
         <ChevronDown
-          className={`w-3 h-3 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`w-3 h-3 transition-transform ${isOpen ? "rotate-180" : ""
+            }`}
         />
       </button>
 
@@ -60,11 +59,10 @@ const LanguageSelector: React.FC = () => {
               <button
                 key={language.code}
                 onClick={() => changeLanguage(language.code)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 text-sm hover:bg-gray-800 transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                  (currentLanguage ?? languages[0]).code === language.code
+                className={`w-full flex items-center space-x-3 px-4 py-3 text-sm hover:bg-gray-800 transition-colors first:rounded-t-lg last:rounded-b-lg ${(currentLanguage ?? languages[0]).code === language.code
                     ? "text-blue-400 bg-gray-800/50"
                     : "text-gray-300 hover:text-white"
-                }`}
+                  }`}
               >
                 <span className="text-base">{language.flag}</span>
                 <span>{language.name}</span>
