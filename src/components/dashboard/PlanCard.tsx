@@ -96,7 +96,8 @@ const PlanCard = ({
             <p className="text-sm text-muted-foreground mt-3">{description}</p>
           </div>
 
-          <div className="space-y-3 text-left flex-grow-1">
+          <div className="space-y-3 text-left flex-1">
+            {" "}
             {features.map((feature, index) => (
               <div key={index} className="flex gap-3 items-start">
                 <Check className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
@@ -107,7 +108,7 @@ const PlanCard = ({
 
           {showButton && (
             <Button
-              className="w-full self-end"
+              className="w-full mt-auto"
               variant="outline"
               onClick={handle_select}
             >
