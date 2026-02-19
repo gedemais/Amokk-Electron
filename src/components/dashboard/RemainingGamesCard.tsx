@@ -2,6 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
+<<<<<<< HEAD
+=======
+
+>>>>>>> a737ae188031d6fb74d2082cae8ef73ee98c4a10
 
 interface RemainingGamesCardProps {
   remainingGames: number;

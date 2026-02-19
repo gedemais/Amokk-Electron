@@ -64,32 +64,26 @@
         "starter_period": "/mese",
         "starter_desc": "Ideale per progredire con calma.",
         "starter_features": "partite coachate / mese",
-        "starter_features2": [
-          "Coach proattivo durante tutta la partita",
-          "Assistente Vocale in partita (Push-To-Talk)",
-          "Supporto in meno di 24 ore"
-        ],
+        "starter_features2.1": "Coach proattivo durante tutta la partita",
+        "starter_features2.2": "Assistente Vocale in partita (Push-To-Talk)",
+        "starter_features2.3": "Supporto in meno di 24 ore",
         "tryhard_title": "Try-Hard",
         "tryhard_price": "24,99€",
         "tryhard_period": "/mese",
         "tryhard_desc": "Tutto il necessario per scalare e progredire velocemente!",
         "tryhard_features": "partite coachate / mese",
-        "tryhard_features2": [
-          "Coach proattivo durante tutta la partita",
-          "Assistente Vocale in partita (Push-To-Talk)",
-          "Supporto in meno di 24 ore"
-        ],
+        "tryhard_features2.1": "Coach proattivo durante tutta la partita",
+        "tryhard_features2.2": "Assistente Vocale in partita (Push-To-Talk)",
+        "tryhard_features2.3": "Supporto in meno di 24 ore",
         "rush_title": "Rush",
         "rush_price": "89,99€",
         "rush_period": "/mese",
         "rush_desc": "Per chi vuole godersi Amokk in ogni partita!",
         "rush_features": "ILLIMITATO",
-        "rush_features2": [
-          "Accesso anticipato alle novità",
-          "Coach proattivo durante tutta la partita",
-          "Assistente Vocale in partita (Push-To-Talk)",
-          "Supporto in meno di 24 ore"
-        ]
+        "rush_features2.1": "Accesso anticipato alle novità",
+        "rush_features2.2": "Coach proattivo durante tutta la partita",
+        "rush_features2.3": "Assistente Vocale in partita (Push-To-Talk)",
+        "rush_features2.4": "Supporto in meno di 24 ore"
       },
       "ProgressDialog": {
         "card_title": "Come progredire con Amokk?",

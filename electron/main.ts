@@ -229,23 +229,23 @@ async function validateEnvironment(): Promise<void> {
     } else {
       logger.info('VALIDATE', 'Backend executable found', { backendPath });
 
-    // Check if executable has proper permissions (Linux/macOS)
-    if (process.platform !== 'win32') {
-      try {
-        const stats = fs.statSync(backendPath);
-        const isExecutable = (stats.mode & 0o111) !== 0;
-        if (!isExecutable) {
-          logger.warn('VALIDATE', 'Backend not executable, will chmod +x at startup');
-          warnings.push(`Backend is not executable. Will attempt chmod +x during startup.`);
-        } else {
-          logger.info('VALIDATE', 'Backend has execute permissions');
+      // Check if executable has proper permissions (Linux/macOS)
+      if (process.platform !== 'win32') {
+        try {
+          const stats = fs.statSync(backendPath);
+          const isExecutable = (stats.mode & 0o111) !== 0;
+          if (!isExecutable) {
+            logger.warn('VALIDATE', 'Backend not executable, will chmod +x at startup');
+            warnings.push(`Backend is not executable. Will attempt chmod +x during startup.`);
+          } else {
+            logger.info('VALIDATE', 'Backend has execute permissions');
+          }
+        } catch (e: any) {
+          logger.warn('VALIDATE', 'Could not check backend permissions', { error: e.message });
+          warnings.push(`Could not check backend permissions`);
         }
-      } catch (e: any) {
-        logger.warn('VALIDATE', 'Could not check backend permissions', { error: e.message });
-        warnings.push(`Could not check backend permissions`);
       }
     }
-  }
   } else {
     logger.info('VALIDATE', 'Frontend-only mode - skipping backend validation');
   }
@@ -332,187 +332,187 @@ async function startBackend(): Promise<void> {
         const shouldTryExe = process.platform !== 'win32' || !isWinExe;
 
         if (shouldTryExe) {
-        // Run the PyInstaller-built executable directly
-        // Ensure it has execute permissions (for AppImage/extracted builds)
-        if (process.platform !== 'win32') {
-          try {
-            fs.chmodSync(backendPath, 0o755);
-            logger.info('BACKEND_SPAWN', 'Set executable permissions (chmod +x)');
-          } catch (e: any) {
-            // Ignore if file system is read-only (AppImage mounted as read-only)
-            if (e.code === 'EROFS') {
-              logger.debug('BACKEND_SPAWN', 'File system is read-only (AppImage), skipping chmod');
-            } else {
-              logger.warn('BACKEND_SPAWN', 'Could not chmod backend', { error: e.message });
+          // Run the PyInstaller-built executable directly
+          // Ensure it has execute permissions (for AppImage/extracted builds)
+          if (process.platform !== 'win32') {
+            try {
+              fs.chmodSync(backendPath, 0o755);
+              logger.info('BACKEND_SPAWN', 'Set executable permissions (chmod +x)');
+            } catch (e: any) {
+              // Ignore if file system is read-only (AppImage mounted as read-only)
+              if (e.code === 'EROFS') {
+                logger.debug('BACKEND_SPAWN', 'File system is read-only (AppImage), skipping chmod');
+              } else {
+                logger.warn('BACKEND_SPAWN', 'Could not chmod backend', { error: e.message });
+              }
             }
           }
-        }
 
-        logger.info('BACKEND_SPAWN', 'Spawning PyInstaller executable', { backendPath });
-        let exeSpawnFailed = false;
+          logger.info('BACKEND_SPAWN', 'Spawning PyInstaller executable', { backendPath });
+          let exeSpawnFailed = false;
 
-        // Attach error handler BEFORE spawning to catch all errors
-        const handleExeSpawnError = (err: any) => {
-          if (exeSpawnFailed) return;  // Only handle once
-          exeSpawnFailed = true;
+          // Attach error handler BEFORE spawning to catch all errors
+          const handleExeSpawnError = (err: any) => {
+            if (exeSpawnFailed) return;  // Only handle once
+            exeSpawnFailed = true;
 
-          logger.warn('BACKEND_SPAWN', 'PyInstaller executable failed to spawn, falling back to Python', {
-            error: err.message,
-            backendPath
+            logger.warn('BACKEND_SPAWN', 'PyInstaller executable failed to spawn, falling back to Python', {
+              error: err.message,
+              backendPath
+            });
+
+            pythonProcess?.removeAllListeners();
+
+            // Get launcher.py path (which auto-installs dependencies)
+            const backendLauncher = path.join(path.dirname(backendPath), '..', 'launcher.py');
+
+            // Setup Python fallback with retry logic
+            const pythonCmds: string[] = [];
+            if (process.platform === 'win32') {
+              pythonCmds.push('python3.exe', 'python.exe', 'py');
+            } else {
+              pythonCmds.push('/usr/bin/python3', 'python3', 'python');
+            }
+
+            let pythonAttempt = 0;
+            const tryPythonFallback = () => {
+              if (pythonAttempt >= pythonCmds.length) {
+                const fallbackError = new Error('Both PyInstaller executable and Python fallback failed');
+                logger.error('BACKEND_SPAWN', 'All spawn methods failed', { pythonCmds });
+                reject(fallbackError);
+                return;
+              }
+
+              const pythonCmd = pythonCmds[pythonAttempt];
+              pythonAttempt++;
+
+              logger.info('BACKEND_SPAWN', 'Trying Python launcher fallback', {
+                pythonCmd,
+                backendPath: backendLauncher,
+                attempt: pythonAttempt,
+              });
+
+              pythonProcess = spawn(pythonCmd, [backendLauncher], {
+                cwd: path.dirname(backendLauncher),
+                stdio: ['ignore', 'pipe', 'pipe'],
+                detached: false,
+                env: { ...process.env },
+              });
+
+              pythonProcess.once('error', () => {
+                tryPythonFallback();
+              });
+            };
+
+            tryPythonFallback();
+          };
+
+          // NOW spawn and attach handler
+          pythonProcess = spawn(backendPath, [], {
+            stdio: ['ignore', 'pipe', 'pipe'],
+            detached: false,
           });
 
-          pythonProcess?.removeAllListeners();
+          pythonProcess.once('error', handleExeSpawnError);
+        } else {
+          // On Windows with PyInstaller .exe: skip exe and use Python directly
+          logger.info('BACKEND_SPAWN', 'Skipping PyInstaller .exe on Windows, using Python fallback directly');
+          // Fall through to Python handling (it's below)
+        }
 
-          // Get launcher.py path (which auto-installs dependencies)
-          const backendLauncher = path.join(path.dirname(backendPath), '..', 'launcher.py');
-
-          // Setup Python fallback with retry logic
+        if (!shouldTryExe || !pythonProcess) {
+          // Run Python script with fallback logic
           const pythonCmds: string[] = [];
+
+          // Platform-specific Python command order
           if (process.platform === 'win32') {
-            pythonCmds.push('python3.exe', 'python.exe', 'py');
+            pythonCmds.push('python3.exe', 'python.exe', 'py');  // Windows
           } else {
-            pythonCmds.push('/usr/bin/python3', 'python3', 'python');
+            pythonCmds.push('/usr/bin/python3', 'python3', 'python');  // Linux/macOS
           }
 
-          let pythonAttempt = 0;
-          const tryPythonFallback = () => {
-            if (pythonAttempt >= pythonCmds.length) {
-              const fallbackError = new Error('Both PyInstaller executable and Python fallback failed');
-              logger.error('BACKEND_SPAWN', 'All spawn methods failed', { pythonCmds });
-              reject(fallbackError);
+          // Use launcher.py which auto-installs dependencies before running main.py
+          const backendLauncher = path.join(path.dirname(backendPath), '..', 'launcher.py');
+
+          let pythonCmd = pythonCmds[0];
+          let spawnAttempt = 0;
+          const maxAttempts = pythonCmds.length;
+
+          const trySpawnPython = () => {
+            if (spawnAttempt >= maxAttempts) {
+              const error = new Error('Could not find python3 executable');
+              logger.error('BACKEND_SPAWN', 'All python spawn attempts failed', { pythonCmds });
+              pythonProcess?.kill?.();
+              pythonProcess = null;
               return;
             }
 
-            const pythonCmd = pythonCmds[pythonAttempt];
-            pythonAttempt++;
+            pythonCmd = pythonCmds[spawnAttempt];
+            spawnAttempt++;
 
-            logger.info('BACKEND_SPAWN', 'Trying Python launcher fallback', {
+            logger.info('BACKEND_SPAWN', 'Spawning Python launcher', {
               pythonCmd,
               backendPath: backendLauncher,
-              attempt: pythonAttempt,
+              attempt: spawnAttempt,
             });
 
             pythonProcess = spawn(pythonCmd, [backendLauncher], {
               cwd: path.dirname(backendLauncher),
               stdio: ['ignore', 'pipe', 'pipe'],
               detached: false,
-              env: { ...process.env },
+              env: { ...process.env, PYTHONUNBUFFERED: '1' },
             });
 
-            pythonProcess.once('error', () => {
-              tryPythonFallback();
-            });
-          };
+            // Capture stdout and stderr for debugging
+            let pythonStdout = '';
+            let pythonStderr = '';
 
-          tryPythonFallback();
-        };
+            if (pythonProcess.stdout) {
+              pythonProcess.stdout.on('data', (data) => {
+                const output = data.toString().trim();
+                pythonStdout += output;
+                if (output) {
+                  logger.info('BACKEND_LAUNCHER_STDOUT', output);
+                }
+              });
+            }
 
-        // NOW spawn and attach handler
-        pythonProcess = spawn(backendPath, [], {
-          stdio: ['ignore', 'pipe', 'pipe'],
-          detached: false,
-        });
+            if (pythonProcess.stderr) {
+              pythonProcess.stderr.on('data', (data) => {
+                const output = data.toString().trim();
+                pythonStderr += output;
+                if (output) {
+                  logger.info('BACKEND_LAUNCHER_STDERR', output);
+                }
+              });
+            }
 
-        pythonProcess.once('error', handleExeSpawnError);
-        } else {
-        // On Windows with PyInstaller .exe: skip exe and use Python directly
-        logger.info('BACKEND_SPAWN', 'Skipping PyInstaller .exe on Windows, using Python fallback directly');
-        // Fall through to Python handling (it's below)
-        }
-
-        if (!shouldTryExe || !pythonProcess) {
-        // Run Python script with fallback logic
-        const pythonCmds: string[] = [];
-
-        // Platform-specific Python command order
-        if (process.platform === 'win32') {
-          pythonCmds.push('python3.exe', 'python.exe', 'py');  // Windows
-        } else {
-          pythonCmds.push('/usr/bin/python3', 'python3', 'python');  // Linux/macOS
-        }
-
-        // Use launcher.py which auto-installs dependencies before running main.py
-        const backendLauncher = path.join(path.dirname(backendPath), '..', 'launcher.py');
-
-        let pythonCmd = pythonCmds[0];
-        let spawnAttempt = 0;
-        const maxAttempts = pythonCmds.length;
-
-        const trySpawnPython = () => {
-          if (spawnAttempt >= maxAttempts) {
-            const error = new Error('Could not find python3 executable');
-            logger.error('BACKEND_SPAWN', 'All python spawn attempts failed', { pythonCmds });
-            pythonProcess?.kill?.();
-            pythonProcess = null;
-            return;
-          }
-
-          pythonCmd = pythonCmds[spawnAttempt];
-          spawnAttempt++;
-
-          logger.info('BACKEND_SPAWN', 'Spawning Python launcher', {
-            pythonCmd,
-            backendPath: backendLauncher,
-            attempt: spawnAttempt,
-          });
-
-          pythonProcess = spawn(pythonCmd, [backendLauncher], {
-            cwd: path.dirname(backendLauncher),
-            stdio: ['ignore', 'pipe', 'pipe'],
-            detached: false,
-            env: { ...process.env, PYTHONUNBUFFERED: '1' },
-          });
-
-          // Capture stdout and stderr for debugging
-          let pythonStdout = '';
-          let pythonStderr = '';
-
-          if (pythonProcess.stdout) {
-            pythonProcess.stdout.on('data', (data) => {
-              const output = data.toString().trim();
-              pythonStdout += output;
-              if (output) {
-                logger.info('BACKEND_LAUNCHER_STDOUT', output);
-              }
-            });
-          }
-
-          if (pythonProcess.stderr) {
-            pythonProcess.stderr.on('data', (data) => {
-              const output = data.toString().trim();
-              pythonStderr += output;
-              if (output) {
-                logger.info('BACKEND_LAUNCHER_STDERR', output);
-              }
-            });
-          }
-
-          pythonProcess.once('error', (err: any) => {
-            logger.info('BACKEND_SPAWN', 'Python spawn error, trying next command', {
-              pythonCmd,
-              error: err.message,
-              stdout: pythonStdout,
-              stderr: pythonStderr,
-            });
-            trySpawnPython();
-          });
-
-          // Also handle exit code 1 (command not found or execution error)
-          pythonProcess.once('exit', (code: number) => {
-            if (code !== 0) {
-              logger.info('BACKEND_SPAWN', 'Python exited with error, trying next command', {
+            pythonProcess.once('error', (err: any) => {
+              logger.info('BACKEND_SPAWN', 'Python spawn error, trying next command', {
                 pythonCmd,
-                exitCode: code,
+                error: err.message,
                 stdout: pythonStdout,
                 stderr: pythonStderr,
               });
               trySpawnPython();
-            }
-          });
-        };
+            });
 
-        // Start the spawn attempts
-        trySpawnPython();
+            // Also handle exit code 1 (command not found or execution error)
+            pythonProcess.once('exit', (code: number) => {
+              if (code !== 0) {
+                logger.info('BACKEND_SPAWN', 'Python exited with error, trying next command', {
+                  pythonCmd,
+                  exitCode: code,
+                  stdout: pythonStdout,
+                  stderr: pythonStderr,
+                });
+                trySpawnPython();
+              }
+            });
+          };
+
+          // Start the spawn attempts
+          trySpawnPython();
         }
       }
 
@@ -707,21 +707,21 @@ async function createWindow(): Promise<void> {
     icon: iconPath,
   });
 
-mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-  return {
-    action: "allow",
-    overrideBrowserWindowOptions: {
-      width: 1600,
-      height: 900,
-      minWidth: 900,
-      minHeight: 700,
-      autoHideMenuBar: true,
-      resizable: true,
-      center: true,
-      title: "Amokk - External Link",
-    },
-  };
-});
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    return {
+      action: "allow",
+      overrideBrowserWindowOptions: {
+        width: 1600,
+        height: 900,
+        minWidth: 900,
+        minHeight: 700,
+        autoHideMenuBar: true,
+        resizable: true,
+        center: true,
+        title: "Amokk - External Link",
+      },
+    };
+  });
 
   // Determine the URL to load
   let loadURL: string;

@@ -9,6 +9,10 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles, Rocket, Brain, Swords, Target, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
+<<<<<<< HEAD
+=======
+
+>>>>>>> a737ae188031d6fb74d2082cae8ef73ee98c4a10
 
 interface ProgressDialogProps {
   open: boolean;

@@ -64,32 +64,26 @@
         "starter_period": "/month",
         "starter_desc": "Ideal for steady progress.",
         "starter_features": "coached games / month",
-        "starter_features2": [
-          "Proactive coach throughout the game",
-          "In-game Voice Assistant (Push-To-Talk)",
-          "Support in less than 24h"
-        ],
+        "starter_features2.1": "Proactive coach throughout the game",
+        "starter_features2.2": "In-game Voice Assistant (Push-To-Talk)",
+        "starter_features2.3": "Support in less than 24h",
         "tryhard_title": "Try-Hard",
         "tryhard_price": "€24.99",
         "tryhard_period": "/month",
         "tryhard_desc": "Everything you need to grind and progress quickly!",
         "tryhard_features": "coached games / month",
-        "tryhard_features2": [
-          "Proactive coach throughout the game",
-          "In-game Voice Assistant (Push-To-Talk)",
-          "Support in less than 24h"
-        ],
+        "tryhard_features2.1": "Proactive coach throughout the game",
+        "tryhard_features2.2": "In-game Voice Assistant (Push-To-Talk)",
+        "tryhard_features2.3": "Support in less than 24h",
         "rush_title": "Rush",
         "rush_price": "€89.99",
         "rush_period": "/month",
         "rush_desc": "For those who want Amokk in every game!",
         "rush_features": "UNLIMITED",
-        "rush_features2": [
-          "Early access to new features",
-          "Proactive coach throughout the game",
-          "In-game Voice Assistant (Push-To-Talk)",
-          "Support in less than 24h"
-        ]
+        "rush_features2.1": "Early access to new features",
+        "rush_features2.2": "Proactive coach throughout the game",
+        "rush_features2.3": "In-game Voice Assistant (Push-To-Talk)",
+        "rush_features2.4": "Support in less than 24h"
       },
       "ProgressDialog": {
         "card_title": "How to progress with Amokk?",

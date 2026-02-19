@@ -64,32 +64,26 @@
         "starter_period": "/Monat",
         "starter_desc": "Ideal, um in Ruhe Fortschritte zu machen.",
         "starter_features": "gecoachte Spiele / Monat",
-        "starter_features2": [
-          "Proaktiver Coach während des gesamten Spiels",
-          "Sprachassistent im Spiel (Push-To-Talk)",
-          "Support in weniger als 24 Std."
-        ],
+        "starter_features2.1": "Proaktiver Coach während des gesamten Spiels",
+        "starter_features2.2": "Sprachassistent im Spiel (Push-To-Talk)",
+        "starter_features2.3": "Support in weniger als 24 Std.",
         "tryhard_title": "Try-Hard",
         "tryhard_price": "24,99€",
         "tryhard_period": "/Monat",
         "tryhard_desc": "Alles, was du brauchst, um schnell zu grindem!",
         "tryhard_features": "gecoachte Spiele / Monat",
-        "tryhard_features2": [
-          "Proaktiver Coach während des gesamten Spiels",
-          "Sprachassistent im Spiel (Push-To-Talk)",
-          "Support in weniger als 24 Std."
-        ],
+        "tryhard_features2.1": "Proaktiver Coach während des gesamten Spiels",
+        "tryhard_features2.2": "Sprachassistent im Spiel (Push-To-Talk)",
+        "tryhard_features2.3": "Support in weniger als 24 Std.",
         "rush_title": "Rush",
         "rush_price": "89,99€",
         "rush_period": "/Monat",
         "rush_desc": "Für alle, die Amokk in jedem Spiel dabei haben wollen!",
         "rush_features": "UNBEGRENZT",
-        "rush_features2": [
-          "Frühzeitiger Zugriff auf Neuerungen",
-          "Proaktiver Coach während des gesamten Spiels",
-          "Sprachassistent im Spiel (Push-To-Talk)",
-          "Support in weniger als 24 Std."
-        ]
+        "rush_features2.1": "Frühzeitiger Zugriff auf Neuerungen",
+        "rush_features2.2": "Sprachassistent im Spiel (Push-To-Talk)",
+        "rush_features2.3": "Proaktiver Coach während des gesamten Spiels",
+        "rush_features2.4": "Support in weniger als 24 Std."
       },
       "ProgressDialog": {
         "card_title": "Wie man mit Amokk Fortschritte macht",

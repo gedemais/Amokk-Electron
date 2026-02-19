@@ -64,32 +64,27 @@
         "starter_period": "/mes",
         "starter_desc": "Ideal para progresar con calma.",
         "starter_features": "partidas entrenadas / mes",
-        "starter_features2": [
-          "Coach proactivo durante toda la partida",
-          "Asistente de voz en partida (Push-To-Talk)",
-          "Soporte en menos de 24h"
-        ],
+        "starter_features2.1": "Coach proactivo durante toda la partida",
+        "starter_features2.2": "Asistente de voz en partida (Push-To-Talk)",
+        "starter_features2.3": "Soporte en menos de 24h",
         "tryhard_title": "Try-Hard",
         "tryhard_price": "24,99€",
         "tryhard_period": "/mes",
         "tryhard_desc": "¡Todo lo necesario para subir de rango rápidamente!",
         "tryhard_features": "partidas entrenadas / mes",
-        "tryhard_features2": [
-          "Coach proactivo durante toda la partida",
-          "Asistente de voz en partida (Push-To-Talk)",
-          "Soporte en menos de 24h"
-        ],
+        "tryhard_features2": [],
+        "tryhard_features2.1": "Coach proactivo durante toda la partida",
+        "tryhard_features2.2": "Asistente de voz en partida (Push-To-Talk)",
+        "tryhard_features2.3": "Soporte en menos de 24h",
         "rush_title": "Rush",
         "rush_price": "89,99€",
         "rush_period": "/mes",
         "rush_desc": "¡Para los que quieren aprovechar Amokk en cada partida!",
         "rush_features": "ILIMITADO",
-        "rush_features2": [
-          "Acceso anticipado a novedades",
-          "Coach proactivo durante toda la partida",
-          "Asistente de voz en partida (Push-To-Talk)",
-          "Soporte en menos de 24h"
-        ]
+        "rush_features2.1": "Acceso anticipado a novedades",
+        "rush_features2.2": "Coach proactivo durante toda la partida",
+        "rush_features2.3": "Asistente de voz en partida (Push-To-Talk)",
+        "rush_features2.4": "Soporte en menos de 24h"
       },
       "ProgressDialog": {
         "card_title": "¿Cómo progresar con Amokk?",
