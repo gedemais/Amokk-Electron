@@ -34,9 +34,9 @@ const PlanCard = ({
   const { t } = useTranslation();
   const handle_select = () => {
     const links = {
-      3: "https://amokkcoaching.lemonsqueezy.com/checkout/buy/812bef86-3ada-4a98-9fe8-05518f3cec4e", // Starter LemonSqueezy link
-      4: "https://amokkcoaching.lemonsqueezy.com/checkout/buy/6155b329-917a-41f3-a77d-fdb17a72cac7", // Try-Hard LemonSqueezy link
-      5: "https://amokkcoaching.lemonsqueezy.com/checkout/buy/fd35a47d-f594-4c39-ae32-34aac151d923", // Rush LemonSqueezy link
+      3: "https://amokkcoaching.lemonsqueezy.com/checkout/buy/248422a4-192c-4289-8113-819a7454d042", // Starter LemonSqueezy link
+      4: "https://amokkcoaching.lemonsqueezy.com/checkout/buy/374c31b6-7907-4cc5-b9af-0ad22e2162c3", // Try-Hard LemonSqueezy link
+      5: "https://amokkcoaching.lemonsqueezy.com/checkout/buy/ea3de16a-644b-4991-833a-26a6b72cab0c", // Rush LemonSqueezy link
     };
 
     const plans_names = {
@@ -54,6 +54,8 @@ const PlanCard = ({
     }
 
     url.searchParams.set("checkout[custom][plan_name]", plans_names[planId]);
+
+    console.log(url.toString());
 
     window.open(url.toString(), "_blank", "noopener,noreferrer");
   };
