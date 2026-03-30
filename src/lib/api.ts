@@ -19,6 +19,7 @@ export const getLocalData = () => apiRequest('GET', '/get_local_data');
 export const toggleAmokkCoach = (active: boolean) => apiRequest('PUT', '/amokk_toggle', { active });
 export const toggleAssistant = (active: boolean) => apiRequest('PUT', '/assistant_toggle', { active });
 export const updateVolume = (volume: number) => apiRequest('PUT', '/update_volume', { volume });
+export const updateLanguage = (lang: string) => apiRequest('PUT', '/update_language', { lang });
 export const updatePttKey = (ptt_key: string) => apiRequest('PUT', '/update_ptt_key', { ptt_key });
 export const selectPlan = (plan_id: number) => apiRequest('POST', '/mock_select_plan', { plan_id });
 export const toggleProactiveCoach = (active: boolean) => apiRequest('PUT', '/coach_toggle', { active });

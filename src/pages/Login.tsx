@@ -16,6 +16,7 @@ import { logger } from "@/utils/logger";
 import { useDebugPanel } from "@/hooks/useDebugPanel";
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from "@/components/LanguageSelector.tsx";
+import { set } from "date-fns";
 
 // Backend API URL
 const BACKEND_HOST = import.meta.env.VITE_BACKEND_HOST || "127.0.0.1";
@@ -23,7 +24,7 @@ const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || "8000";
 const BACKEND_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}`;
 
 const Login = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const debug = useDebugPanel();
   const isDev = import.meta.env.DEV;
@@ -45,6 +46,8 @@ const Login = () => {
         logger.apiResponse("/get_local_data", response.status, data);
 
         if (data.email) setEmail(data.email);
+        if (data.lang) i18n.changeLanguage(data.lang);
+
         if (isDev) setPassword("admin");
       } catch (error) {
         logger.error("GET_LOCAL_DATA failed", error);

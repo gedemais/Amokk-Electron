@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, Globe } from "lucide-react";
+import * as api from "@/lib/api";
 
 const languages = [
   { code: "fr", name: "Français", flag: "🇫🇷" },
@@ -18,8 +19,9 @@ const LanguageSelector: React.FC = () => {
     return languages.find((lang) => lang.code === i18n.resolvedLanguage);
   }, [i18n.resolvedLanguage]);
 
-  const changeLanguage = (langCode: string) => {
+  const changeLanguage = async (langCode: string) => {
     i18n.changeLanguage(langCode);
+    await api.updateLanguage(langCode);
     setIsOpen(false);
   };
 
