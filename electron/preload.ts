@@ -29,6 +29,9 @@ contextBridge.exposeInMainWorld('api', {
     getLogs: () => ipcRenderer.invoke('app:getLogs'),
     clearLogs: () => ipcRenderer.invoke('app:clearLogs'),
   },
+  auth: {
+    googleLogin: () => ipcRenderer.invoke('google:login'),
+  },
 });
 
 // Override console methods to send logs to main process

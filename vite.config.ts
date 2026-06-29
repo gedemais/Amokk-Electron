@@ -3,11 +3,8 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  // Use relative paths for file:// protocol in Electron production builds
   base: mode === "production" ? "./" : "/",
-
   server: {
     host: "::",
     port: 8080,
@@ -22,7 +19,6 @@ export default defineConfig(({ mode }) => ({
     outDir: "dist",
     emptyOutDir: true,
     rollupOptions: {
-      // Ensure proper bundling for Electron
       external: ["electron"],
     },
   },

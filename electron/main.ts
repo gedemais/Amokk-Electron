@@ -8,12 +8,17 @@
  * - Auto-updates and system integration
  */
 
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import { spawn } from 'child_process';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { createServer } from 'http';
+import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
+
+const AMOKK_BACKEND_HOST = process.env.VITE_BACKEND_HOST || "127.0.0.1";
+const AMOKK_BACKEND_PORT = process.env.VITE_BACKEND_PORT || "13649";
+const AMOKK_BACKEND_URL = `${AMOKK_BACKEND_HOST}:${AMOKK_BACKEND_PORT}`;
 
 // ============================================================================
 // Environment Setup
@@ -689,8 +694,15 @@ async function createWindow(): Promise<void> {
     } else {
       baseDir = path.dirname(appPath);
     }
-    preloadPath = path.join(baseDir, 'dist-electron', 'preload.js');
+    //preloadPath = path.join(baseDir, 'dist-electron', 'preload.js');
+    preloadPath = path.join(baseDir, 'dist-electron', 'electron', 'preload.js');
     iconPath = path.join(baseDir, 'assets', 'icon.png');
+    console.log('WINDOW', 'Preload path resolution', { 
+  preloadPath, 
+  exists: fs.existsSync(preloadPath),
+  baseDir,
+  appPath 
+});
   }
 
   mainWindow = new BrowserWindow({
@@ -947,6 +959,149 @@ function setupIPC(): void {
     }
 
     return { success: true };
+  });
+
+  // Google OAuth login
+  ipcMain.handle('google:login', (): Promise<{ token: string; email: string; remaining_games: number; plan_id: number } | { error: string }> => {
+    logger.info('GOOGLE_LOGIN', 'IPC handler triggered');
+    return new Promise((resolve) => {
+      const REDIRECT_PORT = 9876;
+      let serverClosed = false;
+
+      // Serveur HTTP local pour capturer le callback Google
+      const server = createServer(async (req, res) => {
+        // if (!req.url?.startsWith('/callback')) return;
+        logger.info('GOOGLE_LOGIN', 'Request received', { url: req.url });
+
+        if (!req.url?.startsWith('/callback')) {
+          logger.info('GOOGLE_LOGIN', 'Not a callback, ignoring');
+          return;
+        }
+
+        const url = new URL(req.url, `http://127.0.0.1:${REDIRECT_PORT}`);
+        const code = url.searchParams.get('code');
+
+        logger.info('GOOGLE_LOGIN', 'Code extracted', { hasCode: !!code, serverClosed });
+
+
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(`
+                  <!DOCTYPE html>
+                  <html>
+                  <head>
+                    <title>AMOKK</title>
+                    <style>
+                      body { margin: 0; font-family: Arial, sans-serif; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; gap: 16px; }
+                      h2 { font-size: 24px; margin: 0; }
+                      p { color: #888; margin: 0; font-size: 14px; }
+                    </style>
+                  </head>
+                  <body>
+                    <img src="https://framerusercontent.com/images/lKCO8Ykh67XjdJU35Y2l7zo484.png?scale-down-to=512" style="width:64px;height:64px;">
+                    <h2>Login successful !</h2>
+                    <p>You can close this tab.</p>
+                    <script>setTimeout(() => window.close(), 5000);</script>
+                  </body>
+                  </html>
+                `);
+
+
+        if (!code || serverClosed) {
+          logger.info('GOOGLE_LOGIN', 'Skipping - no code or server already closed');
+          return;
+        }
+
+        // if (!code || serverClosed) return;
+        serverClosed = true;
+
+        try {
+          server.close();
+          logger.info('GOOGLE_LOGIN', 'Server closed successfully');
+        } catch (e: any) {
+          logger.error('GOOGLE_LOGIN', 'Error closing server', { error: e.message });
+        }
+
+        logger.info('GOOGLE_LOGIN', 'Starting fetch');  // ← ici
+
+        try {
+
+          console.log('Received Google auth code:', code);
+          logger.info('GOOGLE_LOGIN', 'Calling sign_up_google');
+
+          const response = await fetch('https://api.amokk.fr/sign_up_google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              code,
+              client_type: 'electron',
+              redirect_uri: `http://127.0.0.1:${REDIRECT_PORT}/callback`,
+            }),
+          });
+
+          const data = await response.json();
+
+          logger.info('GOOGLE_LOGIN', 'Got response', data);
+
+          console.log('Google auth response:', data);
+          if (data.token) {
+            // Forward to local FastAPI backend
+            logger.info('GOOGLE_LOGIN', `Forwarding token to backend at http://${AMOKK_BACKEND_URL}/google_auth`, data);
+            await fetch(`http://${AMOKK_BACKEND_URL}/google_auth`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                email: data.email,
+                token: data.token,
+                remaining_games: data.remaining_games,
+                plan_id: data.plan_id,
+                response_code: 200,
+              }),
+            });
+            logger.info('GOOGLE_LOGIN', 'Token forwarded to backend successfully');
+            resolve(data);
+          } else {
+            resolve({ error: 'No token received' });
+          }
+        } catch (err: any) {
+          logger.error('GOOGLE_LOGIN', 'Fetch error', { error: err.message });
+          resolve({ error: err.message });
+        }
+      });
+
+      server.listen(REDIRECT_PORT, () => {
+        logger.info('GOOGLE_LOGIN', 'HTTP server listening', { port: REDIRECT_PORT });
+      });
+
+      server.on('error', (err) => {
+        logger.error('GOOGLE_LOGIN', 'HTTP server error', { error: err.message });
+      });
+
+      // Récupère les credentials Google depuis le backend Python
+      const GOOGLE_CLIENT_ID = "829951426829-6j7gru4esb8ffs4a50g2r04bamnjo00j.apps.googleusercontent.com";
+      const params = new URLSearchParams({
+        client_id: GOOGLE_CLIENT_ID,
+        redirect_uri: `http://127.0.0.1:${REDIRECT_PORT}/callback`,
+        response_type: 'code',
+        scope: 'email profile',
+        access_type: 'offline',
+      });
+
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+
+      //mainWindow?.minimize();
+
+      shell.openExternal(authUrl);
+
+      // Timeout si l'user ne complète pas le flow (2 minutes)
+      setTimeout(() => {
+        if (!serverClosed) {
+          serverClosed = true;
+          server.close();
+          resolve({ error: 'Login timeout' });
+        }
+      }, 120000);
+
+    });
   });
 
   logger.info('IPC_SETUP', 'IPC handlers registered successfully');
