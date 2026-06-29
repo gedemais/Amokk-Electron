@@ -57,6 +57,10 @@ class VolumeRequest(BaseModel):
     volume: int  # 0-100
 
 
+class TTSVoiceRequest(BaseModel):
+    voice_name: str
+
+
 class PlanSelectionRequest(BaseModel):
     plan_id: int
 
@@ -88,6 +92,9 @@ class LocalDataResponse(BaseModel):
     amokk_toggle: bool
     ptt_key: str
     tts_volume: int
+    tts_voices: list
+    tts_voice_name: str
+    tts_voice: str
 
 
 # ============================================================================
@@ -108,6 +115,14 @@ def generate_mock_token(email: str) -> str:
 # ============================================================================
 # Application State (In-memory storage for demo)
 # ============================================================================
+
+TTS_VOICES_MAPPER = {
+    "JEAN-KEVIN": "ash",
+    "MELANIE LA OH": "marin",
+    "Truc": "nova",
+    "Couille": "sage",
+}
+
 
 class AppState:
     """Mock application state - persisted to JSON file"""
@@ -133,6 +148,11 @@ class AppState:
                     self.volume = data.get('volume', 80)
                     self.plan_id = data.get('plan_id', 1)
                     self.email = data.get('email', '')
+                    voice_name = data.get('tts_voice_name', '')
+                    if voice_name not in TTS_VOICES_MAPPER:
+                        voice_name = list(TTS_VOICES_MAPPER.keys())[0]
+                    self.tts_voice_name = voice_name
+                    self.tts_voice = TTS_VOICES_MAPPER[voice_name]
                     logger.info(f"✅ State loaded from {self.state_file}")
             except Exception as e:
                 logger.warning(f"⚠️  Error loading state: {e}. Using defaults.")
@@ -148,11 +168,13 @@ class AppState:
         self.coach_active = True
         self.assistant_active = True
         self.amokk_toggle = True
-        self.proactive_coach_active = False  # Disabled by default
+        self.proactive_coach_active = False
         self.ptt_key = 'v'
         self.volume = 80
-        self.plan_id = 1  # Default: Starter plan
+        self.plan_id = 1
         self.email = ''
+        self.tts_voice_name = list(TTS_VOICES_MAPPER.keys())[0]
+        self.tts_voice = TTS_VOICES_MAPPER[self.tts_voice_name]
 
     def save_state(self):
         """Save state to JSON file"""
@@ -169,6 +191,7 @@ class AppState:
                 'volume': self.volume,
                 'plan_id': self.plan_id,
                 'email': self.email,
+                'tts_voice_name': self.tts_voice_name,
             }
             with open(self.state_file, 'w') as f:
                 json.dump(state_dict, f, indent=2)
@@ -338,6 +361,9 @@ def get_local_data():
         amokk_toggle=app_state.amokk_toggle,
         ptt_key=app_state.ptt_key,
         tts_volume=app_state.volume,
+        tts_voices=list(TTS_VOICES_MAPPER.keys()),
+        tts_voice_name=app_state.tts_voice_name,
+        tts_voice=app_state.tts_voice,
     )
 
 
@@ -527,6 +553,51 @@ def update_volume(request: VolumeRequest):
         raise
     except Exception as e:
         logger.error(f"❌ Volume error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# PUT /update_tts_voice
+# Update the TTS voice selection
+# ============================================================================
+
+@app.put("/update_tts_voice", tags=["Config"])
+def update_tts_voice(request: TTSVoiceRequest):
+    """
+    Update the selected TTS voice
+
+    Request:
+        {
+            "voice_name": "JEAN-KEVIN"
+        }
+
+    Returns:
+        {
+            "success": true,
+            "tts_voice_name": "JEAN-KEVIN",
+            "tts_voice": "ash"
+        }
+    """
+    try:
+        if request.voice_name not in TTS_VOICES_MAPPER:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown voice '{request.voice_name}'. Available: {list(TTS_VOICES_MAPPER.keys())}"
+            )
+
+        app_state.tts_voice_name = request.voice_name
+        app_state.tts_voice = TTS_VOICES_MAPPER[request.voice_name]
+        app_state.save_state()
+        logger.info(f"🎙️  TTS voice updated: {request.voice_name} → {app_state.tts_voice}")
+        return {
+            "success": True,
+            "tts_voice_name": app_state.tts_voice_name,
+            "tts_voice": app_state.tts_voice,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ TTS voice error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

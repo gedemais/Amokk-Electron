@@ -9,9 +9,10 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
-import { Settings, Keyboard, Volume2 } from "lucide-react";
+import { Settings, Keyboard, Volume2, Mic } from "lucide-react";
 
 interface ConfigurationDialogProps {
   configurationDialogOpen: boolean;
@@ -26,6 +27,9 @@ interface ConfigurationDialogProps {
   volume: number[];
   onVolumeChange: (values: number[]) => void;
   onTestVolume: () => void;
+  ttsVoices: string[];
+  selectedVoice: string;
+  onVoiceChange: (voice: string) => void;
 }
 
 const ConfigurationDialog = ({
@@ -41,6 +45,9 @@ const ConfigurationDialog = ({
   volume,
   onVolumeChange,
   onTestVolume,
+  ttsVoices,
+  selectedVoice,
+  onVoiceChange,
 }: ConfigurationDialogProps) => {
   const { t } = useTranslation();
   return (
@@ -83,9 +90,7 @@ const ConfigurationDialog = ({
                 <h4
                   className={`font-semibold transition-colors ${assistantToggle ? "text-accent" : "text-foreground"}`}
                 >
-                  {t(
-                    "components.dashboard.ConfigurationDialog.assistant_title",
-                  )}
+                  {t("components.dashboard.ConfigurationDialog.assistant_title")}
                 </h4>
                 <p className="text-sm text-muted-foreground">
                   {t("components.dashboard.ConfigurationDialog.assistant_desc")}
@@ -119,9 +124,7 @@ const ConfigurationDialog = ({
               >
                 <Keyboard className="h-4 w-4 mr-2" />
                 {isBindingKey
-                  ? t(
-                      "components.dashboard.ConfigurationDialog.ptt_btn_binding",
-                    )
+                  ? t("components.dashboard.ConfigurationDialog.ptt_btn_binding")
                   : pushToTalkKey}
               </Button>
             </div>
@@ -133,9 +136,7 @@ const ConfigurationDialog = ({
                 <h4
                   className={`font-semibold transition-colors ${proactiveCoachEnabled ? "text-accent" : "text-foreground"}`}
                 >
-                  {t(
-                    "components.dashboard.ConfigurationDialog.proactive_title",
-                  )}
+                  {t("components.dashboard.ConfigurationDialog.proactive_title")}
                 </h4>
                 <p className="text-sm text-muted-foreground">
                   {t("components.dashboard.ConfigurationDialog.proactive_desc")}
@@ -148,6 +149,34 @@ const ConfigurationDialog = ({
               />
             </div>
           </div>
+
+          {ttsVoices.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <Mic className="h-4 w-4" />
+                    {t("components.dashboard.ConfigurationDialog.voice_title")}
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    {t("components.dashboard.ConfigurationDialog.voice_desc")}
+                  </p>
+                </div>
+                <Select value={selectedVoice} onValueChange={onVoiceChange}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Voice" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ttsVoices.map((voice) => (
+                      <SelectItem key={voice} value={voice}>
+                        {voice}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3">
             <div className="flex flex-col gap-4">

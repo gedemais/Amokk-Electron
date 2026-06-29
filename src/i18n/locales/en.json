@@ -43,6 +43,8 @@
         "ptt_btn_binding": "Press a key...",
         "proactive_title": "Proactive Coach (V2.5)",
         "proactive_desc": "AMOKK will proactively identify advice opportunities but will still prioritize your questions.",
+        "voice_title": "TTS Voice",
+        "voice_desc": "Choose the voice used by the coach",
         "volume_title": "Volume",
         "volume_desc": "Adjust the voice volume level",
         "test_volume_btn": "Test Volume"

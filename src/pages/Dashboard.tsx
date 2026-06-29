@@ -18,6 +18,8 @@ const Dashboard = () => {
     userPlanId,
     isBindingKey,
     volume,
+    ttsVoices,
+    selectedVoice,
     pricingDialogOpen,
     setPricingDialogOpen,
     configurationDialogOpen,
@@ -29,6 +31,7 @@ const Dashboard = () => {
     handleAmokkToggle,
     handleAssistantToggle,
     handleVolumeChange,
+    handleVoiceChange,
     handleBindKey,
     handleTestVolume,
     selectPlan,
@@ -76,6 +79,9 @@ const Dashboard = () => {
             volume={volume}
             onVolumeChange={handleVolumeChange}
             onTestVolume={handleTestVolume}
+            ttsVoices={ttsVoices}
+            selectedVoice={selectedVoice}
+            onVoiceChange={handleVoiceChange}
           />
         </div>
 
