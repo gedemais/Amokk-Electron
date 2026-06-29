@@ -95,6 +95,7 @@ class LocalDataResponse(BaseModel):
     tts_voices: list
     tts_voice_name: str
     tts_voice: str
+    current_tts_voice_name: Optional[str] = None
 
 
 # ============================================================================
@@ -153,6 +154,7 @@ class AppState:
                         voice_name = list(TTS_VOICES_MAPPER.keys())[0]
                     self.tts_voice_name = voice_name
                     self.tts_voice = TTS_VOICES_MAPPER[voice_name]
+                    self.current_tts_voice_name = data.get('current_tts_voice_name', None)
                     logger.info(f"✅ State loaded from {self.state_file}")
             except Exception as e:
                 logger.warning(f"⚠️  Error loading state: {e}. Using defaults.")
@@ -175,6 +177,7 @@ class AppState:
         self.email = ''
         self.tts_voice_name = list(TTS_VOICES_MAPPER.keys())[0]
         self.tts_voice = TTS_VOICES_MAPPER[self.tts_voice_name]
+        self.current_tts_voice_name = None
 
     def save_state(self):
         """Save state to JSON file"""
@@ -192,6 +195,7 @@ class AppState:
                 'plan_id': self.plan_id,
                 'email': self.email,
                 'tts_voice_name': self.tts_voice_name,
+                'current_tts_voice_name': self.current_tts_voice_name,
             }
             with open(self.state_file, 'w') as f:
                 json.dump(state_dict, f, indent=2)
@@ -364,6 +368,7 @@ def get_local_data():
         tts_voices=list(TTS_VOICES_MAPPER.keys()),
         tts_voice_name=app_state.tts_voice_name,
         tts_voice=app_state.tts_voice,
+        current_tts_voice_name=app_state.current_tts_voice_name,
     )
 
 

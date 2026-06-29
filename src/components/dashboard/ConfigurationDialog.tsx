@@ -162,9 +162,9 @@ const ConfigurationDialog = ({
                     {t("components.dashboard.ConfigurationDialog.voice_desc")}
                   </p>
                 </div>
-                <Select value={selectedVoice} onValueChange={onVoiceChange}>
+                <Select value={selectedVoice || undefined} onValueChange={onVoiceChange}>
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Voice" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {ttsVoices.map((voice) => (

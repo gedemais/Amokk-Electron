@@ -79,6 +79,7 @@ export const useDashboard = () => {
       if (data.tts_volume !== undefined) setVolume([data.tts_volume]);
       if (data.tts_voices !== undefined) setTtsVoices(data.tts_voices);
       if (data.tts_voice_name !== undefined) setSelectedVoice(data.tts_voice_name);
+      if (data.current_tts_voice_name !== undefined) setSelectedVoice(data.current_tts_voice_name ?? "");
       if (data.tts_voice !== undefined) setSelectedVoiceId(data.tts_voice);
       if (data.first_launch === true) {
         setIsFirstLaunch(true);
