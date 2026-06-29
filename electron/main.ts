@@ -1058,6 +1058,10 @@ function setupIPC(): void {
               }),
             });
             logger.info('GOOGLE_LOGIN', 'Token forwarded to backend successfully');
+            if (mainWindow) {
+              mainWindow.show();
+              mainWindow.focus();
+            }
             resolve(data);
           } else {
             resolve({ error: 'No token received' });
