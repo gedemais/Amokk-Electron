@@ -23,6 +23,7 @@ export const updateLanguage = (lang: string) => apiRequest('PUT', '/update_langu
 export const updatePttKey = (ptt_key: string) => apiRequest('PUT', '/update_ptt_key', { ptt_key });
 export const selectPlan = (plan_id: number) => apiRequest('POST', '/mock_select_plan', { plan_id });
 export const toggleProactiveCoach = (active: boolean) => apiRequest('PUT', '/coach_toggle', { active });
+export const updateTtsVoice = (voice_name: string) => apiRequest('PUT', '/update_tts_voice', { voice_name });
 export const contactSupport = () => {
     window.location.href = 'mailto:contact@amokk.fr';
 };

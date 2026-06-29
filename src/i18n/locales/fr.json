@@ -44,6 +44,8 @@
         "ptt_btn_binding": "Appuyez sur une touche...",
         "proactive_title": "Coach Proactif (V2.5)",
         "proactive_desc": "AMOKK identifiera de manière proactive des opportunités de conseils, mais priorisera malgré tout les questions que vous lui poserez.",
+        "voice_title": "Voix TTS",
+        "voice_desc": "Choisissez la voix utilisée par le coach",
         "volume_title": "Volume",
         "volume_desc": "Ajustez le niveau du volume de la voix",
         "test_volume_btn": "Tester le Volume"

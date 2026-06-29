@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useDebugPanel } from "@/hooks/useDebugPanel";
 import { logger } from "@/utils/logger";
 import * as api from "@/lib/api";
+import { toggleVoiceSample } from "@/utils/voiceSamples";
 
 export const useDashboard = () => {
   const debug = useDebugPanel();
@@ -17,6 +18,9 @@ export const useDashboard = () => {
   const [userPlanId, setUserPlanId] = useState(1);
   const [isBindingKey, setIsBindingKey] = useState(false);
   const [volume, setVolume] = useState([70]);
+  const [ttsVoices, setTtsVoices] = useState<string[]>([]);
+  const [selectedVoice, setSelectedVoice] = useState("");
+  const [selectedVoiceId, setSelectedVoiceId] = useState("ash");
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
   const [progressDialogOpen, setProgressDialogOpen] = useState(false);
   const [troubleshootOpen, setTroubleshootOpen] = useState(false);
@@ -34,7 +38,6 @@ export const useDashboard = () => {
 
   useEffect(() => {
     if (!progressDialogOpen && isFirstLaunch) {
-      // Progress fermé, ouvrir la configuration
       setConfigurationDialogOpen(true);
     }
   }, [progressDialogOpen, isFirstLaunch]);
@@ -74,11 +77,13 @@ export const useDashboard = () => {
       if (data.coach_toggle !== undefined) setProactiveCoachEnabled(data.coach_toggle);
       if (data.ptt_key !== undefined) setPushToTalkKey(data.ptt_key);
       if (data.tts_volume !== undefined) setVolume([data.tts_volume]);
+      if (data.tts_voices !== undefined) setTtsVoices(data.tts_voices);
+      if (data.tts_voice_name !== undefined) setSelectedVoice(data.tts_voice_name);
+      if (data.tts_voice !== undefined) setSelectedVoiceId(data.tts_voice);
       if (data.first_launch === true) {
-          setIsFirstLaunch(true);
-          setProgressDialogOpen(true);
-        }
-
+        setIsFirstLaunch(true);
+        setProgressDialogOpen(true);
+      }
     } catch (error) {
       logger.error('GET_LOCAL_DATA failed', error);
       debug.log('GET_LOCAL_DATA_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
@@ -111,13 +116,25 @@ export const useDashboard = () => {
     }
   };
 
-const handleVolumeChange = async (values: number[]) => {
-  setVolume(values);
-  await api.updateVolume(values[0]);
-};
+  const handleVolumeChange = async (values: number[]) => {
+    setVolume(values);
+    await api.updateVolume(values[0]);
+  };
 
+  const handleVoiceChange = async (voiceName: string) => {
+    setSelectedVoice(voiceName);
+    try {
+      logger.api('PUT', '/update_tts_voice', { voice_name: voiceName });
+      const data = await api.updateTtsVoice(voiceName);
+      debug.log('UPDATE_TTS_VOICE', data);
+      logger.apiResponse('/update_tts_voice', 200, data);
+      await fetchLocalData();
+    } catch (error) {
+      logger.error('UPDATE_TTS_VOICE failed', error);
+      debug.log('UPDATE_TTS_VOICE_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  };
 
-  
   const handleBindKey = () => {
     setIsBindingKey(true);
     logger.info('Listening for key press...');
@@ -127,7 +144,7 @@ const handleVolumeChange = async (values: number[]) => {
 
     const handleKeyDown = async (event: KeyboardEvent) => {
       event.preventDefault();
-      clearTimeout(bindingTimeout); // Clear the timeout
+      clearTimeout(bindingTimeout);
       const newKey = event.key.toUpperCase();
       logger.debug('Key pressed', newKey);
       document.removeEventListener('keydown', handleKeyDown);
@@ -199,9 +216,7 @@ const handleVolumeChange = async (values: number[]) => {
   };
 
   const handleTestVolume = () => {
-    const utterance = new SpeechSynthesisUtterance("Test du niveau de volume");
-    utterance.volume = volume[0] / 100;
-    window.speechSynthesis.speak(utterance);
+    toggleVoiceSample(selectedVoiceId, volume[0]);
   };
 
   return {
@@ -213,6 +228,8 @@ const handleVolumeChange = async (values: number[]) => {
     userPlanId,
     isBindingKey,
     volume,
+    ttsVoices,
+    selectedVoice,
     pricingDialogOpen,
     setPricingDialogOpen,
     configurationDialogOpen,
@@ -224,6 +241,7 @@ const handleVolumeChange = async (values: number[]) => {
     handleAmokkToggle,
     handleAssistantToggle,
     handleVolumeChange,
+    handleVoiceChange,
     handleBindKey,
     handleTestVolume,
     selectPlan,
