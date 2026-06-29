@@ -7,6 +7,7 @@
       "email_placeholder": "your@email.com",
       "password_label": "Password",
       "password_placeholder": "••••••••",
+      "continue_with_google": "Continue with Google",
       "login_button_loading": "Processing...",
       "login_button": "Login",
       "no_account": "No account yet?",

@@ -101,6 +101,29 @@ const Login = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    console.log('handleGoogleLogin called');
+    console.log('window.api:', (window as any).api);
+    console.log('window.api.auth:', (window as any).api?.auth);
+    setIsLoading(true);
+    console.log('window.api:', JSON.stringify(Object.keys((window as any).api)));
+    setErrorMessage('');
+    try {
+      const result = await (window as any).api.auth.googleLogin();
+      if (result.error) {
+        setErrorMessage(result.error);
+        return;
+      }
+      localStorage.setItem('auth_token', result.token);
+      localStorage.setItem('user_email', result.email);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setErrorMessage(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center flex-col justify-center p-4 relative overflow-hidden">
       <div
@@ -177,6 +200,27 @@ const Login = () => {
             >
               {isLoading ? t('pages.Login.login_button_loading') : t('pages.Login.login_button')}
             </Button>
+
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border/50" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="px-2 bg-card text-muted-foreground">ou</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-12"
+              onClick={handleGoogleLogin}
+              disabled={isLoading}
+            >
+              <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4 mr-2" />
+              {t('pages.Login.continue_with_google')}
+            </Button>
+
           </form>
 
           <div className="mt-6 text-center">
