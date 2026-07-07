@@ -15,7 +15,6 @@ interface PlanCardProps {
   showButton?: boolean;
   isCurrentPlan?: boolean;
   planId: number;
-  link: string;
 }
 
 const PlanCard = ({
@@ -29,7 +28,6 @@ const PlanCard = ({
   showButton = true,
   isCurrentPlan,
   planId,
-  link,
 }: PlanCardProps) => {
   const { t } = useTranslation();
   const handle_select = () => {

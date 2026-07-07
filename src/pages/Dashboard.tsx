@@ -18,6 +18,7 @@ const Dashboard = () => {
     userPlanId,
     isBindingKey,
     volume,
+    ttsSpeed,
     ttsVoices,
     selectedVoice,
     pricingDialogOpen,
@@ -31,17 +32,19 @@ const Dashboard = () => {
     handleAmokkToggle,
     handleAssistantToggle,
     handleVolumeChange,
+    handleTtsSpeedChange,
     handleVoiceChange,
     handleBindKey,
     handleTestVolume,
     selectPlan,
     toggleProactiveCoach,
     contactSupport,
+    refreshLocalData,
   } = useDashboard();
 
   return (
     <div className="min-h-screen p-6">
-      <DashboardHeader />
+      <DashboardHeader onLanguageChanged={refreshLocalData} />
 
       <div className="max-w-4xl mx-auto space-y-6">
         <RemainingGamesCard
@@ -78,6 +81,8 @@ const Dashboard = () => {
             onProactiveCoachToggle={toggleProactiveCoach}
             volume={volume}
             onVolumeChange={handleVolumeChange}
+            ttsSpeed={ttsSpeed}
+            onTtsSpeedChange={handleTtsSpeedChange}
             onTestVolume={handleTestVolume}
             ttsVoices={ttsVoices}
             selectedVoice={selectedVoice}

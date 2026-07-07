@@ -18,6 +18,7 @@ export const useDashboard = () => {
   const [userPlanId, setUserPlanId] = useState(1);
   const [isBindingKey, setIsBindingKey] = useState(false);
   const [volume, setVolume] = useState([70]);
+  const [ttsSpeed, setTtsSpeed] = useState([1.0]);
   const [ttsVoices, setTtsVoices] = useState<string[]>([]);
   const [selectedVoice, setSelectedVoice] = useState("");
   const [selectedVoiceId, setSelectedVoiceId] = useState("ash");
@@ -77,6 +78,7 @@ export const useDashboard = () => {
       if (data.coach_toggle !== undefined) setProactiveCoachEnabled(data.coach_toggle);
       if (data.ptt_key !== undefined) setPushToTalkKey(data.ptt_key);
       if (data.tts_volume !== undefined) setVolume([data.tts_volume]);
+      if (data.tts_speed !== undefined) setTtsSpeed([data.tts_speed]);
       if (data.tts_voices !== undefined) setTtsVoices(data.tts_voices);
       if (data.tts_voice_name !== undefined) setSelectedVoice(data.tts_voice_name);
       if (data.current_tts_voice_name !== undefined) setSelectedVoice(data.current_tts_voice_name ?? "");
@@ -120,6 +122,19 @@ export const useDashboard = () => {
   const handleVolumeChange = async (values: number[]) => {
     setVolume(values);
     await api.updateVolume(values[0]);
+  };
+
+  const handleTtsSpeedChange = async (values: number[]) => {
+    setTtsSpeed(values);
+    try {
+      logger.api('PUT', '/update_tts_speed', { speed: values[0] });
+      const data = await api.updateTtsSpeed(values[0]);
+      debug.log('UPDATE_TTS_SPEED', data);
+      logger.apiResponse('/update_tts_speed', 200, data);
+    } catch (error) {
+      logger.error('UPDATE_TTS_SPEED failed', error);
+      debug.log('UPDATE_TTS_SPEED_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
+    }
   };
 
   const handleVoiceChange = async (voiceName: string) => {
@@ -217,7 +232,11 @@ export const useDashboard = () => {
   };
 
   const handleTestVolume = () => {
-    toggleVoiceSample(selectedVoiceId, volume[0]);
+    toggleVoiceSample(selectedVoiceId, {
+      volume: volume[0],
+      speed: ttsSpeed[0],
+      lang: language,
+    });
   };
 
   return {
@@ -229,6 +248,7 @@ export const useDashboard = () => {
     userPlanId,
     isBindingKey,
     volume,
+    ttsSpeed,
     ttsVoices,
     selectedVoice,
     pricingDialogOpen,
@@ -242,11 +262,13 @@ export const useDashboard = () => {
     handleAmokkToggle,
     handleAssistantToggle,
     handleVolumeChange,
+    handleTtsSpeedChange,
     handleVoiceChange,
     handleBindKey,
     handleTestVolume,
     selectPlan,
     toggleProactiveCoach,
     contactSupport,
+    refreshLocalData: fetchLocalData,
   };
 };

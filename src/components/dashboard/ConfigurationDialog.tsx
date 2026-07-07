@@ -12,7 +12,11 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
-import { Settings, Keyboard, Volume2, Mic } from "lucide-react";
+import { Settings, Keyboard, Volume2, Mic, Gauge } from "lucide-react";
+
+const TTS_SPEED_MIN = 0.75;
+const TTS_SPEED_MAX = 2.0;
+const TTS_SPEED_STEP = 0.05;
 
 interface ConfigurationDialogProps {
   configurationDialogOpen: boolean;
@@ -26,6 +30,8 @@ interface ConfigurationDialogProps {
   onProactiveCoachToggle: (checked: boolean) => void;
   volume: number[];
   onVolumeChange: (values: number[]) => void;
+  ttsSpeed: number[];
+  onTtsSpeedChange: (values: number[]) => void;
   onTestVolume: () => void;
   ttsVoices: string[];
   selectedVoice: string;
@@ -44,6 +50,8 @@ const ConfigurationDialog = ({
   onProactiveCoachToggle,
   volume,
   onVolumeChange,
+  ttsSpeed,
+  onTtsSpeedChange,
   onTestVolume,
   ttsVoices,
   selectedVoice,
@@ -210,6 +218,33 @@ const ConfigurationDialog = ({
                 <Volume2 className="h-4 w-4 mr-2" />
                 {t("components.dashboard.ConfigurationDialog.test_volume_btn")}
               </Button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex flex-col gap-4">
+              <div className="flex-1">
+                <h4 className="font-semibold">
+                  {t("components.dashboard.ConfigurationDialog.speed_title")}
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  {t("components.dashboard.ConfigurationDialog.speed_desc")}
+                </p>
+              </div>
+              <div className="flex items-center gap-4">
+                <Gauge className="h-4 w-4 text-muted-foreground" />
+                <Slider
+                  value={ttsSpeed}
+                  onValueChange={onTtsSpeedChange}
+                  min={TTS_SPEED_MIN}
+                  max={TTS_SPEED_MAX}
+                  step={TTS_SPEED_STEP}
+                  className="flex-1"
+                />
+                <span className="text-sm font-medium min-w-[5ch]">
+                  {ttsSpeed[0].toFixed(2)}x
+                </span>
+              </div>
             </div>
           </div>
         </div>

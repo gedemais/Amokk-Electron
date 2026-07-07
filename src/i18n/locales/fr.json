@@ -48,7 +48,9 @@
         "voice_desc": "Choisissez la voix utilisée par le coach",
         "volume_title": "Volume",
         "volume_desc": "Ajustez le niveau du volume de la voix",
-        "test_volume_btn": "Tester le Volume"
+        "test_volume_btn": "Tester le Volume",
+        "speed_title": "Vitesse de la voix",
+        "speed_desc": "Ajustez la vitesse de parole du coach"
       },
       "DashboardHeader": {
         "title": "AMOKK"

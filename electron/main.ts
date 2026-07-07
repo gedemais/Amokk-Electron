@@ -961,6 +961,23 @@ function setupIPC(): void {
     return { success: true };
   });
 
+  /**
+   * Bring the main window back to the foreground after an external browser
+   * flow (e.g. Google OAuth). The OS refuses focus stealing from another
+   * process, so restore/show/focus is reinforced with an always-on-top
+   * pulse and an explicit app-level focus request.
+   */
+  function restoreAndFocusMainWindow(): void {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+    mainWindow.setAlwaysOnTop(true);
+    mainWindow.focus();
+    mainWindow.setAlwaysOnTop(false);
+    app.focus({ steal: true });
+  }
+
   // Google OAuth login
   ipcMain.handle('google:login', (): Promise<{ token: string; email: string; remaining_games: number; plan_id: number } | { error: string }> => {
     logger.info('GOOGLE_LOGIN', 'IPC handler triggered');
@@ -1058,16 +1075,15 @@ function setupIPC(): void {
               }),
             });
             logger.info('GOOGLE_LOGIN', 'Token forwarded to backend successfully');
-            if (mainWindow) {
-              mainWindow.show();
-              mainWindow.focus();
-            }
+            restoreAndFocusMainWindow();
             resolve(data);
           } else {
+            restoreAndFocusMainWindow();
             resolve({ error: 'No token received' });
           }
         } catch (err: any) {
           logger.error('GOOGLE_LOGIN', 'Fetch error', { error: err.message });
+          restoreAndFocusMainWindow();
           resolve({ error: err.message });
         }
       });
@@ -1092,7 +1108,9 @@ function setupIPC(): void {
 
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 
-      //mainWindow?.minimize();
+      // Minimize so the browser takes the foreground; the window is
+      // restored and focused once the token comes back (or on failure).
+      mainWindow?.minimize();
 
       shell.openExternal(authUrl);
 
@@ -1101,6 +1119,7 @@ function setupIPC(): void {
         if (!serverClosed) {
           serverClosed = true;
           server.close();
+          restoreAndFocusMainWindow();
           resolve({ error: 'Login timeout' });
         }
       }, 120000);

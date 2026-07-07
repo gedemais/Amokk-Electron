@@ -2,7 +2,11 @@ import logo from "@/assets/logo.png";
 import LanguageSelector from "@/components/LanguageSelector";
 import { useTranslation } from "react-i18next";
 
-const DashboardHeader = () => {
+interface DashboardHeaderProps {
+  onLanguageChanged?: (lang: string) => void;
+}
+
+const DashboardHeader = ({ onLanguageChanged }: DashboardHeaderProps) => {
   const { t } = useTranslation();
   return (
     <header className="flex items-center justify-between mb-8">
@@ -12,7 +16,7 @@ const DashboardHeader = () => {
           {t("components.dashboard.DashboardHeader.title")}
         </h1>
       </div>
-      <LanguageSelector />
+      <LanguageSelector onLanguageChanged={onLanguageChanged} />
     </header>
   );
 };

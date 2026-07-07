@@ -11,7 +11,13 @@ const languages = [
   { code: "it", name: "Italiano", flag: "🇮🇹", },
 ];
 
-const LanguageSelector: React.FC = () => {
+interface LanguageSelectorProps {
+  // Called after the backend has been notified of the new language, so the
+  // parent can refresh language-dependent data (e.g. TTS voice names).
+  onLanguageChanged?: (lang: string) => void;
+}
+
+const LanguageSelector: React.FC<LanguageSelectorProps> = ({ onLanguageChanged }) => {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -22,6 +28,7 @@ const LanguageSelector: React.FC = () => {
   const changeLanguage = async (langCode: string) => {
     i18n.changeLanguage(langCode);
     await api.updateLanguage(langCode);
+    onLanguageChanged?.(langCode);
     setIsOpen(false);
   };
 

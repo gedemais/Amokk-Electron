@@ -1,0 +1,3 @@
+# Dependencies for the one-shot tools/ scripts (not shipped with the app)
+gdown==5.2.0
+openai>=1.40.0

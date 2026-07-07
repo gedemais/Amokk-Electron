@@ -57,6 +57,10 @@ class VolumeRequest(BaseModel):
     volume: int  # 0-100
 
 
+class TTSSpeedRequest(BaseModel):
+    speed: float  # 0.75-2.0
+
+
 class TTSVoiceRequest(BaseModel):
     voice_name: str
 
@@ -92,6 +96,7 @@ class LocalDataResponse(BaseModel):
     amokk_toggle: bool
     ptt_key: str
     tts_volume: int
+    tts_speed: float
     tts_voices: list
     tts_voice_name: str
     tts_voice: str
@@ -116,6 +121,10 @@ def generate_mock_token(email: str) -> str:
 # ============================================================================
 # Application State (In-memory storage for demo)
 # ============================================================================
+
+TTS_SPEED_MIN = 0.75
+TTS_SPEED_MAX = 2.0
+TTS_SPEED_DEFAULT = 1.0
 
 TTS_VOICES_MAPPER = {
     "JEAN-KEVIN": "ash",
@@ -147,6 +156,7 @@ class AppState:
                     self.proactive_coach_active = data.get('proactive_coach_active', False)
                     self.ptt_key = data.get('ptt_key', 'v')
                     self.volume = data.get('volume', 80)
+                    self.tts_speed = data.get('tts_speed', TTS_SPEED_DEFAULT)
                     self.plan_id = data.get('plan_id', 1)
                     self.email = data.get('email', '')
                     voice_name = data.get('tts_voice_name', '')
@@ -173,6 +183,7 @@ class AppState:
         self.proactive_coach_active = False
         self.ptt_key = 'v'
         self.volume = 80
+        self.tts_speed = TTS_SPEED_DEFAULT
         self.plan_id = 1
         self.email = ''
         self.tts_voice_name = list(TTS_VOICES_MAPPER.keys())[0]
@@ -192,6 +203,7 @@ class AppState:
                 'proactive_coach_active': self.proactive_coach_active,
                 'ptt_key': self.ptt_key,
                 'volume': self.volume,
+                'tts_speed': self.tts_speed,
                 'plan_id': self.plan_id,
                 'email': self.email,
                 'tts_voice_name': self.tts_voice_name,
@@ -259,6 +271,7 @@ def root():
             "PUT  /mock_proactive_coach_toggle",
             "PUT  /update_ptt_key",
             "PUT  /update_volume",
+            "PUT  /update_tts_speed",
             "POST /mock_select_plan",
             "POST /mock_contact_support",
             "POST /logout",
@@ -365,6 +378,7 @@ def get_local_data():
         amokk_toggle=app_state.amokk_toggle,
         ptt_key=app_state.ptt_key,
         tts_volume=app_state.volume,
+        tts_speed=app_state.tts_speed,
         tts_voices=list(TTS_VOICES_MAPPER.keys()),
         tts_voice_name=app_state.tts_voice_name,
         tts_voice=app_state.tts_voice,
@@ -558,6 +572,45 @@ def update_volume(request: VolumeRequest):
         raise
     except Exception as e:
         logger.error(f"❌ Volume error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# PUT /update_tts_speed
+# Update TTS speech speed
+# ============================================================================
+
+@app.put("/update_tts_speed", tags=["Config"])
+def update_tts_speed(request: TTSSpeedRequest):
+    """
+    Update the TTS speech speed
+
+    Request:
+        {
+            "speed": 1.25
+        }
+
+    Returns:
+        {
+            "success": true,
+            "speed": 1.25
+        }
+    """
+    try:
+        if not (TTS_SPEED_MIN <= request.speed <= TTS_SPEED_MAX):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Speed must be between {TTS_SPEED_MIN} and {TTS_SPEED_MAX}"
+            )
+
+        app_state.tts_speed = request.speed
+        app_state.save_state()
+        logger.info(f"⏩ TTS speed updated: {request.speed}x")
+        return {"success": True, "speed": request.speed}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ TTS speed error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

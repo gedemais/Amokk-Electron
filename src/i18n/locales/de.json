@@ -44,9 +44,13 @@
         "ptt_btn_binding": "Taste drücken...",
         "proactive_title": "Proaktiver Coach (V2.5)",
         "proactive_desc": "AMOKK wird proaktiv Ratschläge geben, priorisiert aber weiterhin deine gestellten Fragen.",
+        "voice_title": "Stimme des Coachs",
+        "voice_desc": "Wähle die Stimme des Coachs",
         "volume_title": "Lautstärke",
         "volume_desc": "Passe die Lautstärke der Stimme an",
-        "test_volume_btn": "Lautstärke testen"
+        "test_volume_btn": "Lautstärke testen",
+        "speed_title": "Sprechgeschwindigkeit",
+        "speed_desc": "Passe die Sprechgeschwindigkeit des Coachs an"
       },
       "DashboardHeader": {
         "title": "AMOKK"
