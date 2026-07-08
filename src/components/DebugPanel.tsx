@@ -100,7 +100,7 @@ const PAGE_GUIDELINES: PageGuideline[] = [
           '  2. Drag slider to change value',
           '  3. Check Debug tab → UPDATE_VOLUME response',
           '  4. Verify: volume field matches slider',
-          '  5. Click "Tester le Volume" → hear voice at new volume',
+          '  5. Click "Tester la Voix" → hear voice at new volume',
           '',
           '🎯 Coach Proactif Toggle:',
           '  1. In Configuration dialog → "Coach Proactif (V1.9.6)"',

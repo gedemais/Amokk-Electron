@@ -16,13 +16,37 @@ const CDN_VOICES: Record<string, string> = {
   sage: `${CDN_BASE}/sage.wav`,
 };
 
-// Gender of each known TTS voice id, used to resolve `<lang>/<gender>.mp3`
-// samples when no per-voice sample is bundled.
+// Gender of each known TTS voice, used to resolve `<lang>/<gender>.mp3`.
+// The production backend exposes exactly two voices per language, named with
+// the localized gender ("Homme"/"Femme", "Male"/"Female", ...) — these are
+// the primary keys. OpenAI voice ids are kept as a dev/legacy fallback.
+// Lookups are case-insensitive (keys must be lowercase).
 const VOICE_GENDERS: Record<string, VoiceGender> = {
+  // Localized production voice names
+  homme: 'male',
+  femme: 'female',
+  male: 'male',
+  female: 'female',
+  hombre: 'male',
+  mujer: 'female',
+  mann: 'male',
+  frau: 'female',
+  uomo: 'male',
+  donna: 'female',
+  // OpenAI voice ids (dev/legacy)
+  alloy: 'male',
   ash: 'male',
+  ballad: 'male',
+  cedar: 'male',
+  echo: 'male',
+  onyx: 'male',
+  verse: 'male',
+  coral: 'female',
+  fable: 'female',
+  marin: 'female',
   nova: 'female',
   sage: 'female',
-  marin: 'female',
+  shimmer: 'female',
 };
 
 // Bundled samples live in public/voice-samples/ (populated via
@@ -33,24 +57,36 @@ const SAMPLES_BASE = `${import.meta.env.BASE_URL}voice-samples`;
 
 /**
  * Ordered candidate URLs for a voice sample, most specific first:
- * 1. per-voice + per-language sample
- * 2. per-gender + per-language sample
- * 3. legacy non-localized CDN sample
+ * 1. per-gender + per-language sample (`<lang>/male.mp3` / `<lang>/female.mp3`)
+ * 2. per-voice samples (dev/legacy ids only)
+ * 3. gender-consistent CDN sample
  * 4. global fallback
+ *
+ * `voice` is the voice as reported by the backend — in production the
+ * localized gender name ("Femme", "Male", "Donna", ...), in dev an OpenAI
+ * voice id ("ash", "marin", ...). Matching is case-insensitive.
  */
-export function getVoiceSampleUrls(voiceId: string, lang?: string): string[] {
+export function getVoiceSampleUrls(voice: string, lang?: string): string[] {
   const urls: string[] = [];
+  const key = voice.trim().toLowerCase();
+  const gender = VOICE_GENDERS[key];
 
-  if (lang) {
-    urls.push(`${SAMPLES_BASE}/${lang}/${voiceId}.mp3`);
-    const gender = VOICE_GENDERS[voiceId];
-    if (gender) {
-      urls.push(`${SAMPLES_BASE}/${lang}/${gender}.mp3`);
-    }
+  if (lang && gender) {
+    urls.push(`${SAMPLES_BASE}/${lang}/${gender}.mp3`);
   }
-  urls.push(`${SAMPLES_BASE}/${voiceId}.mp3`);
-  if (CDN_VOICES[voiceId]) {
-    urls.push(CDN_VOICES[voiceId]);
+  if (lang) {
+    urls.push(`${SAMPLES_BASE}/${lang}/${encodeURIComponent(key)}.mp3`);
+  }
+  urls.push(`${SAMPLES_BASE}/${encodeURIComponent(key)}.mp3`);
+  if (CDN_VOICES[key]) {
+    urls.push(CDN_VOICES[key]);
+  }
+  // Keep the CDN fallback gender-consistent so a missing sample never turns
+  // a female voice into a male one (or vice versa).
+  if (gender === 'female') {
+    urls.push(CDN_VOICES.nova);
+  } else if (gender === 'male') {
+    urls.push(CDN_VOICES.ash);
   }
   urls.push(FALLBACK_URL);
 
@@ -81,7 +117,7 @@ function playUrl(url: string, { volume, speed = 1 }: VoiceSamplePlayback): Promi
  * Play the sample matching the selected voice and language, at the given
  * volume and speed. Clicking while a sample is playing stops it.
  */
-export async function toggleVoiceSample(voiceId: string, playback: VoiceSamplePlayback): Promise<void> {
+export async function toggleVoiceSample(voice: string, playback: VoiceSamplePlayback): Promise<void> {
   // If already playing — just stop
   if (currentAudio && !currentAudio.paused) {
     stopCurrent();
@@ -90,7 +126,7 @@ export async function toggleVoiceSample(voiceId: string, playback: VoiceSamplePl
 
   stopCurrent();
 
-  for (const url of getVoiceSampleUrls(voiceId, playback.lang)) {
+  for (const url of getVoiceSampleUrls(voice, playback.lang)) {
     try {
       await playUrl(url, playback);
       return;

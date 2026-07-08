@@ -48,7 +48,7 @@
         "voice_desc": "Elige la voz utilizada por el coach",
         "volume_title": "Volumen",
         "volume_desc": "Ajusta el nivel del volumen de la voz",
-        "test_volume_btn": "Probar Volumen",
+        "test_volume_btn": "Probar la Voz",
         "speed_title": "Velocidad de la voz",
         "speed_desc": "Ajusta la velocidad de habla del coach"
       },

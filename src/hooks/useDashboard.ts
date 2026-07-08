@@ -144,6 +144,7 @@ export const useDashboard = () => {
       const data = await api.updateTtsVoice(voiceName);
       debug.log('UPDATE_TTS_VOICE', data);
       logger.apiResponse('/update_tts_voice', 200, data);
+      if (data.tts_voice !== undefined) setSelectedVoiceId(data.tts_voice);
       await fetchLocalData();
     } catch (error) {
       logger.error('UPDATE_TTS_VOICE failed', error);
@@ -232,7 +233,9 @@ export const useDashboard = () => {
   };
 
   const handleTestVolume = () => {
-    toggleVoiceSample(selectedVoiceId, {
+    // Prefer the voice name ("Homme"/"Femme"/"Male"/... in production) —
+    // it is what maps to the bundled <lang>/male|female.mp3 samples.
+    toggleVoiceSample(selectedVoice || selectedVoiceId, {
       volume: volume[0],
       speed: ttsSpeed[0],
       lang: language,

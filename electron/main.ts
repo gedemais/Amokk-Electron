@@ -985,22 +985,10 @@ function setupIPC(): void {
       const REDIRECT_PORT = 9876;
       let serverClosed = false;
 
-      // Serveur HTTP local pour capturer le callback Google
-      const server = createServer(async (req, res) => {
-        // if (!req.url?.startsWith('/callback')) return;
-        logger.info('GOOGLE_LOGIN', 'Request received', { url: req.url });
-
-        if (!req.url?.startsWith('/callback')) {
-          logger.info('GOOGLE_LOGIN', 'Not a callback, ignoring');
-          return;
-        }
-
-        const url = new URL(req.url, `http://127.0.0.1:${REDIRECT_PORT}`);
-        const code = url.searchParams.get('code');
-
-        logger.info('GOOGLE_LOGIN', 'Code extracted', { hasCode: !!code, serverClosed });
-
-
+      // Result page shown in the browser tab; auto-closes after `closeAfterMs`
+      // (note: some browsers refuse window.close() on tabs they consider
+      // user-opened, in which case the countdown is a no-op).
+      const sendResultPage = (res: any, title: string, subtitle: string, closeAfterMs: number) => {
         res.writeHead(200, { 'Content-Type': 'text/html' });
         res.end(`
                   <!DOCTYPE html>
@@ -1015,33 +1003,39 @@ function setupIPC(): void {
                   </head>
                   <body>
                     <img src="https://framerusercontent.com/images/lKCO8Ykh67XjdJU35Y2l7zo484.png?scale-down-to=512" style="width:64px;height:64px;">
-                    <h2>Login successful !</h2>
-                    <p>You can close this tab.</p>
-                    <script>setTimeout(() => window.close(), 5000);</script>
+                    <h2>${title}</h2>
+                    <p>${subtitle}</p>
+                    <script>setTimeout(() => window.close(), ${closeAfterMs});</script>
                   </body>
                   </html>
                 `);
+      };
 
+      // Serveur HTTP local pour capturer le callback Google
+      const server = createServer(async (req, res) => {
+        logger.info('GOOGLE_LOGIN', 'Request received', { url: req.url });
 
-        if (!code || serverClosed) {
-          logger.info('GOOGLE_LOGIN', 'Skipping - no code or server already closed');
+        if (!req.url?.startsWith('/callback')) {
+          logger.info('GOOGLE_LOGIN', 'Not a callback, ignoring');
           return;
         }
 
-        // if (!code || serverClosed) return;
-        serverClosed = true;
+        const url = new URL(req.url, `http://127.0.0.1:${REDIRECT_PORT}`);
+        const code = url.searchParams.get('code');
 
-        try {
-          server.close();
-          logger.info('GOOGLE_LOGIN', 'Server closed successfully');
-        } catch (e: any) {
-          logger.error('GOOGLE_LOGIN', 'Error closing server', { error: e.message });
+        logger.info('GOOGLE_LOGIN', 'Code extracted', { hasCode: !!code, serverClosed });
+
+        if (!code || serverClosed) {
+          logger.info('GOOGLE_LOGIN', 'Skipping - no code or server already closed');
+          sendResultPage(res, 'AMOKK', 'You can close this tab.', 3000);
+          return;
         }
 
-        logger.info('GOOGLE_LOGIN', 'Starting fetch');  // ← ici
+        serverClosed = true;
+
+        logger.info('GOOGLE_LOGIN', 'Starting fetch');
 
         try {
-
           console.log('Received Google auth code:', code);
           logger.info('GOOGLE_LOGIN', 'Calling sign_up_google');
 
@@ -1061,6 +1055,14 @@ function setupIPC(): void {
 
           console.log('Google auth response:', data);
           if (data.token) {
+            // Bring the app window back the moment the token arrives,
+            // before forwarding it to the local backend.
+            restoreAndFocusMainWindow();
+
+            // The page is only served now (token in hand), so the browser
+            // tab auto-closes 3s after the token was obtained.
+            sendResultPage(res, 'Login successful !', 'This tab will close automatically.', 3000);
+
             // Forward to local FastAPI backend
             logger.info('GOOGLE_LOGIN', `Forwarding token to backend at http://${AMOKK_BACKEND_URL}/google_auth`, data);
             await fetch(`http://${AMOKK_BACKEND_URL}/google_auth`, {
@@ -1075,16 +1077,24 @@ function setupIPC(): void {
               }),
             });
             logger.info('GOOGLE_LOGIN', 'Token forwarded to backend successfully');
-            restoreAndFocusMainWindow();
             resolve(data);
           } else {
+            sendResultPage(res, 'Login failed', 'You can close this tab.', 3000);
             restoreAndFocusMainWindow();
             resolve({ error: 'No token received' });
           }
         } catch (err: any) {
           logger.error('GOOGLE_LOGIN', 'Fetch error', { error: err.message });
+          sendResultPage(res, 'Login failed', 'You can close this tab.', 3000);
           restoreAndFocusMainWindow();
           resolve({ error: err.message });
+        } finally {
+          try {
+            server.close();
+            logger.info('GOOGLE_LOGIN', 'Server closed successfully');
+          } catch (e: any) {
+            logger.error('GOOGLE_LOGIN', 'Error closing server', { error: e.message });
+          }
         }
       });
 

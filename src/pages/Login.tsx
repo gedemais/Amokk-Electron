@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { logger } from "@/utils/logger";
 import { useDebugPanel } from "@/hooks/useDebugPanel";
@@ -32,7 +32,8 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMethod, setLoadingMethod] = useState<"password" | "google" | null>(null);
+  const isLoading = loadingMethod !== null;
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -67,7 +68,7 @@ const Login = () => {
 
     if (isLoading) return;
 
-    setIsLoading(true);
+    setLoadingMethod("password");
     setErrorMessage("");
 
     try {
@@ -97,7 +98,7 @@ const Login = () => {
       setErrorMessage(errorMsg);
       logger.error("Login error", errorMsg);
     } finally {
-      setIsLoading(false);
+      setLoadingMethod(null);
     }
   };
 
@@ -105,7 +106,8 @@ const Login = () => {
     console.log('handleGoogleLogin called');
     console.log('window.api:', (window as any).api);
     console.log('window.api.auth:', (window as any).api?.auth);
-    setIsLoading(true);
+    if (isLoading) return;
+    setLoadingMethod('google');
     console.log('window.api:', JSON.stringify(Object.keys((window as any).api)));
     setErrorMessage('');
     try {
@@ -120,7 +122,7 @@ const Login = () => {
     } catch (err: any) {
       setErrorMessage(err.message);
     } finally {
-      setIsLoading(false);
+      setLoadingMethod(null);
     }
   };
 
@@ -198,7 +200,14 @@ const Login = () => {
               className="w-full text-lg h-12"
               disabled={isLoading}
             >
-              {isLoading ? t('pages.Login.login_button_loading') : t('pages.Login.login_button')}
+              {loadingMethod === "password" ? (
+                <>
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  {t('pages.Login.login_button_loading')}
+                </>
+              ) : (
+                t('pages.Login.login_button')
+              )}
             </Button>
 
             <div className="relative my-4">
@@ -217,8 +226,17 @@ const Login = () => {
               onClick={handleGoogleLogin}
               disabled={isLoading}
             >
-              <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4 mr-2" />
-              {t('pages.Login.continue_with_google')}
+              {loadingMethod === "google" ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {t('pages.Login.login_button_loading')}
+                </>
+              ) : (
+                <>
+                  <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4 mr-2" />
+                  {t('pages.Login.continue_with_google')}
+                </>
+              )}
             </Button>
 
           </form>
