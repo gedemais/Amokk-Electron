@@ -65,6 +65,14 @@ class TTSVoiceRequest(BaseModel):
     voice_name: str
 
 
+class InputDeviceRequest(BaseModel):
+    device_name: str          # "" = system default device
+
+
+class MicTestStartRequest(BaseModel):
+    device_name: str = ""     # "" = currently persisted device
+
+
 class PlanSelectionRequest(BaseModel):
     plan_id: int
 
@@ -101,6 +109,8 @@ class LocalDataResponse(BaseModel):
     tts_voice_name: str
     tts_voice: str
     current_tts_voice_name: Optional[str] = None
+    input_devices: list = []
+    current_input_device_name: str = ""
 
 
 # ============================================================================
@@ -132,6 +142,17 @@ TTS_VOICES_MAPPER = {
     "Truc": "nova",
     "Couille": "sage",
 }
+
+# Mock input devices ("" = system default is NOT listed; the frontend adds
+# its own localized "default" entry with a sentinel value)
+MOCK_INPUT_DEVICES = [
+    "Microphone (USB Audio Device)",
+    "Casque Micro (Realtek(R) Audio)",
+]
+
+# Mic test state (parity with the real backend's MicTester watchdog: the
+# test auto-deactivates when the frontend stops polling /get_mic_level)
+MIC_TEST_IDLE_TIMEOUT_S = 5.0
 
 
 class AppState:
@@ -165,6 +186,7 @@ class AppState:
                     self.tts_voice_name = voice_name
                     self.tts_voice = TTS_VOICES_MAPPER[voice_name]
                     self.current_tts_voice_name = data.get('current_tts_voice_name', None)
+                    self.input_device_name = data.get('input_device_name', '')
                     logger.info(f"✅ State loaded from {self.state_file}")
             except Exception as e:
                 logger.warning(f"⚠️  Error loading state: {e}. Using defaults.")
@@ -189,6 +211,7 @@ class AppState:
         self.tts_voice_name = list(TTS_VOICES_MAPPER.keys())[0]
         self.tts_voice = TTS_VOICES_MAPPER[self.tts_voice_name]
         self.current_tts_voice_name = None
+        self.input_device_name = ''
 
     def save_state(self):
         """Save state to JSON file"""
@@ -208,6 +231,7 @@ class AppState:
                 'email': self.email,
                 'tts_voice_name': self.tts_voice_name,
                 'current_tts_voice_name': self.current_tts_voice_name,
+                'input_device_name': self.input_device_name,
             }
             with open(self.state_file, 'w') as f:
                 json.dump(state_dict, f, indent=2)
@@ -272,6 +296,10 @@ def root():
             "PUT  /update_ptt_key",
             "PUT  /update_volume",
             "PUT  /update_tts_speed",
+            "PUT  /update_input_device",
+            "POST /start_mic_test",
+            "POST /stop_mic_test",
+            "GET  /get_mic_level",
             "POST /mock_select_plan",
             "POST /mock_contact_support",
             "POST /logout",
@@ -383,6 +411,8 @@ def get_local_data():
         tts_voice_name=app_state.tts_voice_name,
         tts_voice=app_state.tts_voice,
         current_tts_voice_name=app_state.current_tts_voice_name,
+        input_devices=MOCK_INPUT_DEVICES,
+        current_input_device_name=app_state.input_device_name,
     )
 
 
@@ -657,6 +687,76 @@ def update_tts_voice(request: TTSVoiceRequest):
     except Exception as e:
         logger.error(f"❌ TTS voice error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# Microphone: device selection + Discord-like mic test (mock)
+# ============================================================================
+
+_mic_test = {"active": False, "started": 0.0, "last_poll": 0.0}
+
+
+@app.put("/update_input_device", tags=["Config"])
+def update_input_device(request: InputDeviceRequest):
+    """
+    Update the selected audio input device ("" = system default).
+    Parity with the real backend: 400 on unknown non-empty names.
+    """
+    try:
+        if request.device_name != "" and request.device_name not in MOCK_INPUT_DEVICES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown input device '{request.device_name}'. Available: {MOCK_INPUT_DEVICES}"
+            )
+        app_state.input_device_name = request.device_name
+        app_state.save_state()
+        logger.info(f"🎤 Input device updated: '{request.device_name or 'default'}'")
+        return f"Updated input device to '{request.device_name or 'default'}' successfully"
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Input device error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/start_mic_test", tags=["Config"])
+def start_mic_test(request: MicTestStartRequest):
+    """Start (or restart on another device) the mock mic test."""
+    import time
+    _mic_test["active"] = True
+    _mic_test["started"] = time.time()
+    _mic_test["last_poll"] = time.time()
+    logger.info(f"🎤 Mic test started ('{request.device_name or 'persisted/default'}')")
+    return {"active": True}
+
+
+@app.post("/stop_mic_test", tags=["Config"])
+def stop_mic_test():
+    """Stop the mock mic test (idempotent)."""
+    _mic_test["active"] = False
+    logger.info("🎤 Mic test stopped")
+    return {"active": False}
+
+
+@app.get("/get_mic_level", tags=["Config"])
+def get_mic_level():
+    """
+    Synthetic level while the test runs: a slow sine with jitter so the
+    volume bar visibly 'lives' in dev. Auto-deactivates when unpolled for
+    MIC_TEST_IDLE_TIMEOUT_S (parity with the real backend's watchdog).
+    """
+    import time
+    import math
+    import random
+    now = time.time()
+    if _mic_test["active"] and now - _mic_test["last_poll"] > MIC_TEST_IDLE_TIMEOUT_S:
+        _mic_test["active"] = False
+        logger.info("🎤 Mic test auto-stopped (polling ceased)")
+    if not _mic_test["active"]:
+        return {"active": False, "level": 0.0}
+    _mic_test["last_poll"] = now
+    level = abs(math.sin((now - _mic_test["started"]) * 2.0)) * (0.6 + 0.4 * random.random())
+    return {"active": True, "level": round(level, 3)}
 
 
 # ============================================================================

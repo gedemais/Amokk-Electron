@@ -25,6 +25,10 @@ export const updatePttKey = (ptt_key: string) => apiRequest('PUT', '/update_ptt_
 export const selectPlan = (plan_id: number) => apiRequest('POST', '/mock_select_plan', { plan_id });
 export const toggleProactiveCoach = (active: boolean) => apiRequest('PUT', '/coach_toggle', { active });
 export const updateTtsVoice = (voice_name: string) => apiRequest('PUT', '/update_tts_voice', { voice_name });
+export const updateInputDevice = (device_name: string) => apiRequest('PUT', '/update_input_device', { device_name });
+export const startMicTest = (device_name: string = "") => apiRequest('POST', '/start_mic_test', { device_name });
+export const stopMicTest = () => apiRequest('POST', '/stop_mic_test');
+export const getMicLevel = () => apiRequest('GET', '/get_mic_level');
 export const contactSupport = () => {
     window.location.href = 'mailto:contact@amokk.fr';
 };

@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,14 +10,21 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
+import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
-import { Settings, Keyboard, Volume2, Mic, Gauge } from "lucide-react";
+import { Settings, Keyboard, Volume2, Mic, AudioLines, Gauge } from "lucide-react";
+import * as api from "@/lib/api";
 
 const TTS_SPEED_MIN = 0.75;
 const TTS_SPEED_MAX = 2.0;
 const TTS_SPEED_STEP = 0.05;
+
+// Radix SelectItem forbids value="" — this sentinel stands for the system
+// default device; the backend only ever sees "".
+const DEFAULT_DEVICE_SENTINEL = "__default__";
+const MIC_LEVEL_POLL_MS = 100;
 
 interface ConfigurationDialogProps {
   configurationDialogOpen: boolean;
@@ -36,6 +44,9 @@ interface ConfigurationDialogProps {
   ttsVoices: string[];
   selectedVoice: string;
   onVoiceChange: (voice: string) => void;
+  inputDevices: string[];
+  selectedInputDevice: string; // "" = system default
+  onInputDeviceChange: (device: string) => void;
 }
 
 const ConfigurationDialog = ({
@@ -56,8 +67,72 @@ const ConfigurationDialog = ({
   ttsVoices,
   selectedVoice,
   onVoiceChange,
+  inputDevices,
+  selectedInputDevice,
+  onInputDeviceChange,
 }: ConfigurationDialogProps) => {
   const { t } = useTranslation();
+
+  // ------- Discord-like mic test: poll the backend level while active -------
+  const [micTestActive, setMicTestActive] = useState(false);
+  const [micLevel, setMicLevel] = useState(0);
+  const micPollRef = useRef<NodeJS.Timeout | null>(null);
+
+  const stopMicTest = useCallback(() => {
+    if (micPollRef.current) {
+      clearInterval(micPollRef.current);
+      micPollRef.current = null;
+    }
+    setMicTestActive(false);
+    setMicLevel(0);
+    // Best-effort: the backend watchdog closes the stream anyway when the
+    // polling stops (killed renderer, backend restart...).
+    api.stopMicTest().catch(() => {});
+  }, []);
+
+  const startMicTest = async () => {
+    try {
+      const data = await api.startMicTest(selectedInputDevice);
+      // apiRequest never throws on 4xx/5xx: gate on the payload instead.
+      if (data?.active !== true) return;
+      setMicTestActive(true);
+      micPollRef.current = setInterval(async () => {
+        try {
+          const level = await api.getMicLevel();
+          if (level?.active !== true) {
+            stopMicTest(); // watchdog fired or device unplugged mid-test
+            return;
+          }
+          setMicLevel(level.level ?? 0);
+        } catch {
+          stopMicTest(); // backend unreachable
+        }
+      }, MIC_LEVEL_POLL_MS);
+    } catch {
+      // backend down: leave the test idle
+    }
+  };
+
+  // Stop when the dialog closes, and on unmount.
+  useEffect(() => {
+    if (!configurationDialogOpen && micTestActive) stopMicTest();
+  }, [configurationDialogOpen, micTestActive, stopMicTest]);
+  useEffect(() => () => stopMicTest(), [stopMicTest]);
+
+  // Switching device mid-test: the backend restarts its stream in place.
+  useEffect(() => {
+    if (micTestActive) {
+      api.startMicTest(selectedInputDevice).catch(() => stopMicTest());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedInputDevice]);
+
+  // Unplugged-but-persisted device: keep it visible instead of a blank trigger.
+  const listedDevices =
+    selectedInputDevice === "" || inputDevices.includes(selectedInputDevice)
+      ? inputDevices
+      : [selectedInputDevice, ...inputDevices];
+
   return (
     <Dialog
       open={configurationDialogOpen}
@@ -82,7 +157,7 @@ const ConfigurationDialog = ({
           </CardContent>
         </Card>
       </DialogTrigger>
-      <DialogContent className="bg-card border-border/50">
+      <DialogContent className="bg-card border-border/50 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">
             {t("components.dashboard.ConfigurationDialog.dialog_title")}
@@ -155,6 +230,54 @@ const ConfigurationDialog = ({
                 onCheckedChange={onProactiveCoachToggle}
                 className="data-[state=checked]:bg-accent ml-4"
               />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <AudioLines className="h-4 w-4" />
+                  {t("components.dashboard.ConfigurationDialog.mic_title")}
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  {t("components.dashboard.ConfigurationDialog.mic_desc")}
+                </p>
+              </div>
+              <Select
+                value={selectedInputDevice === "" ? DEFAULT_DEVICE_SENTINEL : selectedInputDevice}
+                onValueChange={(value) =>
+                  onInputDeviceChange(value === DEFAULT_DEVICE_SENTINEL ? "" : value)
+                }
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={DEFAULT_DEVICE_SENTINEL}>
+                    {t("components.dashboard.ConfigurationDialog.mic_device_default")}
+                  </SelectItem>
+                  {listedDevices.map((device) => (
+                    <SelectItem key={device} value={device}>
+                      {device}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={micTestActive ? stopMicTest : startMicTest}
+                className="border-accent/50 hover:bg-accent/10"
+              >
+                <AudioLines className="h-4 w-4 mr-2" />
+                {micTestActive
+                  ? t("components.dashboard.ConfigurationDialog.mic_test_stop_btn")
+                  : t("components.dashboard.ConfigurationDialog.mic_test_btn")}
+              </Button>
+              <Progress value={micLevel * 100} className="flex-1" />
             </div>
           </div>
 

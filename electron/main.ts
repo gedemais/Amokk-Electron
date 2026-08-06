@@ -14,7 +14,7 @@ import os from 'os';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http';
-import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell, screen } from 'electron';
 
 const AMOKK_BACKEND_HOST = process.env.VITE_BACKEND_HOST || "127.0.0.1";
 const AMOKK_BACKEND_PORT = process.env.VITE_BACKEND_PORT || "13649";
@@ -672,6 +672,36 @@ async function checkBackendHealth(): Promise<boolean> {
 // Window Management
 // ============================================================================
 
+// The UI is designed for this size; smaller screens get a window clamped to
+// their work area and the renderer is zoomed down proportionally so nothing
+// requires scrolling (login page included).
+const DESIGN_WIDTH = 1600;
+const DESIGN_HEIGHT = 900;
+
+/**
+ * Window size fitted to the current screen's work area (sizes are in DIPs,
+ * so Windows display scaling is already accounted for).
+ */
+function fittedWindowBounds(designW: number, designH: number, minW: number, minH: number) {
+  const { width: workW, height: workH } = screen.getPrimaryDisplay().workAreaSize;
+  return {
+    width: Math.min(designW, Math.floor(workW * 0.95)),
+    height: Math.min(designH, Math.floor(workH * 0.95)),
+    minWidth: Math.min(minW, workW),
+    minHeight: Math.min(minH, workH),
+  };
+}
+
+/**
+ * Scale the renderer with the window: below the design size the whole UI
+ * zooms down proportionally (never above 1 — big screens keep the 1:1 look).
+ */
+function applyWindowZoom(win: BrowserWindow) {
+  const [w, h] = win.getContentSize();
+  const zoom = Math.min(1, w / DESIGN_WIDTH, h / DESIGN_HEIGHT);
+  win.webContents.setZoomFactor(zoom);
+}
+
 /**
  * Create the main application window
  */
@@ -706,10 +736,7 @@ async function createWindow(): Promise<void> {
   }
 
   mainWindow = new BrowserWindow({
-    width: 1600,
-    height: 900,
-    minWidth: 800,
-    minHeight: 600,
+    ...fittedWindowBounds(DESIGN_WIDTH, DESIGN_HEIGHT, 800, 600),
     autoHideMenuBar: true,
     webPreferences: {
       preload: preloadPath,
@@ -719,14 +746,17 @@ async function createWindow(): Promise<void> {
     icon: iconPath,
   });
 
+  // Keep the UI scaled to the window (initial fit + user resizes).
+  mainWindow.webContents.on('did-finish-load', () => applyWindowZoom(mainWindow!));
+  mainWindow.on('resize', () => applyWindowZoom(mainWindow!));
+
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     return {
       action: "allow",
       overrideBrowserWindowOptions: {
-        width: 1600,
-        height: 900,
-        minWidth: 900,
-        minHeight: 700,
+        // External pages (Google auth...) are responsive: clamping to the
+        // screen is enough, no zoom needed.
+        ...fittedWindowBounds(DESIGN_WIDTH, DESIGN_HEIGHT, 900, 700),
         autoHideMenuBar: true,
         resizable: true,
         center: true,

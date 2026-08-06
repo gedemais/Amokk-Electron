@@ -21,6 +21,8 @@ export const useDashboard = () => {
   const [ttsSpeed, setTtsSpeed] = useState([1.0]);
   const [ttsVoices, setTtsVoices] = useState<string[]>([]);
   const [selectedVoice, setSelectedVoice] = useState("");
+  const [inputDevices, setInputDevices] = useState<string[]>([]);
+  const [selectedInputDevice, setSelectedInputDevice] = useState(""); // "" = system default
   const [selectedVoiceId, setSelectedVoiceId] = useState("ash");
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
   const [progressDialogOpen, setProgressDialogOpen] = useState(false);
@@ -83,6 +85,8 @@ export const useDashboard = () => {
       if (data.tts_voice_name !== undefined) setSelectedVoice(data.tts_voice_name);
       if (data.current_tts_voice_name !== undefined) setSelectedVoice(data.current_tts_voice_name ?? "");
       if (data.tts_voice !== undefined) setSelectedVoiceId(data.tts_voice);
+      if (data.input_devices !== undefined) setInputDevices(data.input_devices);
+      if (data.current_input_device_name !== undefined) setSelectedInputDevice(data.current_input_device_name ?? "");
       if (data.first_launch === true) {
         setIsFirstLaunch(true);
         setProgressDialogOpen(true);
@@ -149,6 +153,19 @@ export const useDashboard = () => {
     } catch (error) {
       logger.error('UPDATE_TTS_VOICE failed', error);
       debug.log('UPDATE_TTS_VOICE_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  };
+
+  const handleInputDeviceChange = async (deviceName: string) => {
+    setSelectedInputDevice(deviceName);
+    try {
+      logger.api('PUT', '/update_input_device', { device_name: deviceName });
+      const data = await api.updateInputDevice(deviceName);
+      debug.log('UPDATE_INPUT_DEVICE', data);
+      logger.apiResponse('/update_input_device', 200, data);
+    } catch (error) {
+      logger.error('UPDATE_INPUT_DEVICE failed', error);
+      debug.log('UPDATE_INPUT_DEVICE_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
     }
   };
 
@@ -254,6 +271,8 @@ export const useDashboard = () => {
     ttsSpeed,
     ttsVoices,
     selectedVoice,
+    inputDevices,
+    selectedInputDevice,
     pricingDialogOpen,
     setPricingDialogOpen,
     configurationDialogOpen,
@@ -267,6 +286,7 @@ export const useDashboard = () => {
     handleVolumeChange,
     handleTtsSpeedChange,
     handleVoiceChange,
+    handleInputDeviceChange,
     handleBindKey,
     handleTestVolume,
     selectPlan,

@@ -21,6 +21,8 @@ const Dashboard = () => {
     ttsSpeed,
     ttsVoices,
     selectedVoice,
+    inputDevices,
+    selectedInputDevice,
     pricingDialogOpen,
     setPricingDialogOpen,
     configurationDialogOpen,
@@ -34,6 +36,7 @@ const Dashboard = () => {
     handleVolumeChange,
     handleTtsSpeedChange,
     handleVoiceChange,
+    handleInputDeviceChange,
     handleBindKey,
     handleTestVolume,
     selectPlan,
@@ -87,6 +90,9 @@ const Dashboard = () => {
             ttsVoices={ttsVoices}
             selectedVoice={selectedVoice}
             onVoiceChange={handleVoiceChange}
+            inputDevices={inputDevices}
+            selectedInputDevice={selectedInputDevice}
+            onInputDeviceChange={handleInputDeviceChange}
           />
         </div>
 
