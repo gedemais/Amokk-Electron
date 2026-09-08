@@ -69,6 +69,14 @@ class InputDeviceRequest(BaseModel):
     device_name: str          # "" = system default device
 
 
+class OutputDeviceRequest(BaseModel):
+    device_name: str          # "" = system default device
+
+
+class AutoOpenBuildRequest(BaseModel):
+    value: str                 # "none" | "u.gg" | "lolalytics"
+
+
 class MicTestStartRequest(BaseModel):
     device_name: str = ""     # "" = currently persisted device
 
@@ -111,6 +119,16 @@ class LocalDataResponse(BaseModel):
     current_tts_voice_name: Optional[str] = None
     input_devices: list = []
     current_input_device_name: str = ""
+    output_devices: list = []
+    current_output_device_name: str = ""
+    overlay_toggle: bool = True
+    coach_early_game_tips_toggle: bool = True
+    coach_item_build_tips_toggle: bool = True
+    coach_auto_open_build: str = "none"
+    overlay_speaking_animation_toggle: bool = True
+    overlay_listening_animation_toggle: bool = True
+    overlay_thinking_animation_toggle: bool = True
+    overlay_live_chat_toggle: bool = True
 
 
 # ============================================================================
@@ -150,6 +168,15 @@ MOCK_INPUT_DEVICES = [
     "Casque Micro (Realtek(R) Audio)",
 ]
 
+# Mock output devices, same spirit as MOCK_INPUT_DEVICES ("" = system
+# default is NOT listed; the frontend adds its own localized entry).
+MOCK_OUTPUT_DEVICES = [
+    "Haut-parleurs (USB Audio Device)",
+    "Casque (Realtek(R) Audio)",
+]
+
+COACH_AUTO_OPEN_BUILD_OPTIONS = ["none", "u.gg", "lolalytics"]
+
 # Mic test state (parity with the real backend's MicTester watchdog: the
 # test auto-deactivates when the frontend stops polling /get_mic_level)
 MIC_TEST_IDLE_TIMEOUT_S = 5.0
@@ -187,6 +214,15 @@ class AppState:
                     self.tts_voice = TTS_VOICES_MAPPER[voice_name]
                     self.current_tts_voice_name = data.get('current_tts_voice_name', None)
                     self.input_device_name = data.get('input_device_name', '')
+                    self.output_device_name = data.get('output_device_name', '')
+                    self.overlay_toggle = data.get('overlay_toggle', True)
+                    self.coach_early_game_tips_toggle = data.get('coach_early_game_tips_toggle', True)
+                    self.coach_item_build_tips_toggle = data.get('coach_item_build_tips_toggle', True)
+                    self.coach_auto_open_build = data.get('coach_auto_open_build', 'none')
+                    self.overlay_speaking_animation_toggle = data.get('overlay_speaking_animation_toggle', True)
+                    self.overlay_listening_animation_toggle = data.get('overlay_listening_animation_toggle', True)
+                    self.overlay_thinking_animation_toggle = data.get('overlay_thinking_animation_toggle', True)
+                    self.overlay_live_chat_toggle = data.get('overlay_live_chat_toggle', True)
                     logger.info(f"✅ State loaded from {self.state_file}")
             except Exception as e:
                 logger.warning(f"⚠️  Error loading state: {e}. Using defaults.")
@@ -212,6 +248,15 @@ class AppState:
         self.tts_voice = TTS_VOICES_MAPPER[self.tts_voice_name]
         self.current_tts_voice_name = None
         self.input_device_name = ''
+        self.output_device_name = ''
+        self.overlay_toggle = True
+        self.coach_early_game_tips_toggle = True
+        self.coach_item_build_tips_toggle = True
+        self.coach_auto_open_build = 'none'
+        self.overlay_speaking_animation_toggle = True
+        self.overlay_listening_animation_toggle = True
+        self.overlay_thinking_animation_toggle = True
+        self.overlay_live_chat_toggle = True
 
     def save_state(self):
         """Save state to JSON file"""
@@ -232,6 +277,15 @@ class AppState:
                 'tts_voice_name': self.tts_voice_name,
                 'current_tts_voice_name': self.current_tts_voice_name,
                 'input_device_name': self.input_device_name,
+                'output_device_name': self.output_device_name,
+                'overlay_toggle': self.overlay_toggle,
+                'coach_early_game_tips_toggle': self.coach_early_game_tips_toggle,
+                'coach_item_build_tips_toggle': self.coach_item_build_tips_toggle,
+                'coach_auto_open_build': self.coach_auto_open_build,
+                'overlay_speaking_animation_toggle': self.overlay_speaking_animation_toggle,
+                'overlay_listening_animation_toggle': self.overlay_listening_animation_toggle,
+                'overlay_thinking_animation_toggle': self.overlay_thinking_animation_toggle,
+                'overlay_live_chat_toggle': self.overlay_live_chat_toggle,
             }
             with open(self.state_file, 'w') as f:
                 json.dump(state_dict, f, indent=2)
@@ -297,9 +351,17 @@ def root():
             "PUT  /update_volume",
             "PUT  /update_tts_speed",
             "PUT  /update_input_device",
+            "PUT  /update_output_device",
             "POST /start_mic_test",
             "POST /stop_mic_test",
             "GET  /get_mic_level",
+            "PUT  /coach_early_game_tips_toggle",
+            "PUT  /coach_item_build_tips_toggle",
+            "PUT  /update_coach_auto_open_build",
+            "PUT  /overlay_speaking_animation_toggle",
+            "PUT  /overlay_listening_animation_toggle",
+            "PUT  /overlay_thinking_animation_toggle",
+            "PUT  /overlay_live_chat_toggle",
             "POST /mock_select_plan",
             "POST /mock_contact_support",
             "POST /logout",
@@ -396,7 +458,7 @@ def get_local_data():
             "tts_volume": 80
         }
     """
-    return LocalDataResponse(
+    response = LocalDataResponse(
         remaining_games=app_state.remaining_games,
         first_launch=app_state.first_launch,
         game_timer=app_state.game_timer,
@@ -413,7 +475,28 @@ def get_local_data():
         current_tts_voice_name=app_state.current_tts_voice_name,
         input_devices=MOCK_INPUT_DEVICES,
         current_input_device_name=app_state.input_device_name,
+        output_devices=MOCK_OUTPUT_DEVICES,
+        current_output_device_name=app_state.output_device_name,
+        overlay_toggle=app_state.overlay_toggle,
+        coach_early_game_tips_toggle=app_state.coach_early_game_tips_toggle,
+        coach_item_build_tips_toggle=app_state.coach_item_build_tips_toggle,
+        coach_auto_open_build=app_state.coach_auto_open_build,
+        overlay_speaking_animation_toggle=app_state.overlay_speaking_animation_toggle,
+        overlay_listening_animation_toggle=app_state.overlay_listening_animation_toggle,
+        overlay_thinking_animation_toggle=app_state.overlay_thinking_animation_toggle,
+        overlay_live_chat_toggle=app_state.overlay_live_chat_toggle,
     )
+
+    # Parity with the real backend (UIAPI.get_local_data): flip first_launch
+    # off once this has been served after a successful login. Left unset,
+    # the frontend's periodic poll kept re-reading first_launch=true and
+    # re-opening the welcome/onboarding dialogs on top of whatever the user
+    # was currently reading.
+    if app_state.first_launch and app_state.email:
+        app_state.first_launch = False
+        app_state.save_state()
+
+    return response
 
 
 # ============================================================================
@@ -719,6 +802,30 @@ def update_input_device(request: InputDeviceRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.put("/update_output_device", tags=["Config"])
+def update_output_device(request: OutputDeviceRequest):
+    """
+    Persist the selected audio output device ("" = system default).
+    Placeholder setting: nothing actually re-routes TTS playback to this
+    device yet, this endpoint only caches the chosen name.
+    """
+    try:
+        if request.device_name != "" and request.device_name not in MOCK_OUTPUT_DEVICES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown output device '{request.device_name}'. Available: {MOCK_OUTPUT_DEVICES}"
+            )
+        app_state.output_device_name = request.device_name
+        app_state.save_state()
+        logger.info(f"🔈 Output device updated: '{request.device_name or 'default'}'")
+        return f"Updated output device to '{request.device_name or 'default'}' successfully"
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Output device error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/start_mic_test", tags=["Config"])
 def start_mic_test(request: MicTestStartRequest):
     """Start (or restart on another device) the mock mic test."""
@@ -757,6 +864,212 @@ def get_mic_level():
     _mic_test["last_poll"] = now
     level = abs(math.sin((now - _mic_test["started"]) * 2.0)) * (0.6 + 0.4 * random.random())
     return {"active": True, "level": round(level, 3)}
+
+
+# ============================================================================
+# In-game overlay (mock): state cycling so the 4 visuals can be seen in dev
+# ============================================================================
+
+# Seconds spent in each state by the dev cycle, in order.
+_OVERLAY_CYCLE = [("idle", 4.0), ("thinking", 4.0), ("speaking", 6.0), ("listening", 6.0)]
+_overlay_started = None
+
+# Dev levels are read from the REAL microphone (the production backend feeds
+# the overlay with actual RMS: mic capture while PTT is held, TTS playback
+# loudness while speaking). A synthetic sine looked plausible but hid how the
+# animations really behave, so the mock listens for real instead — falling
+# back to silence when sounddevice or a mic is unavailable.
+_mic_monitor = {"stream": None, "level": 0.0, "failed": False}
+
+
+def _monitor_level():
+    """Current mic loudness 0..1, opening the monitor stream on first use."""
+    if _mic_monitor["failed"]:
+        return 0.0
+    if _mic_monitor["stream"] is None:
+        try:
+            import math as _math
+            import numpy as _np
+            import sounddevice as _sd
+
+            def _callback(indata, frames, time_info, status):
+                try:
+                    rms = float(_np.sqrt(_np.mean(_np.square(indata))))
+                    level = max(0.0, min(1.0, (20 * _math.log10(rms + 1e-6) + 60) / 60))
+                    previous = _mic_monitor["level"]
+                    _mic_monitor["level"] = level if level > previous else previous * 0.85
+                except Exception:
+                    pass
+
+            stream = _sd.InputStream(channels=1, dtype="float32", callback=_callback)
+            stream.start()
+            _mic_monitor["stream"] = stream
+            logger.info("🎤 Overlay dev levels: monitoring the real microphone")
+        except Exception as e:
+            _mic_monitor["failed"] = True
+            logger.warning(f"⚠️  No mic monitor for overlay dev levels ({e}); levels stay at 0")
+            return 0.0
+    return _mic_monitor["level"]
+
+
+@app.put("/overlay_toggle", tags=["Config"])
+def overlay_toggle(request: CoachToggleRequest):
+    """Enable/disable the in-game overlay icon."""
+    app_state.overlay_toggle = request.active
+    app_state.save_state()
+    logger.info(f"🖼️  Overlay toggle: {request.active}")
+    return f"Updated overlay toggle to {request.active} successfully"
+
+
+# ============================================================================
+# Coach Proactif sub-settings (placeholders: cached only, no behavior wired)
+# ============================================================================
+
+@app.put("/coach_early_game_tips_toggle", tags=["Config"])
+def coach_early_game_tips_toggle(request: CoachToggleRequest):
+    """Placeholder setting: caches the value, no early-game tip logic exists yet."""
+    app_state.coach_early_game_tips_toggle = request.active
+    app_state.save_state()
+    logger.info(f"🎯 Early-game tips toggle: {request.active}")
+    return f"Updated coach early game tips toggle to {request.active} successfully"
+
+
+@app.put("/coach_item_build_tips_toggle", tags=["Config"])
+def coach_item_build_tips_toggle(request: CoachToggleRequest):
+    """Placeholder setting: caches the value, no item-build tip logic exists yet."""
+    app_state.coach_item_build_tips_toggle = request.active
+    app_state.save_state()
+    logger.info(f"🎯 Item build tips toggle: {request.active}")
+    return f"Updated coach item build tips toggle to {request.active} successfully"
+
+
+@app.put("/update_coach_auto_open_build", tags=["Config"])
+def update_coach_auto_open_build(request: AutoOpenBuildRequest):
+    """Placeholder setting: caches the choice, no browser auto-open logic exists yet."""
+    if request.value not in COACH_AUTO_OPEN_BUILD_OPTIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid value '{request.value}'. Must be one of: {COACH_AUTO_OPEN_BUILD_OPTIONS}"
+        )
+    app_state.coach_auto_open_build = request.value
+    app_state.save_state()
+    logger.info(f"🎯 Coach auto-open build updated: {request.value}")
+    return {"success": True, "value": request.value}
+
+
+# ============================================================================
+# Overlay In-Game sub-settings (placeholders: cached only, no behavior wired)
+# ============================================================================
+
+@app.put("/overlay_speaking_animation_toggle", tags=["Config"])
+def overlay_speaking_animation_toggle(request: CoachToggleRequest):
+    """Placeholder setting: the overlay does not read this toggle yet."""
+    app_state.overlay_speaking_animation_toggle = request.active
+    app_state.save_state()
+    logger.info(f"🖼️  Overlay speaking animation toggle: {request.active}")
+    return f"Updated overlay speaking animation toggle to {request.active} successfully"
+
+
+@app.put("/overlay_listening_animation_toggle", tags=["Config"])
+def overlay_listening_animation_toggle(request: CoachToggleRequest):
+    """Placeholder setting: the overlay does not read this toggle yet."""
+    app_state.overlay_listening_animation_toggle = request.active
+    app_state.save_state()
+    logger.info(f"🖼️  Overlay listening animation toggle: {request.active}")
+    return f"Updated overlay listening animation toggle to {request.active} successfully"
+
+
+@app.put("/overlay_thinking_animation_toggle", tags=["Config"])
+def overlay_thinking_animation_toggle(request: CoachToggleRequest):
+    """Placeholder setting: the overlay does not read this toggle yet."""
+    app_state.overlay_thinking_animation_toggle = request.active
+    app_state.save_state()
+    logger.info(f"🖼️  Overlay thinking animation toggle: {request.active}")
+    return f"Updated overlay thinking animation toggle to {request.active} successfully"
+
+
+@app.put("/overlay_live_chat_toggle", tags=["Config"])
+def overlay_live_chat_toggle(request: CoachToggleRequest):
+    """Placeholder setting: no live textual chat UI exists yet."""
+    app_state.overlay_live_chat_toggle = request.active
+    app_state.save_state()
+    logger.info(f"🖼️  Overlay live chat toggle: {request.active}")
+    return f"Updated overlay live chat toggle to {request.active} successfully"
+
+
+@app.get("/get_overlay_state", tags=["Config"])
+def get_overlay_state():
+    """
+    Mock overlay state. The real backend reports the live assistant state;
+    here we cycle through the four states so each visual can be checked in
+    dev, with the REAL mic loudness driving the wave / mic gauge.
+    """
+    import time
+    global _overlay_started
+    now = time.time()
+    if _overlay_started is None:
+        _overlay_started = now
+
+    period = sum(duration for _, duration in _OVERLAY_CYCLE)
+    elapsed = (now - _overlay_started) % period
+    state = _OVERLAY_CYCLE[-1][0]
+    for name, duration in _OVERLAY_CYCLE:
+        if elapsed < duration:
+            state = name
+            break
+        elapsed -= duration
+
+    level = _monitor_level() if state in ("speaking", "listening") else 0.0
+
+    return {
+        # In dev there is no game: visible whenever the setting is on, so the
+        # overlay window can be seen without launching League.
+        "visible": bool(app_state.overlay_toggle),
+        "state": state,
+        "level": round(level, 3),
+        "speaking_animation_enabled": bool(app_state.overlay_speaking_animation_toggle),
+        "listening_animation_enabled": bool(app_state.overlay_listening_animation_toggle),
+        "thinking_animation_enabled": bool(app_state.overlay_thinking_animation_toggle),
+        "live_chat_enabled": bool(app_state.overlay_live_chat_toggle),
+    }
+
+
+# Canned conversation for dev/local testing of the overlay's live chat panel
+# (the real backend fills this from the actual STT/coach/answer pipeline —
+# see MessageProcessor.transcript). One new entry "arrives" every few
+# seconds so the fold button and auto-scroll can be exercised without a
+# real game running.
+_MOCK_CHAT_SCRIPT = [
+    ("coach", "Ta lane est en train de push, fais attention a la wave avant de partir en trade."),
+    ("question", "Est-ce que je dois acheter Aegis ou Cinglante en premier ?"),
+    ("answer", "Cinglante d'abord ici, ton adversaire fait plus de degats physiques que magiques."),
+    ("coach", "Le buff rouge ennemi spawn dans 20 secondes, prepare un ward pour le voir."),
+    ("question", "Comment je joue ce matchup en early game ?"),
+    ("answer", "Reste passif jusqu'au niveau 3, tu n'as pas d'all-in avant ton combo complet."),
+]
+_MOCK_CHAT_INTERVAL_S = 4.0
+_mock_chat_started = None
+
+
+@app.get("/get_overlay_chat", tags=["Config"])
+def get_overlay_chat():
+    """Mock live chat feed: replays _MOCK_CHAT_SCRIPT, revealing one more
+    message every _MOCK_CHAT_INTERVAL_S seconds, looping."""
+    import time
+    global _mock_chat_started
+    now = time.time()
+    if _mock_chat_started is None:
+        _mock_chat_started = now
+
+    elapsed = now - _mock_chat_started
+    revealed = int(elapsed // _MOCK_CHAT_INTERVAL_S)
+    shown_count = (revealed % len(_MOCK_CHAT_SCRIPT)) + 1
+
+    messages = [
+        {"id": i + 1, "role": role, "text": text}
+        for i, (role, text) in enumerate(_MOCK_CHAT_SCRIPT[:shown_count])
+    ]
+    return {"messages": messages}
 
 
 # ============================================================================

@@ -3,6 +3,7 @@ import { useDebugPanel } from "@/hooks/useDebugPanel";
 import { logger } from "@/utils/logger";
 import * as api from "@/lib/api";
 import { toggleVoiceSample } from "@/utils/voiceSamples";
+import type { AutoOpenBuildOption } from "@/components/dashboard/configuration/CoachTab";
 
 export const useDashboard = () => {
   const debug = useDebugPanel();
@@ -12,7 +13,7 @@ export const useDashboard = () => {
   const [amokkToggle, setAmokkToggle] = useState(false);
   const [assistantToggle, setAssistantToggle] = useState(false);
   const [pushToTalkKey, setPushToTalkKey] = useState("V");
-  const [proactiveCoachEnabled, setProactiveCoachEnabled] = useState(false);
+  const [proactiveCoachEnabled, setProactiveCoachEnabled] = useState(true);
   const [remainingGames, setRemainingGames] = useState(42);
   const [language, setLanguage] = useState("fr");
   const [userPlanId, setUserPlanId] = useState(1);
@@ -23,11 +24,26 @@ export const useDashboard = () => {
   const [selectedVoice, setSelectedVoice] = useState("");
   const [inputDevices, setInputDevices] = useState<string[]>([]);
   const [selectedInputDevice, setSelectedInputDevice] = useState(""); // "" = system default
+  const [outputDevices, setOutputDevices] = useState<string[]>([]);
+  const [selectedOutputDevice, setSelectedOutputDevice] = useState(""); // "" = system default
+  const [overlayEnabled, setOverlayEnabled] = useState(true);
   const [selectedVoiceId, setSelectedVoiceId] = useState("ash");
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
   const [progressDialogOpen, setProgressDialogOpen] = useState(false);
   const [troubleshootOpen, setTroubleshootOpen] = useState(false);
   const [configurationDialogOpen, setConfigurationDialogOpen] = useState(false);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+
+  // Coach Proactif sub-settings
+  const [earlyGameTipsEnabled, setEarlyGameTipsEnabled] = useState(true);
+  const [itemBuildTipsEnabled, setItemBuildTipsEnabled] = useState(true);
+  const [autoOpenBuild, setAutoOpenBuild] = useState<AutoOpenBuildOption>("none");
+
+  // Overlay In-Game sub-settings
+  const [speakingAnimationEnabled, setSpeakingAnimationEnabled] = useState(true);
+  const [listeningAnimationEnabled, setListeningAnimationEnabled] = useState(true);
+  const [thinkingAnimationEnabled, setThinkingAnimationEnabled] = useState(true);
+  const [liveTextualChatEnabled, setLiveTextualChatEnabled] = useState(true);
 
   useEffect(() => {
     fetchLocalData();
@@ -41,7 +57,7 @@ export const useDashboard = () => {
 
   useEffect(() => {
     if (!progressDialogOpen && isFirstLaunch) {
-      setConfigurationDialogOpen(true);
+      setOnboardingOpen(true);
     }
   }, [progressDialogOpen, isFirstLaunch]);
 
@@ -87,6 +103,16 @@ export const useDashboard = () => {
       if (data.tts_voice !== undefined) setSelectedVoiceId(data.tts_voice);
       if (data.input_devices !== undefined) setInputDevices(data.input_devices);
       if (data.current_input_device_name !== undefined) setSelectedInputDevice(data.current_input_device_name ?? "");
+      if (data.output_devices !== undefined) setOutputDevices(data.output_devices);
+      if (data.current_output_device_name !== undefined) setSelectedOutputDevice(data.current_output_device_name ?? "");
+      if (data.overlay_toggle !== undefined) setOverlayEnabled(data.overlay_toggle);
+      if (data.coach_early_game_tips_toggle !== undefined) setEarlyGameTipsEnabled(data.coach_early_game_tips_toggle);
+      if (data.coach_item_build_tips_toggle !== undefined) setItemBuildTipsEnabled(data.coach_item_build_tips_toggle);
+      if (data.coach_auto_open_build !== undefined) setAutoOpenBuild(data.coach_auto_open_build);
+      if (data.overlay_speaking_animation_toggle !== undefined) setSpeakingAnimationEnabled(data.overlay_speaking_animation_toggle);
+      if (data.overlay_listening_animation_toggle !== undefined) setListeningAnimationEnabled(data.overlay_listening_animation_toggle);
+      if (data.overlay_thinking_animation_toggle !== undefined) setThinkingAnimationEnabled(data.overlay_thinking_animation_toggle);
+      if (data.overlay_live_chat_toggle !== undefined) setLiveTextualChatEnabled(data.overlay_live_chat_toggle);
       if (data.first_launch === true) {
         setIsFirstLaunch(true);
         setProgressDialogOpen(true);
@@ -166,6 +192,123 @@ export const useDashboard = () => {
     } catch (error) {
       logger.error('UPDATE_INPUT_DEVICE failed', error);
       debug.log('UPDATE_INPUT_DEVICE_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  };
+
+  const handleOverlayToggle = async (newState: boolean) => {
+    setOverlayEnabled(newState);
+    try {
+      logger.api('PUT', '/overlay_toggle', { active: newState });
+      const data = await api.toggleOverlay(newState);
+      debug.log('OVERLAY_TOGGLE', data);
+      logger.apiResponse('/overlay_toggle', 200, data);
+    } catch (error) {
+      logger.error('OVERLAY_TOGGLE failed', error);
+      debug.log('OVERLAY_TOGGLE_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  };
+
+  const handleOutputDeviceChange = async (deviceName: string) => {
+    setSelectedOutputDevice(deviceName);
+    try {
+      logger.api('PUT', '/update_output_device', { device_name: deviceName });
+      const data = await api.updateOutputDevice(deviceName);
+      debug.log('UPDATE_OUTPUT_DEVICE', data);
+      logger.apiResponse('/update_output_device', 200, data);
+    } catch (error) {
+      logger.error('UPDATE_OUTPUT_DEVICE failed', error);
+      debug.log('UPDATE_OUTPUT_DEVICE_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  };
+
+  const handleEarlyGameTipsToggle = async (newState: boolean) => {
+    setEarlyGameTipsEnabled(newState);
+    try {
+      logger.api('PUT', '/coach_early_game_tips_toggle', { active: newState });
+      const data = await api.toggleEarlyGameTips(newState);
+      debug.log('COACH_EARLY_GAME_TIPS_TOGGLE', data);
+      logger.apiResponse('/coach_early_game_tips_toggle', 200, data);
+    } catch (error) {
+      logger.error('COACH_EARLY_GAME_TIPS_TOGGLE failed', error);
+      debug.log('COACH_EARLY_GAME_TIPS_TOGGLE_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  };
+
+  const handleItemBuildTipsToggle = async (newState: boolean) => {
+    setItemBuildTipsEnabled(newState);
+    try {
+      logger.api('PUT', '/coach_item_build_tips_toggle', { active: newState });
+      const data = await api.toggleItemBuildTips(newState);
+      debug.log('COACH_ITEM_BUILD_TIPS_TOGGLE', data);
+      logger.apiResponse('/coach_item_build_tips_toggle', 200, data);
+    } catch (error) {
+      logger.error('COACH_ITEM_BUILD_TIPS_TOGGLE failed', error);
+      debug.log('COACH_ITEM_BUILD_TIPS_TOGGLE_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  };
+
+  const handleAutoOpenBuildChange = async (value: AutoOpenBuildOption) => {
+    setAutoOpenBuild(value);
+    try {
+      logger.api('PUT', '/update_coach_auto_open_build', { value });
+      const data = await api.updateCoachAutoOpenBuild(value);
+      debug.log('UPDATE_COACH_AUTO_OPEN_BUILD', data);
+      logger.apiResponse('/update_coach_auto_open_build', 200, data);
+    } catch (error) {
+      logger.error('UPDATE_COACH_AUTO_OPEN_BUILD failed', error);
+      debug.log('UPDATE_COACH_AUTO_OPEN_BUILD_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  };
+
+  const handleSpeakingAnimationToggle = async (newState: boolean) => {
+    setSpeakingAnimationEnabled(newState);
+    try {
+      logger.api('PUT', '/overlay_speaking_animation_toggle', { active: newState });
+      const data = await api.toggleSpeakingAnimation(newState);
+      debug.log('OVERLAY_SPEAKING_ANIMATION_TOGGLE', data);
+      logger.apiResponse('/overlay_speaking_animation_toggle', 200, data);
+    } catch (error) {
+      logger.error('OVERLAY_SPEAKING_ANIMATION_TOGGLE failed', error);
+      debug.log('OVERLAY_SPEAKING_ANIMATION_TOGGLE_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  };
+
+  const handleListeningAnimationToggle = async (newState: boolean) => {
+    setListeningAnimationEnabled(newState);
+    try {
+      logger.api('PUT', '/overlay_listening_animation_toggle', { active: newState });
+      const data = await api.toggleListeningAnimation(newState);
+      debug.log('OVERLAY_LISTENING_ANIMATION_TOGGLE', data);
+      logger.apiResponse('/overlay_listening_animation_toggle', 200, data);
+    } catch (error) {
+      logger.error('OVERLAY_LISTENING_ANIMATION_TOGGLE failed', error);
+      debug.log('OVERLAY_LISTENING_ANIMATION_TOGGLE_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  };
+
+  const handleThinkingAnimationToggle = async (newState: boolean) => {
+    setThinkingAnimationEnabled(newState);
+    try {
+      logger.api('PUT', '/overlay_thinking_animation_toggle', { active: newState });
+      const data = await api.toggleThinkingAnimation(newState);
+      debug.log('OVERLAY_THINKING_ANIMATION_TOGGLE', data);
+      logger.apiResponse('/overlay_thinking_animation_toggle', 200, data);
+    } catch (error) {
+      logger.error('OVERLAY_THINKING_ANIMATION_TOGGLE failed', error);
+      debug.log('OVERLAY_THINKING_ANIMATION_TOGGLE_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  };
+
+  const handleLiveTextualChatToggle = async (newState: boolean) => {
+    setLiveTextualChatEnabled(newState);
+    try {
+      logger.api('PUT', '/overlay_live_chat_toggle', { active: newState });
+      const data = await api.toggleLiveTextualChat(newState);
+      debug.log('OVERLAY_LIVE_CHAT_TOGGLE', data);
+      logger.apiResponse('/overlay_live_chat_toggle', 200, data);
+    } catch (error) {
+      logger.error('OVERLAY_LIVE_CHAT_TOGGLE failed', error);
+      debug.log('OVERLAY_LIVE_CHAT_TOGGLE_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
     }
   };
 
@@ -273,10 +416,22 @@ export const useDashboard = () => {
     selectedVoice,
     inputDevices,
     selectedInputDevice,
+    outputDevices,
+    selectedOutputDevice,
+    overlayEnabled,
+    earlyGameTipsEnabled,
+    itemBuildTipsEnabled,
+    autoOpenBuild,
+    speakingAnimationEnabled,
+    listeningAnimationEnabled,
+    thinkingAnimationEnabled,
+    liveTextualChatEnabled,
     pricingDialogOpen,
     setPricingDialogOpen,
     configurationDialogOpen,
     setConfigurationDialogOpen,
+    onboardingOpen,
+    setOnboardingOpen,
     progressDialogOpen,
     setProgressDialogOpen,
     troubleshootOpen,
@@ -287,6 +442,15 @@ export const useDashboard = () => {
     handleTtsSpeedChange,
     handleVoiceChange,
     handleInputDeviceChange,
+    handleOutputDeviceChange,
+    handleOverlayToggle,
+    handleEarlyGameTipsToggle,
+    handleItemBuildTipsToggle,
+    handleAutoOpenBuildChange,
+    handleSpeakingAnimationToggle,
+    handleListeningAnimationToggle,
+    handleThinkingAnimationToggle,
+    handleLiveTextualChatToggle,
     handleBindKey,
     handleTestVolume,
     selectPlan,

@@ -26,9 +26,20 @@ export const selectPlan = (plan_id: number) => apiRequest('POST', '/mock_select_
 export const toggleProactiveCoach = (active: boolean) => apiRequest('PUT', '/coach_toggle', { active });
 export const updateTtsVoice = (voice_name: string) => apiRequest('PUT', '/update_tts_voice', { voice_name });
 export const updateInputDevice = (device_name: string) => apiRequest('PUT', '/update_input_device', { device_name });
+export const updateOutputDevice = (device_name: string) => apiRequest('PUT', '/update_output_device', { device_name });
+export const toggleEarlyGameTips = (active: boolean) => apiRequest('PUT', '/coach_early_game_tips_toggle', { active });
+export const toggleItemBuildTips = (active: boolean) => apiRequest('PUT', '/coach_item_build_tips_toggle', { active });
+export const updateCoachAutoOpenBuild = (value: string) => apiRequest('PUT', '/update_coach_auto_open_build', { value });
+export const toggleSpeakingAnimation = (active: boolean) => apiRequest('PUT', '/overlay_speaking_animation_toggle', { active });
+export const toggleListeningAnimation = (active: boolean) => apiRequest('PUT', '/overlay_listening_animation_toggle', { active });
+export const toggleThinkingAnimation = (active: boolean) => apiRequest('PUT', '/overlay_thinking_animation_toggle', { active });
+export const toggleLiveTextualChat = (active: boolean) => apiRequest('PUT', '/overlay_live_chat_toggle', { active });
 export const startMicTest = (device_name: string = "") => apiRequest('POST', '/start_mic_test', { device_name });
 export const stopMicTest = () => apiRequest('POST', '/stop_mic_test');
 export const getMicLevel = () => apiRequest('GET', '/get_mic_level');
+export const getOverlayState = () => apiRequest('GET', '/get_overlay_state');
+export const getOverlayChat = () => apiRequest('GET', '/get_overlay_chat');
+export const toggleOverlay = (active: boolean) => apiRequest('PUT', '/overlay_toggle', { active });
 export const contactSupport = () => {
     window.location.href = 'mailto:contact@amokk.fr';
 };

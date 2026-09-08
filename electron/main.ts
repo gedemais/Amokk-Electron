@@ -202,6 +202,8 @@ interface BackendStatus {
 // ============================================================================
 
 let mainWindow: any = null;
+let overlayWindow: any = null;
+let overlayPollTimer: any = null;
 let pythonProcess: any = null;
 let backendReady = false;
 let backendStartAttempts = 0;
@@ -703,36 +705,42 @@ function applyWindowZoom(win: BrowserWindow) {
 }
 
 /**
+ * Preload script path, shared by every BrowserWindow that needs
+ * window.api (main window AND the overlay window — the overlay's chat
+ * panel calls window.api.overlay.setInteractive, which silently no-ops
+ * without this, leaving the window permanently click-through).
+ */
+function resolvePreloadPath(): string {
+  if (isDev) {
+    return path.join(__dirname, 'preload.ts');
+  }
+  // In production, use the resources directory
+  const appPath = app.getAppPath();
+  const baseDir = path.dirname(appPath); // Go up from app.asar to resources/
+  return path.join(baseDir, 'dist-electron', 'electron', 'preload.js');
+}
+
+/**
  * Create the main application window
  */
 async function createWindow(): Promise<void> {
   console.log('🪟 Creating application window...');
 
-  // Determine correct preload path
-  let preloadPath: string;
+  const preloadPath = resolvePreloadPath();
   let iconPath: string;
 
   if (isDev) {
-    preloadPath = path.join(__dirname, 'preload.ts');
     iconPath = path.join(__dirname, '../assets/icon.png');
   } else {
-    // In production, use the resources directory
     const appPath = app.getAppPath();
-    let baseDir: string;
-    if (appPath.includes('app.asar')) {
-      baseDir = path.dirname(appPath); // Go up from app.asar to resources/
-    } else {
-      baseDir = path.dirname(appPath);
-    }
-    //preloadPath = path.join(baseDir, 'dist-electron', 'preload.js');
-    preloadPath = path.join(baseDir, 'dist-electron', 'electron', 'preload.js');
+    const baseDir = path.dirname(appPath);
     iconPath = path.join(baseDir, 'assets', 'icon.png');
-    console.log('WINDOW', 'Preload path resolution', { 
-  preloadPath, 
-  exists: fs.existsSync(preloadPath),
-  baseDir,
-  appPath 
-});
+    console.log('WINDOW', 'Preload path resolution', {
+      preloadPath,
+      exists: fs.existsSync(preloadPath),
+      baseDir,
+      appPath,
+    });
   }
 
   mainWindow = new BrowserWindow({
@@ -894,9 +902,151 @@ async function createWindow(): Promise<void> {
 
   mainWindow.on('closed', () => {
     mainWindow = null;
+    destroyOverlayWindow();  // else 'window-all-closed' never fires
   });
 
   console.log('✅ Window created successfully\n');
+}
+
+// ============================================================================
+// In-game Overlay
+// ============================================================================
+
+// Small status icon pinned to the top-left corner, over the game. The base
+// size is the DESIGN_WIDTH/HEIGHT one; like the main window, it is scaled down
+// on smaller screens (same zoom rule) so the overlay keeps the same visual
+// weight relative to the game's UI. It is deliberately generous around the
+// content: the glow and the waveform must never be clipped by the window.
+//
+// The window is tall enough to also fit the optional live-chat panel below
+// the icon (see .overlay-chat in index.css) even when the panel is expanded;
+// unused space stays fully transparent and click-through, so there is no
+// visual cost to reserving the room up front instead of resizing the native
+// window on every fold/unfold.
+const OVERLAY_BASE_WIDTH = 240;
+const OVERLAY_BASE_HEIGHT = 320;
+const OVERLAY_BASE_MARGIN = 18;   // from the screen's work-area corner
+const OVERLAY_VISIBILITY_POLL_MS = 1000;
+
+/** Same rule as the main window: 1 at the design resolution, smaller below. */
+function screenScale(): number {
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  return Math.min(1, width / DESIGN_WIDTH, height / DESIGN_HEIGHT);
+}
+
+/**
+ * Transparent, click-through, always-on-top window rendering the #/overlay
+ * route. It is created hidden: a poll on the backend decides when the icon is
+ * actually shown (setting enabled + a game in progress).
+ *
+ * NOTE: this composites OVER the game without touching its process (no
+ * DirectX hook, no injection) — the only approach that is safe with Vanguard.
+ * It therefore requires the game to be composited by the DWM: borderless,
+ * windowed, or fullscreen with Windows' Fullscreen Optimizations left on.
+ */
+function createOverlayWindow(): void {
+  if (overlayWindow && !overlayWindow.isDestroyed()) return;
+
+  const { workArea } = screen.getPrimaryDisplay();
+  const scale = screenScale();
+  const margin = Math.round(OVERLAY_BASE_MARGIN * scale);
+  const windowWidth = Math.round(OVERLAY_BASE_WIDTH * scale);
+  const windowHeight = Math.round(OVERLAY_BASE_HEIGHT * scale);
+
+  overlayWindow = new BrowserWindow({
+    x: workArea.x + margin,
+    // Still left-anchored, but vertically centered rather than pinned to the
+    // top corner: mid-screen reads better against where the game's own HUD
+    // usually lives (top bars, minimap, kill feed all cluster near the
+    // edges).
+    y: workArea.y + Math.round((workArea.height - windowHeight) / 2),
+    width: windowWidth,
+    height: windowHeight,
+    transparent: true,
+    frame: false,
+    resizable: false,
+    movable: false,
+    minimizable: false,
+    maximizable: false,
+    skipTaskbar: true,
+    focusable: false,        // never steals focus from the game
+    hasShadow: false,
+    show: false,
+    webPreferences: {
+      preload: resolvePreloadPath(),
+      nodeIntegration: false,
+      contextIsolation: true,
+      backgroundThrottling: false,  // keep polling while the game has focus
+    },
+  });
+
+  // 'screen-saver' is the level that stays above fullscreen-optimized games.
+  overlayWindow.setAlwaysOnTop(true, 'screen-saver');
+  overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  // Clicks go straight through to the game — the icon is purely informative.
+  overlayWindow.setIgnoreMouseEvents(true, { forward: true });
+
+  const overlayURL = isDev
+    ? 'http://localhost:8080/#/overlay'
+    : `${mainWindow.webContents.getURL().split('#')[0]}#/overlay`;
+
+  // Zoom the content by the same factor as the window: the icon keeps its
+  // proportion to the screen instead of looking huge on small resolutions.
+  overlayWindow.webContents.on('did-finish-load', () => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+      overlayWindow.webContents.setZoomFactor(screenScale());
+    }
+  });
+
+  overlayWindow.loadURL(overlayURL).catch((error: any) => {
+    logger.error('OVERLAY', 'Failed to load overlay URL', { error: error.message, overlayURL });
+  });
+
+  overlayWindow.on('closed', () => {
+    overlayWindow = null;
+  });
+
+  logger.info('OVERLAY', 'Overlay window created', { overlayURL });
+}
+
+function destroyOverlayWindow(): void {
+  if (overlayPollTimer) {
+    clearInterval(overlayPollTimer);
+    overlayPollTimer = null;
+  }
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.destroy();
+  }
+  overlayWindow = null;
+}
+
+/**
+ * Show/hide the overlay from the backend's own verdict (setting + game in
+ * progress). Hiding the WINDOW, not just its content: a transparent
+ * full-time window still costs compositing.
+ */
+function startOverlayVisibilityPoll(): void {
+  if (overlayPollTimer) return;
+
+  overlayPollTimer = setInterval(async () => {
+    if (!overlayWindow || overlayWindow.isDestroyed()) return;
+    try {
+      const response = await fetch(`http://${AMOKK_BACKEND_URL}/get_overlay_state`);
+      if (!response.ok) return;
+      const { visible } = await response.json();
+      if (visible && !overlayWindow.isVisible()) {
+        overlayWindow.showInactive();   // show without taking focus
+        overlayWindow.setAlwaysOnTop(true, 'screen-saver');
+        logger.info('OVERLAY', 'Overlay shown', { bounds: overlayWindow.getBounds() });
+      } else if (!visible && overlayWindow.isVisible()) {
+        overlayWindow.hide();
+        logger.info('OVERLAY', 'Overlay hidden');
+      }
+    } catch (error: any) {
+      // backend not up yet / shutting down: keep the current state
+      logger.debug('OVERLAY', 'Visibility poll failed', { error: error?.message });
+    }
+  }, OVERLAY_VISIBILITY_POLL_MS);
 }
 
 // ============================================================================
@@ -989,6 +1139,22 @@ function setupIPC(): void {
     }
 
     return { success: true };
+  });
+
+  // The overlay window is click-through by default (see createOverlayWindow)
+  // so it never steals input from the game. The chat panel's fold button and
+  // message list are the one exception: the renderer tells us when the
+  // cursor enters/leaves that interactive island, and we flip
+  // setIgnoreMouseEvents accordingly. `forward: true` keeps mousemove/
+  // mouseenter/mouseleave reaching the renderer even while click-through, so
+  // this toggle itself keeps working.
+  ipcMain.on('overlay:set-interactive', (_event, interactive: boolean) => {
+    if (!overlayWindow || overlayWindow.isDestroyed()) return;
+    if (interactive) {
+      overlayWindow.setIgnoreMouseEvents(false);
+    } else {
+      overlayWindow.setIgnoreMouseEvents(true, { forward: true });
+    }
   });
 
   /**
@@ -1204,6 +1370,11 @@ app.on('ready', async () => {
     logger.info('STARTUP', 'Creating application window');
     await createWindow();
 
+    // In-game overlay: created hidden, shown by its own visibility poll
+    logger.info('STARTUP', 'Creating in-game overlay window');
+    createOverlayWindow();
+    startOverlayVisibilityPoll();
+
     logger.info('STARTUP', 'Application ready!');
 
     // Run connectivity tests after everything is started
@@ -1287,6 +1458,7 @@ app.on('will-quit', async (event) => {
 app.on('quit', () => {
   logger.info('SHUTDOWN', 'App quit event triggered');
 
+  destroyOverlayWindow();
   stopBackend();
 
   logger.info('SHUTDOWN', 'Application shutdown complete');
