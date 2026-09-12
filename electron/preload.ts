@@ -37,6 +37,12 @@ contextBridge.exposeInMainWorld('api', {
   checkout: {
     open: (url: string) => ipcRenderer.invoke('checkout:open', url),
   },
+
+  // In-game overlay: lets the (otherwise fully click-through) overlay window
+  // become clickable/scrollable while the cursor is over the chat panel.
+  overlay: {
+    setInteractive: (interactive: boolean) => ipcRenderer.send('overlay:set-interactive', interactive),
+  },
 });
 
 // Override console methods to send logs to main process

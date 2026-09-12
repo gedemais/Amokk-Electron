@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,35 +6,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
-import { Settings, Keyboard, Volume2, Mic, Gauge } from "lucide-react";
+import { Settings } from "lucide-react";
+import { useMicTest } from "@/hooks/useMicTest";
+import GeneralTab from "./configuration/GeneralTab";
+import AudioTab from "./configuration/AudioTab";
+import AssistantTab from "./configuration/AssistantTab";
+import CoachTab from "./configuration/CoachTab";
+import OverlayTab from "./configuration/OverlayTab";
+import type { ConfigurationSettingsProps } from "./configuration/types";
 
-const TTS_SPEED_MIN = 0.75;
-const TTS_SPEED_MAX = 2.0;
-const TTS_SPEED_STEP = 0.05;
-
-interface ConfigurationDialogProps {
+interface ConfigurationDialogProps extends ConfigurationSettingsProps {
   configurationDialogOpen: boolean;
   onConfigurationDialogOpenChange: (open: boolean) => void;
-  assistantToggle: boolean;
-  onAssistantToggle: (checked: boolean) => void;
-  pushToTalkKey: string;
-  isBindingKey: boolean;
-  onBindKey: () => void;
-  proactiveCoachEnabled: boolean;
-  onProactiveCoachToggle: (checked: boolean) => void;
-  volume: number[];
-  onVolumeChange: (values: number[]) => void;
-  ttsSpeed: number[];
-  onTtsSpeedChange: (values: number[]) => void;
-  onTestVolume: () => void;
-  ttsVoices: string[];
-  selectedVoice: string;
-  onVoiceChange: (voice: string) => void;
 }
 
 const ConfigurationDialog = ({
@@ -56,13 +41,37 @@ const ConfigurationDialog = ({
   ttsVoices,
   selectedVoice,
   onVoiceChange,
+  outputDevices,
+  selectedOutputDevice,
+  onOutputDeviceChange,
+  inputDevices,
+  selectedInputDevice,
+  onInputDeviceChange,
+  overlayEnabled,
+  onOverlayToggle,
+  earlyGameTipsEnabled,
+  onEarlyGameTipsToggle,
+  itemBuildTipsEnabled,
+  onItemBuildTipsToggle,
+  autoOpenBuild,
+  onAutoOpenBuildChange,
+  speakingAnimationEnabled,
+  onSpeakingAnimationToggle,
+  listeningAnimationEnabled,
+  onListeningAnimationToggle,
+  thinkingAnimationEnabled,
+  onThinkingAnimationToggle,
+  liveTextualChatEnabled,
+  onLiveTextualChatToggle,
 }: ConfigurationDialogProps) => {
   const { t } = useTranslation();
+  const { micTestActive, micLevel, startMicTest, stopMicTest } = useMicTest(
+    configurationDialogOpen,
+    selectedInputDevice,
+  );
+
   return (
-    <Dialog
-      open={configurationDialogOpen}
-      onOpenChange={onConfigurationDialogOpenChange}
-    >
+    <Dialog open={configurationDialogOpen} onOpenChange={onConfigurationDialogOpenChange}>
       <DialogTrigger asChild>
         <Card className="cursor-pointer hover:border-accent/50 transition-colors border-border/50 bg-card/95 backdrop-blur h-full">
           <CardContent className="pt-6 h-full flex items-center">
@@ -82,7 +91,7 @@ const ConfigurationDialog = ({
           </CardContent>
         </Card>
       </DialogTrigger>
-      <DialogContent className="bg-card border-border/50">
+      <DialogContent className="bg-card border-border/50 max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">
             {t("components.dashboard.ConfigurationDialog.dialog_title")}
@@ -91,163 +100,92 @@ const ConfigurationDialog = ({
             {t("components.dashboard.ConfigurationDialog.dialog_desc")}
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-6 py-4">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <h4
-                  className={`font-semibold transition-colors ${assistantToggle ? "text-accent" : "text-foreground"}`}
-                >
-                  {t("components.dashboard.ConfigurationDialog.assistant_title")}
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  {t("components.dashboard.ConfigurationDialog.assistant_desc")}
-                </p>
-              </div>
-              <Switch
-                checked={assistantToggle}
-                onCheckedChange={onAssistantToggle}
-                className="data-[state=checked]:bg-accent ml-4"
-              />
-            </div>
-          </div>
 
-          <div className="space-y-3">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <h4 className="font-semibold">
-                  {t("components.dashboard.ConfigurationDialog.ptt_title")}
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  {t("components.dashboard.ConfigurationDialog.ptt_desc")}{" "}
-                  <br />
-                  {t("components.dashboard.ConfigurationDialog.ptt_desc2")}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onBindKey}
-                className="border-accent/50 hover:bg-accent/10 min-w-[100px]"
-              >
-                <Keyboard className="h-4 w-4 mr-2" />
-                {isBindingKey
-                  ? t("components.dashboard.ConfigurationDialog.ptt_btn_binding")
-                  : pushToTalkKey}
-              </Button>
-            </div>
-          </div>
+        <Tabs defaultValue="general" className="py-2">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="general">
+              {t("components.dashboard.ConfigurationDialog.tab_general")}
+            </TabsTrigger>
+            <TabsTrigger value="audio">
+              {t("components.dashboard.ConfigurationDialog.tab_audio")}
+            </TabsTrigger>
+            <TabsTrigger value="assistant">
+              {t("components.dashboard.ConfigurationDialog.tab_assistant")}
+            </TabsTrigger>
+            <TabsTrigger value="coach">
+              {t("components.dashboard.ConfigurationDialog.tab_coach")}
+            </TabsTrigger>
+            <TabsTrigger value="overlay">
+              {t("components.dashboard.ConfigurationDialog.tab_overlay")}
+            </TabsTrigger>
+          </TabsList>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <h4
-                  className={`font-semibold transition-colors ${proactiveCoachEnabled ? "text-accent" : "text-foreground"}`}
-                >
-                  {t("components.dashboard.ConfigurationDialog.proactive_title")}
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  {t("components.dashboard.ConfigurationDialog.proactive_desc")}
-                </p>
-              </div>
-              <Switch
-                checked={proactiveCoachEnabled}
-                onCheckedChange={onProactiveCoachToggle}
-                className="data-[state=checked]:bg-accent ml-4"
-              />
-            </div>
-          </div>
+          <TabsContent value="general" className="py-4">
+            <GeneralTab
+              assistantToggle={assistantToggle}
+              onAssistantToggle={onAssistantToggle}
+              proactiveCoachEnabled={proactiveCoachEnabled}
+              onProactiveCoachToggle={onProactiveCoachToggle}
+              overlayEnabled={overlayEnabled}
+              onOverlayToggle={onOverlayToggle}
+            />
+          </TabsContent>
 
-          {ttsVoices.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h4 className="font-semibold flex items-center gap-2">
-                    <Mic className="h-4 w-4" />
-                    {t("components.dashboard.ConfigurationDialog.voice_title")}
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {t("components.dashboard.ConfigurationDialog.voice_desc")}
-                  </p>
-                </div>
-                <Select value={selectedVoice || undefined} onValueChange={onVoiceChange}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ttsVoices.map((voice) => (
-                      <SelectItem key={voice} value={voice}>
-                        {voice}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
+          <TabsContent value="audio" className="py-4">
+            <AudioTab
+              ttsVoices={ttsVoices}
+              selectedVoice={selectedVoice}
+              onVoiceChange={onVoiceChange}
+              volume={volume}
+              onVolumeChange={onVolumeChange}
+              ttsSpeed={ttsSpeed}
+              onTtsSpeedChange={onTtsSpeedChange}
+              onTestVolume={onTestVolume}
+              outputDevices={outputDevices}
+              selectedOutputDevice={selectedOutputDevice}
+              onOutputDeviceChange={onOutputDeviceChange}
+            />
+          </TabsContent>
 
-          <div className="space-y-3">
-            <div className="flex flex-col gap-4">
-              <div className="flex-1">
-                <h4 className="font-semibold">
-                  {t("components.dashboard.ConfigurationDialog.volume_title")}
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  {t("components.dashboard.ConfigurationDialog.volume_desc")}
-                </p>
-              </div>
-              <div className="flex items-center gap-4">
-                <Volume2 className="h-4 w-4 text-muted-foreground" />
-                <Slider
-                  value={volume}
-                  onValueChange={onVolumeChange}
-                  max={100}
-                  step={1}
-                  className="flex-1"
-                />
-                <span className="text-sm font-medium min-w-[3ch]">
-                  {volume[0]}
-                </span>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onTestVolume}
-                className="border-accent/50 hover:bg-accent/10"
-              >
-                <Volume2 className="h-4 w-4 mr-2" />
-                {t("components.dashboard.ConfigurationDialog.test_volume_btn")}
-              </Button>
-            </div>
-          </div>
+          <TabsContent value="assistant" className="py-4">
+            <AssistantTab
+              pushToTalkKey={pushToTalkKey}
+              isBindingKey={isBindingKey}
+              onBindKey={onBindKey}
+              inputDevices={inputDevices}
+              selectedInputDevice={selectedInputDevice}
+              onInputDeviceChange={onInputDeviceChange}
+              micTestActive={micTestActive}
+              micLevel={micLevel}
+              onStartMicTest={startMicTest}
+              onStopMicTest={stopMicTest}
+            />
+          </TabsContent>
 
-          <div className="space-y-3">
-            <div className="flex flex-col gap-4">
-              <div className="flex-1">
-                <h4 className="font-semibold">
-                  {t("components.dashboard.ConfigurationDialog.speed_title")}
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  {t("components.dashboard.ConfigurationDialog.speed_desc")}
-                </p>
-              </div>
-              <div className="flex items-center gap-4">
-                <Gauge className="h-4 w-4 text-muted-foreground" />
-                <Slider
-                  value={ttsSpeed}
-                  onValueChange={onTtsSpeedChange}
-                  min={TTS_SPEED_MIN}
-                  max={TTS_SPEED_MAX}
-                  step={TTS_SPEED_STEP}
-                  className="flex-1"
-                />
-                <span className="text-sm font-medium min-w-[5ch]">
-                  {ttsSpeed[0].toFixed(2)}x
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+          <TabsContent value="coach" className="py-4">
+            <CoachTab
+              earlyGameTipsEnabled={earlyGameTipsEnabled}
+              onEarlyGameTipsToggle={onEarlyGameTipsToggle}
+              itemBuildTipsEnabled={itemBuildTipsEnabled}
+              onItemBuildTipsToggle={onItemBuildTipsToggle}
+              autoOpenBuild={autoOpenBuild}
+              onAutoOpenBuildChange={onAutoOpenBuildChange}
+            />
+          </TabsContent>
+
+          <TabsContent value="overlay" className="py-4">
+            <OverlayTab
+              speakingAnimationEnabled={speakingAnimationEnabled}
+              onSpeakingAnimationToggle={onSpeakingAnimationToggle}
+              listeningAnimationEnabled={listeningAnimationEnabled}
+              onListeningAnimationToggle={onListeningAnimationToggle}
+              thinkingAnimationEnabled={thinkingAnimationEnabled}
+              onThinkingAnimationToggle={onThinkingAnimationToggle}
+              liveTextualChatEnabled={liveTextualChatEnabled}
+              onLiveTextualChatToggle={onLiveTextualChatToggle}
+            />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

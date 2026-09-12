@@ -137,3 +137,257 @@ All colors MUST be HSL.
 ::-webkit-scrollbar {
   display: none;
 }
+
+/* ==========================================================================
+   In-game overlay (route #/overlay, transparent click-through window).
+   Everything here is painted OVER the game: the background must stay fully
+   transparent and the motion must stay cheap (no blur, no full-window
+   animation).
+   ========================================================================== */
+
+html:has(.overlay-root),
+html:has(.overlay-root) body {
+  background: transparent !important;
+  overflow: hidden;
+}
+
+.overlay-root {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Top-aligned, not centered: the window is now tall enough to also fit the
+     optional chat panel below the icon, and the icon must stay pinned near
+     the top-left corner regardless of whether the panel is shown/expanded. */
+  justify-content: flex-start;
+  padding-top: 14px;
+  background: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none; /* belt and braces: the window is click-through too */
+  overflow: hidden;
+}
+
+/* Icon on top, waveform underneath */
+.overlay-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.overlay-badge {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  /* Readable over any map/background */
+  filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.9));
+}
+
+/* --- thinking: a spinner orbiting the icon --- */
+.overlay-spinner {
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  border-top-color: hsl(var(--accent));
+  border-right-color: hsl(var(--primary-glow));
+  animation: overlay-spin 900ms linear infinite;
+  filter: drop-shadow(0 0 4px hsl(var(--accent) / 0.8));
+}
+
+@keyframes overlay-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- speaking / listening: a flowing waveform ribbon under the icon.
+   Same shape for both audio directions, palette tells them apart:
+   cyan/violet = Amokk speaking, red/orange = the user on the mic. --- */
+.overlay-wave {
+  --wave-core: hsl(var(--accent));
+  --wave-edge: hsl(var(--primary-glow));
+  --wave-glow: hsl(var(--accent) / 0.55);
+
+  width: 96px;
+  height: 28px;
+  opacity: 0;
+  transform: scaleY(0.4);
+  transition: opacity 180ms ease, transform 180ms ease;
+  pointer-events: none;
+}
+
+.overlay-wave.is-listening {
+  --wave-core: hsl(0 85% 62%);
+  --wave-edge: hsl(20 90% 58%);
+  --wave-glow: hsl(0 85% 62% / 0.55);
+}
+
+.overlay-wave.is-active {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.overlay-wave-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 4px var(--wave-glow));
+}
+
+/* --- listening: the recording dot on the icon (the waveform carries the
+   level, this only says "you are on the mic") --- */
+.overlay-rec-dot {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: hsl(0 85% 58%);
+  box-shadow: 0 0 5px hsl(0 85% 58% / 0.9), 0 0 2px rgba(0, 0, 0, 0.9);
+  animation: overlay-rec-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes overlay-rec-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.85);
+  }
+}
+
+/* --- live chat panel: the one interactive island on an otherwise
+   click-through window (see electron/main.ts overlay:set-interactive).
+   pointer-events must be re-enabled explicitly since .overlay-root turns
+   them off for the whole window. --- */
+.overlay-chat {
+  pointer-events: auto;
+  /* Glued right under the icon/waveform — not floating with visible daylight
+     between them. */
+  margin-top: 2px;
+  width: 208px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  cursor: default;
+}
+
+/* Round icon button, like a messaging app's conversation bubble icon. */
+.overlay-chat-toggle {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid hsl(var(--border) / 0.8);
+  background: hsl(var(--background) / 0.82);
+  color: hsl(var(--muted-foreground));
+  backdrop-filter: blur(2px);
+  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.overlay-chat-toggle:hover {
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--accent) / 0.6);
+}
+
+.overlay-chat-toggle.is-expanded {
+  color: hsl(var(--accent));
+  border-color: hsl(var(--accent) / 0.6);
+  background: hsl(var(--accent) / 0.12);
+}
+
+.overlay-chat-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.overlay-chat-body {
+  margin-top: 6px;
+  max-height: 172px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  border-radius: 10px;
+  background: hsl(var(--background) / 0.82);
+  border: 1px solid hsl(var(--border) / 0.6);
+  backdrop-filter: blur(2px);
+}
+
+.overlay-chat-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.overlay-chat-body::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 999px;
+}
+
+.overlay-chat-empty {
+  font-size: 10.5px;
+  color: hsl(var(--muted-foreground));
+  text-align: center;
+  padding: 6px 2px;
+}
+
+/* SMS/WhatsApp-style bubbles: the user's own transcribed questions sit on
+   the right, everything AMOKK says (coach advice or a direct answer) sits
+   on the left — role color still tells the two AMOKK message kinds apart. */
+.overlay-chat-bubble {
+  max-width: 84%;
+  font-size: 11px;
+  line-height: 1.35;
+  color: hsl(var(--foreground) / 0.95);
+  padding: 6px 10px;
+  border-radius: 14px;
+  word-break: break-word;
+}
+
+/* Question: the user's own voice, transcribed — the "outgoing" bubble,
+   right-aligned like your own messages in any chat app. Warm, distinct from
+   the red/orange "listening" wave and the cyan "answer" bubbles. */
+.overlay-chat-bubble.role-question {
+  align-self: flex-end;
+  background: hsl(38 92% 58% / 0.28);
+  border: 1px solid hsl(38 92% 58% / 0.45);
+  border-bottom-right-radius: 4px;
+}
+
+/* Answer: AMOKK replying to that question — "incoming", left-aligned, cyan
+   like the speaking wave. */
+.overlay-chat-bubble.role-answer {
+  align-self: flex-start;
+  background: hsl(var(--accent) / 0.22);
+  border: 1px solid hsl(var(--accent) / 0.4);
+  border-bottom-left-radius: 4px;
+}
+
+/* Coach: unprompted advice — also "incoming", the app's primary brand violet. */
+.overlay-chat-bubble.role-coach {
+  align-self: flex-start;
+  background: hsl(var(--primary-glow) / 0.22);
+  border: 1px solid hsl(var(--primary-glow) / 0.4);
+  border-bottom-left-radius: 4px;
+}

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Overlay from "./pages/Overlay";
 import NotFound from "./pages/NotFound";
 import { DebugPanel } from "@/components/DebugPanel";
 import { DebugProvider } from "@/context/DebugContext";
@@ -53,6 +54,8 @@ const App = () => {
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              {/* In-game overlay window (electron/main.ts) */}
+              <Route path="/overlay" element={<Overlay />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

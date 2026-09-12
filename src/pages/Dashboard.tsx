@@ -5,6 +5,7 @@ import PricingDialog from "@/components/dashboard/PricingDialog";
 import ProgressDialog from "@/components/dashboard/ProgressDialog";
 import CoachStatus from "@/components/dashboard/CoachStatus";
 import ConfigurationDialog from "@/components/dashboard/ConfigurationDialog";
+import OnboardingWizard from "@/components/dashboard/OnboardingWizard";
 import QuickStartGuide from "@/components/dashboard/QuickStartGuide";
 import Troubleshooting from "@/components/dashboard/Troubleshooting";
 
@@ -22,10 +23,24 @@ const Dashboard = () => {
     ttsSpeed,
     ttsVoices,
     selectedVoice,
+    inputDevices,
+    selectedInputDevice,
+    outputDevices,
+    selectedOutputDevice,
+    overlayEnabled,
+    earlyGameTipsEnabled,
+    itemBuildTipsEnabled,
+    autoOpenBuild,
+    speakingAnimationEnabled,
+    listeningAnimationEnabled,
+    thinkingAnimationEnabled,
+    liveTextualChatEnabled,
     pricingDialogOpen,
     setPricingDialogOpen,
     configurationDialogOpen,
     setConfigurationDialogOpen,
+    onboardingOpen,
+    setOnboardingOpen,
     progressDialogOpen,
     setProgressDialogOpen,
     troubleshootOpen,
@@ -35,6 +50,16 @@ const Dashboard = () => {
     handleVolumeChange,
     handleTtsSpeedChange,
     handleVoiceChange,
+    handleInputDeviceChange,
+    handleOutputDeviceChange,
+    handleOverlayToggle,
+    handleEarlyGameTipsToggle,
+    handleItemBuildTipsToggle,
+    handleAutoOpenBuildChange,
+    handleSpeakingAnimationToggle,
+    handleListeningAnimationToggle,
+    handleThinkingAnimationToggle,
+    handleLiveTextualChatToggle,
     handleBindKey,
     handleTestVolume,
     selectPlan,
@@ -42,6 +67,46 @@ const Dashboard = () => {
     contactSupport,
     refreshLocalData,
   } = useDashboard();
+
+  const configurationSettings = {
+    assistantToggle,
+    onAssistantToggle: handleAssistantToggle,
+    proactiveCoachEnabled,
+    onProactiveCoachToggle: toggleProactiveCoach,
+    overlayEnabled,
+    onOverlayToggle: handleOverlayToggle,
+    volume,
+    onVolumeChange: handleVolumeChange,
+    ttsSpeed,
+    onTtsSpeedChange: handleTtsSpeedChange,
+    onTestVolume: handleTestVolume,
+    ttsVoices,
+    selectedVoice,
+    onVoiceChange: handleVoiceChange,
+    outputDevices,
+    selectedOutputDevice,
+    onOutputDeviceChange: handleOutputDeviceChange,
+    pushToTalkKey,
+    isBindingKey,
+    onBindKey: handleBindKey,
+    inputDevices,
+    selectedInputDevice,
+    onInputDeviceChange: handleInputDeviceChange,
+    earlyGameTipsEnabled,
+    onEarlyGameTipsToggle: handleEarlyGameTipsToggle,
+    itemBuildTipsEnabled,
+    onItemBuildTipsToggle: handleItemBuildTipsToggle,
+    autoOpenBuild,
+    onAutoOpenBuildChange: handleAutoOpenBuildChange,
+    speakingAnimationEnabled,
+    onSpeakingAnimationToggle: handleSpeakingAnimationToggle,
+    listeningAnimationEnabled,
+    onListeningAnimationToggle: handleListeningAnimationToggle,
+    thinkingAnimationEnabled,
+    onThinkingAnimationToggle: handleThinkingAnimationToggle,
+    liveTextualChatEnabled,
+    onLiveTextualChatToggle: handleLiveTextualChatToggle,
+  };
 
   return (
     <div className="min-h-screen p-6">
@@ -67,6 +132,12 @@ const Dashboard = () => {
             onOpenChange={setProgressDialogOpen}
         />
 
+        <OnboardingWizard
+          open={onboardingOpen}
+          onOpenChange={setOnboardingOpen}
+          {...configurationSettings}
+        />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <CoachStatus
             amokkToggle={amokkToggle}
@@ -76,21 +147,7 @@ const Dashboard = () => {
           <ConfigurationDialog
             configurationDialogOpen={configurationDialogOpen}
             onConfigurationDialogOpenChange={setConfigurationDialogOpen}
-            assistantToggle={assistantToggle}
-            onAssistantToggle={handleAssistantToggle}
-            pushToTalkKey={pushToTalkKey}
-            isBindingKey={isBindingKey}
-            onBindKey={handleBindKey}
-            proactiveCoachEnabled={proactiveCoachEnabled}
-            onProactiveCoachToggle={toggleProactiveCoach}
-            volume={volume}
-            onVolumeChange={handleVolumeChange}
-            ttsSpeed={ttsSpeed}
-            onTtsSpeedChange={handleTtsSpeedChange}
-            onTestVolume={handleTestVolume}
-            ttsVoices={ttsVoices}
-            selectedVoice={selectedVoice}
-            onVoiceChange={handleVoiceChange}
+            {...configurationSettings}
           />
         </div>
 
