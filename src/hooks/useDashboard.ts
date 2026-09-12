@@ -16,6 +16,8 @@ export const useDashboard = () => {
   const [remainingGames, setRemainingGames] = useState(42);
   const [language, setLanguage] = useState("fr");
   const [userPlanId, setUserPlanId] = useState(1);
+  // Surveillance post-checkout en cours (backend : /start_plan_watch)
+  const [planWatchPending, setPlanWatchPending] = useState(false);
   const [isBindingKey, setIsBindingKey] = useState(false);
   const [volume, setVolume] = useState([70]);
   const [ttsSpeed, setTtsSpeed] = useState([1.0]);
@@ -42,6 +44,11 @@ export const useDashboard = () => {
       setConfigurationDialogOpen(true);
     }
   }, [progressDialogOpen, isFirstLaunch]);
+
+  // Les tarifs ne s'ouvrent JAMAIS d'eux-mêmes (ni au premier lancement, ni
+  // aux suivants) : trop agressif. Un compte sans plan garde le rappel passif
+  // de RemainingGamesCard ("Aucune partie / Choisissez un plan"), qu'il ouvre
+  // quand il le décide.
 
   useEffect(() => {
     const handle_before_unload = () => {
@@ -73,6 +80,7 @@ export const useDashboard = () => {
       if (data.remaining_games !== undefined) setRemainingGames(data.remaining_games);
       if (data.lang !== undefined) setLanguage(data.lang);
       if (data.plan_id !== undefined) setUserPlanId(data.plan_id);
+      if (data.plan_watch_pending !== undefined) setPlanWatchPending(data.plan_watch_pending);
       if (data.amokk_toggle !== undefined) setAmokkToggle(data.amokk_toggle);
       if (data.assistant_toggle !== undefined) setAssistantToggle(data.assistant_toggle);
       if (data.coach_toggle !== undefined) setProactiveCoachEnabled(data.coach_toggle);
@@ -187,17 +195,21 @@ export const useDashboard = () => {
     }, 5000);
   };
 
+  // Appelé APRÈS l'ouverture du checkout dans le navigateur par défaut
+  // (PlanCard). Le backend interroge /get_profile toutes les 10s pendant 10min
+  // et met à jour shared_data dès que le webhook a crédité le compte ; le
+  // polling /get_local_data ci-dessus (10s) propage ensuite le changement à
+  // l'UI. Achat détecté = plan et parties à jour sans redémarrage.
   const selectPlan = async (planId: number) => {
+    setPricingDialogOpen(false);
     try {
-      logger.api('POST', '/mock_select_plan', { plan_id: planId });
-      const data = await api.selectPlan(planId);
-      debug.log('MOCK_SELECT_PLAN', data);
-      logger.apiResponse('/mock_select_plan', 200, data);
-      setRemainingGames(data.remaining_games);
-      setPricingDialogOpen(false);
+      logger.api('POST', '/start_plan_watch', { plan_id: planId });
+      const data = await api.startPlanWatch();
+      debug.log('START_PLAN_WATCH', data);
+      logger.apiResponse('/start_plan_watch', 200, data);
     } catch (error) {
-      logger.error('MOCK_SELECT_PLAN failed', error);
-      debug.log('MOCK_SELECT_PLAN_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
+      logger.error('START_PLAN_WATCH failed', error);
+      debug.log('START_PLAN_WATCH_ERROR', { error: error instanceof Error ? error.message : 'Unknown error' });
     }
   };
 
@@ -249,6 +261,7 @@ export const useDashboard = () => {
     proactiveCoachEnabled,
     remainingGames,
     userPlanId,
+    planWatchPending,
     isBindingKey,
     volume,
     ttsSpeed,

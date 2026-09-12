@@ -16,6 +16,7 @@ const Dashboard = () => {
     proactiveCoachEnabled,
     remainingGames,
     userPlanId,
+    planWatchPending,
     isBindingKey,
     volume,
     ttsSpeed,
@@ -49,6 +50,8 @@ const Dashboard = () => {
       <div className="max-w-4xl mx-auto space-y-6">
         <RemainingGamesCard
           remainingGames={remainingGames}
+          userPlanId={userPlanId}
+          planWatchPending={planWatchPending}
           onUpgradeClick={() => setPricingDialogOpen(true)}
         />
 
@@ -67,6 +70,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <CoachStatus
             amokkToggle={amokkToggle}
+            userPlanId={userPlanId}
             onToggle={handleAmokkToggle}
           />
           <ConfigurationDialog

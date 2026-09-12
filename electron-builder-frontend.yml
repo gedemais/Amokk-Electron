@@ -26,7 +26,16 @@ win:
   target: portable
   icon: assets/icon.ico
   artifactName: 'frontend.exe'
-  signAndEditExecutable: false
+  # Signature via le token OV Sectigo (SafeNet) : electron-builder localise le
+  # cert par son subject dans le store Windows et signe l'exe Electron INTERNE
+  # (celui extrait dans %TEMP% au lancement — non signé, c'était le dernier
+  # binaire à déclencher les heuristiques AV) ainsi que le portable final.
+  # PREREQUIS : token branché pendant `npm run dist:win_front`.
+  signAndEditExecutable: true
+  certificateSubjectName: AMOKK
+  rfc3161TimeStampServer: http://timestamp.sectigo.com
+  signingHashAlgorithms:
+    - sha256
 
 linux:
   executableName: amokk-frontend

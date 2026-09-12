@@ -45,17 +45,28 @@ const PlanCard = ({
 
     const userEmail = localStorage.getItem("user_email");
 
-    const url = new URL(links[planId]);
-
-    if (userEmail) {
-      url.searchParams.set("checkout[custom][email]", userEmail);
+    // Sans email, le webhook LemonSqueezy retombe sur celui tapé au checkout :
+    // le plan atterrirait sur un autre compte (ou aucun). On refuse le clic
+    // plutôt que de risquer un achat orphelin.
+    if (!userEmail) {
+      alert(t("components.dashboard.RemainingGamesCard.missing_email"));
+      return;
     }
 
+    const url = new URL(links[planId]);
+
+    // DEUX paramètres, deux rôles distincts :
+    // - checkout[custom][email] : donnée custom, non modifiable par l'acheteur,
+    //   lue par notre webhook pour rattacher l'achat au bon compte (la garantie)
+    // - checkout[email] : pré-remplit le champ email visible (le confort)
+    url.searchParams.set("checkout[custom][email]", userEmail);
+    url.searchParams.set("checkout[email]", userEmail);
     url.searchParams.set("checkout[custom][plan_name]", plans_names[planId]);
 
-    console.log(url.toString());
-
-    window.open(url.toString(), "_blank", "noopener,noreferrer");
+    // Navigateur par DÉFAUT + réduction de la fenêtre (IPC), puis surveillance
+    // du profil en live (onSelect -> useDashboard.selectPlan).
+    (window as any).api?.checkout?.open(url.toString());
+    onSelect();
   };
   return (
     <Card className="border-border/50 hover:border-primary/50 transition-all cursor-pointer group relative overflow-hidden">

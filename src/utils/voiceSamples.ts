@@ -70,12 +70,15 @@ export function getVoiceSampleUrls(voice: string, lang?: string): string[] {
   const urls: string[] = [];
   const key = voice.trim().toLowerCase();
   const gender = VOICE_GENDERS[key];
+  // The backend reports locale codes ("fr_FR") since the lang normalization,
+  // while the bundled sample folders use short codes ("fr") — accept both.
+  const shortLang = lang ? lang.split(/[_-]/)[0].toLowerCase() : undefined;
 
-  if (lang && gender) {
-    urls.push(`${SAMPLES_BASE}/${lang}/${gender}.mp3`);
+  if (shortLang && gender) {
+    urls.push(`${SAMPLES_BASE}/${shortLang}/${gender}.mp3`);
   }
-  if (lang) {
-    urls.push(`${SAMPLES_BASE}/${lang}/${encodeURIComponent(key)}.mp3`);
+  if (shortLang) {
+    urls.push(`${SAMPLES_BASE}/${shortLang}/${encodeURIComponent(key)}.mp3`);
   }
   urls.push(`${SAMPLES_BASE}/${encodeURIComponent(key)}.mp3`);
   if (CDN_VOICES[key]) {

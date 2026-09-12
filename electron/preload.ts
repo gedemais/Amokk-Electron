@@ -32,6 +32,11 @@ contextBridge.exposeInMainWorld('api', {
   auth: {
     googleLogin: () => ipcRenderer.invoke('google:login'),
   },
+
+  // Checkout: opens the payment page in the DEFAULT browser + minimizes the app
+  checkout: {
+    open: (url: string) => ipcRenderer.invoke('checkout:open', url),
+  },
 });
 
 // Override console methods to send logs to main process

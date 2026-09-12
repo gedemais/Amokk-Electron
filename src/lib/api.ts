@@ -22,7 +22,9 @@ export const updateVolume = (volume: number) => apiRequest('PUT', '/update_volum
 export const updateTtsSpeed = (speed: number) => apiRequest('PUT', '/update_tts_speed', { speed });
 export const updateLanguage = (lang: string) => apiRequest('PUT', '/update_language', { lang });
 export const updatePttKey = (ptt_key: string) => apiRequest('PUT', '/update_ptt_key', { ptt_key });
-export const selectPlan = (plan_id: number) => apiRequest('POST', '/mock_select_plan', { plan_id });
+// Surveillance du profil après ouverture du checkout : le backend interroge
+// /get_profile toutes les 10s (10min max) et s'arrête dès qu'un achat est vu.
+export const startPlanWatch = () => apiRequest('POST', '/start_plan_watch');
 export const toggleProactiveCoach = (active: boolean) => apiRequest('PUT', '/coach_toggle', { active });
 export const updateTtsVoice = (voice_name: string) => apiRequest('PUT', '/update_tts_voice', { voice_name });
 export const contactSupport = () => {

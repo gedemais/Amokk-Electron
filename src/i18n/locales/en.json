@@ -27,7 +27,9 @@
         "active_desc": "AMOKK is active, start a game and he'll begin coaching you!",
         "inactive_desc": "Activate AMOKK to start coaching",
         "status_active": "Active",
-        "status_inactive": "Inactive"
+        "status_inactive": "Inactive",
+        "no_plan_desc": "Pick a plan to activate your coach.",
+        "status_no_plan": "Unavailable"
       },
       "ConfigurationDialog": {
         "card_title": "Configuration",
@@ -126,7 +128,13 @@
       "RemainingGamesCard": {
         "games_remaining_suffix": "Coached Games Remaining",
         "games_remaining_desc": "Unlock unlimited coaching with a premium plan",
-        "upgrade_btn": "Upgrade Plan"
+        "upgrade_btn": "Upgrade Plan",
+        "no_plan_title": "No games available",
+        "no_plan_desc": "Pick a plan to activate your coach.",
+        "no_plan_btn": "Pick a plan",
+        "waiting_payment": "Waiting for payment confirmation...",
+        "missing_email": "Could not retrieve your email. Please sign in again before picking a plan.",
+        "waiting_payment_desc": "This can take a minute."
       },
       "Troubleshooting": {
         "title": "Having an issue?",
@@ -136,7 +144,9 @@
         "solution_2": "Check your microphone permissions",
         "solution_3": "Verify AMOKK is set to Active",
         "solution_4": "Restart the app if problems persist",
-        "contact_btn": "Contact Us"
+        "contact_btn": "Contact Us",
+        "solution_5": "Make sure AMOKK is set to “Active”",
+        "solution_6": "Restart the application if problems persist"
       }
     }
   }

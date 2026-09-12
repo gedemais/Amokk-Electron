@@ -978,6 +978,28 @@ function setupIPC(): void {
     app.focus({ steal: true });
   }
 
+  // Checkout: open the LemonSqueezy page in the user's DEFAULT browser (not an
+  // Electron window — the payment flow belongs in a real browser, with the
+  // user's password manager and payment autofill) and minimize the app so the
+  // checkout tab is visible. Same pattern as the Google login flow below.
+  ipcMain.handle('checkout:open', (_event, url: string) => {
+    try {
+      // Only ever hand https URLs to the OS shell.
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'https:') {
+        logger.error('CHECKOUT_OPEN', `Refused non-https URL: ${parsed.protocol}`);
+        return { ok: false };
+      }
+      logger.info('CHECKOUT_OPEN', `Opening checkout in default browser: ${parsed.host}`);
+      mainWindow?.minimize();
+      shell.openExternal(url);
+      return { ok: true };
+    } catch (error: any) {
+      logger.error('CHECKOUT_OPEN', `Failed to open checkout: ${error?.message}`);
+      return { ok: false };
+    }
+  });
+
   // Google OAuth login
   ipcMain.handle('google:login', (): Promise<{ token: string; email: string; remaining_games: number; plan_id: number } | { error: string }> => {
     logger.info('GOOGLE_LOGIN', 'IPC handler triggered');

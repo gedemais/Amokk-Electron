@@ -27,7 +27,9 @@
         "active_desc": "AMOKK est actif, tu peux lancer une game pour qu'il commence à te coacher !",
         "inactive_desc": "Activez AMOKK pour commencer le coaching",
         "status_active": "Actif",
-        "status_inactive": "Inactif"
+        "status_inactive": "Inactif",
+        "no_plan_desc": "Choisissez un plan pour activer votre coach.",
+        "status_no_plan": "Indisponible"
       },
       "ConfigurationDialog": {
         "card_title": "Configuration",
@@ -126,7 +128,13 @@
       "RemainingGamesCard": {
         "games_remaining_suffix": "Parties coachées restantes",
         "games_remaining_desc": "Débloquez plus de coachings avec un plan supérieur.",
-        "upgrade_btn": "Améliorer le Plan"
+        "upgrade_btn": "Améliorer le Plan",
+        "no_plan_title": "Aucune game disponible",
+        "no_plan_desc": "Choisissez un plan pour activer votre coach.",
+        "no_plan_btn": "Choisir un plan",
+        "waiting_payment": "En attente de confirmation du paiement...",
+        "missing_email": "Impossible de récupérer votre email. Reconnectez-vous avant de choisir un plan.",
+        "waiting_payment_desc": "Cela peut prendre une minute."
       },
       "Troubleshooting": {
         "title": "Un problème ?",
