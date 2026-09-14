@@ -39,9 +39,14 @@ contextBridge.exposeInMainWorld('api', {
   },
 
   // In-game overlay: lets the (otherwise fully click-through) overlay window
-  // become clickable/scrollable while the cursor is over the chat panel.
+  // become clickable while the cursor is over the icon/its radial menu/its
+  // chat panel. The chat panel's own open/close is plain React state
+  // (Overlay.tsx) and needs no IPC of its own.
   overlay: {
     setInteractive: (interactive: boolean) => ipcRenderer.send('overlay:set-interactive', interactive),
+    close: () => ipcRenderer.send('overlay:close'),
+    startMove: () => ipcRenderer.send('overlay:start-move'),
+    stopMove: () => ipcRenderer.send('overlay:stop-move'),
   },
 });
 

@@ -18,6 +18,20 @@
       "title": "404",
       "message": "Oops! Page not found",
       "link": "Return to Home"
+    },
+    "Overlay": {
+      "close_tip": "Close the overlay",
+      "chat_tip": "Show the text exchanges",
+      "move_tip": "Move the overlay",
+      "volume_tip": "Adjust the volume",
+      "chat_title": "Messages",
+      "chat_close_label": "Close messages",
+      "chat_empty": "Waiting for conversation...",
+      "volume_title": "Volume",
+      "volume_close_label": "Close volume",
+      "volume_mute_label": "Mute",
+      "volume_unmute_label": "Unmute",
+      "chat_font_size_label": "Text size"
     }
   },
   "components": {

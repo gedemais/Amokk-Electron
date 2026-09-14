@@ -204,6 +204,11 @@ interface BackendStatus {
 let mainWindow: any = null;
 let overlayWindow: any = null;
 let overlayPollTimer: any = null;
+// "Deplacer" from the overlay's radial menu: while set, the window follows
+// the cursor (see startOverlayMove) instead of the normal click-through
+// behaviour.
+let overlayMoveInterval: any = null;
+let overlayScale = 1;
 let pythonProcess: any = null;
 let backendReady = false;
 let backendStartAttempts = 0;
@@ -916,22 +921,43 @@ async function createWindow(): Promise<void> {
 // size is the DESIGN_WIDTH/HEIGHT one; like the main window, it is scaled down
 // on smaller screens (same zoom rule) so the overlay keeps the same visual
 // weight relative to the game's UI. It is deliberately generous around the
-// content: the glow and the waveform must never be clipped by the window.
-//
-// The window is tall enough to also fit the optional live-chat panel below
-// the icon (see .overlay-chat in index.css) even when the panel is expanded;
-// unused space stays fully transparent and click-through, so there is no
-// visual cost to reserving the room up front instead of resizing the native
-// window on every fold/unfold.
-const OVERLAY_BASE_WIDTH = 240;
-const OVERLAY_BASE_HEIGHT = 320;
-const OVERLAY_BASE_MARGIN = 18;   // from the screen's work-area corner
+// content: the glow, the waveform, the radial menu's tooltips (see
+// .overlay-fan-tip in index.css, which can run wide), and the optional chat
+// panel below the icon must never be clipped by the window; unused space
+// stays fully transparent and click-through, so there is no visual cost to
+// reserving the room whether or not the panel is currently open.
+const OVERLAY_BASE_WIDTH = 360;
+const OVERLAY_BASE_HEIGHT = 480;
+const OVERLAY_BASE_MARGIN = 10;   // from the screen's work-area corner
 const OVERLAY_VISIBILITY_POLL_MS = 1000;
+const OVERLAY_POSITION_FILE = path.join(app.getPath('userData'), 'overlay-position.json');
 
 /** Same rule as the main window: 1 at the design resolution, smaller below. */
 function screenScale(): number {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   return Math.min(1, width / DESIGN_WIDTH, height / DESIGN_HEIGHT);
+}
+
+/** Where "Deplacer" last dropped the icon, across restarts — a plain JSON
+ * file rather than the Python backend's cache, since window position is
+ * purely an Electron/OS concern. Absent or corrupt just means "no saved spot
+ * yet", not an error worth surfacing. */
+function loadSavedOverlayPosition(): { x: number; y: number } | null {
+  try {
+    const pos = JSON.parse(fs.readFileSync(OVERLAY_POSITION_FILE, 'utf-8'));
+    if (typeof pos?.x === 'number' && typeof pos?.y === 'number') return pos;
+  } catch {
+    // no saved position yet, or the file is corrupt: fall back to the default spot
+  }
+  return null;
+}
+
+function saveOverlayPosition(x: number, y: number): void {
+  try {
+    fs.writeFileSync(OVERLAY_POSITION_FILE, JSON.stringify({ x, y }));
+  } catch (error: any) {
+    logger.error('OVERLAY', 'Failed to save overlay position', { error: error?.message });
+  }
 }
 
 /**
@@ -949,22 +975,41 @@ function createOverlayWindow(): void {
 
   const { workArea } = screen.getPrimaryDisplay();
   const scale = screenScale();
+  overlayScale = scale;
   const margin = Math.round(OVERLAY_BASE_MARGIN * scale);
   const windowWidth = Math.round(OVERLAY_BASE_WIDTH * scale);
   const windowHeight = Math.round(OVERLAY_BASE_HEIGHT * scale);
 
+  // Default spot: left-anchored, vertically centered rather than pinned to
+  // the top corner (mid-screen reads better against where the game's own
+  // HUD usually lives — top bars, minimap, kill feed all cluster near the
+  // edges). A saved "Deplacer" position overrides it, clamped to the CURRENT
+  // display's work area so a spot saved on a different monitor/resolution
+  // can't place the icon off-screen.
+  const defaultX = workArea.x + margin;
+  const defaultY = workArea.y + Math.round((workArea.height - windowHeight) / 2);
+  const saved = loadSavedOverlayPosition();
+  const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+  const initialX = saved
+    ? clamp(saved.x, workArea.x, workArea.x + workArea.width - windowWidth)
+    : defaultX;
+  const initialY = saved
+    ? clamp(saved.y, workArea.y, workArea.y + workArea.height - windowHeight)
+    : defaultY;
+
   overlayWindow = new BrowserWindow({
-    x: workArea.x + margin,
-    // Still left-anchored, but vertically centered rather than pinned to the
-    // top corner: mid-screen reads better against where the game's own HUD
-    // usually lives (top bars, minimap, kill feed all cluster near the
-    // edges).
-    y: workArea.y + Math.round((workArea.height - windowHeight) / 2),
+    x: initialX,
+    y: initialY,
     width: windowWidth,
     height: windowHeight,
     transparent: true,
     frame: false,
     resizable: false,
+    // No native drag: moving happens via startOverlayMove() below, which
+    // repositions the window programmatically (setPosition), so this stays
+    // false — a real OS-driven window drag needs the window to be
+    // focusable, which we never want (it must never steal focus/input from
+    // the game outside of the brief, explicit "Deplacer" action).
     movable: false,
     minimizable: false,
     maximizable: false,
@@ -1014,6 +1059,10 @@ function destroyOverlayWindow(): void {
     clearInterval(overlayPollTimer);
     overlayPollTimer = null;
   }
+  if (overlayMoveInterval) {
+    clearInterval(overlayMoveInterval);
+    overlayMoveInterval = null;
+  }
   if (overlayWindow && !overlayWindow.isDestroyed()) {
     overlayWindow.destroy();
   }
@@ -1047,6 +1096,71 @@ function startOverlayVisibilityPoll(): void {
       logger.debug('OVERLAY', 'Visibility poll failed', { error: error?.message });
     }
   }, OVERLAY_VISIBILITY_POLL_MS);
+}
+
+/**
+ * Radial menu item "Fermer l'overlay" (the X icon) — flips the SAME
+ * `overlay_toggle` setting the Configuration > General tab's "Overlay"
+ * switch controls (see GeneralTab.tsx / useDashboard.ts), so closing it here
+ * shows up there too instead of being a separate, overlay-only notion of
+ * "closed". Hiding the window immediately is just for instant feedback —
+ * the visibility poll above would otherwise get there within a second on
+ * its own once /get_overlay_state reflects the new setting.
+ */
+function closeOverlay(): void {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.hide();
+  }
+  fetch(`http://${AMOKK_BACKEND_URL}/overlay_toggle`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ active: false }),
+  }).catch((error: any) => {
+    logger.error('OVERLAY', 'Failed to persist overlay_toggle=false', { error: error?.message });
+  });
+  logger.info('OVERLAY', 'Overlay closed by user');
+}
+
+/**
+ * Radial menu item "Deplacer l'overlay avec la souris" (the Move icon) — the
+ * window follows the cursor (polled; no OS-level drag, since the window is
+ * `movable: false` and non-focusable on purpose, see createOverlayWindow)
+ * until the user left- or right-clicks it to drop it at the new position
+ * (Overlay.tsx wires both to 'overlay:stop-move'). Made fully interactive
+ * for the duration so that drop click actually reaches the renderer.
+ */
+function startOverlayMove(): void {
+  if (!overlayWindow || overlayWindow.isDestroyed() || overlayMoveInterval) return;
+  overlayWindow.setIgnoreMouseEvents(false);
+  // Icon's on-screen offset within the overlay window (see .overlay-badge in
+  // index.css: padding-left 8 + half of the 52px badge, and padding-top 48 +
+  // half of it), scaled like everything else in this window.
+  const iconOffsetX = Math.round(34 * overlayScale);
+  const iconOffsetY = Math.round(74 * overlayScale);
+  overlayMoveInterval = setInterval(() => {
+    if (!overlayWindow || overlayWindow.isDestroyed()) {
+      stopOverlayMove();
+      return;
+    }
+    const cursor = screen.getCursorScreenPoint();
+    overlayWindow.setPosition(cursor.x - iconOffsetX, cursor.y - iconOffsetY);
+  }, 16);
+  logger.info('OVERLAY', 'Overlay move started');
+}
+
+function stopOverlayMove(): void {
+  if (overlayMoveInterval) {
+    clearInterval(overlayMoveInterval);
+    overlayMoveInterval = null;
+  } else {
+    return; // wasn't moving: nothing to restore
+  }
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.setIgnoreMouseEvents(true, { forward: true });
+    const bounds = overlayWindow.getBounds();
+    saveOverlayPosition(bounds.x, bounds.y);
+  }
+  logger.info('OVERLAY', 'Overlay move stopped');
 }
 
 // ============================================================================
@@ -1142,20 +1256,35 @@ function setupIPC(): void {
   });
 
   // The overlay window is click-through by default (see createOverlayWindow)
-  // so it never steals input from the game. The chat panel's fold button and
-  // message list are the one exception: the renderer tells us when the
-  // cursor enters/leaves that interactive island, and we flip
-  // setIgnoreMouseEvents accordingly. `forward: true` keeps mousemove/
-  // mouseenter/mouseleave reaching the renderer even while click-through, so
-  // this toggle itself keeps working.
+  // so it never steals input from the game. Hovering the AMOKK icon is the
+  // one exception: the renderer tells us when the cursor enters/leaves that
+  // interactive hotspot, and we flip setIgnoreMouseEvents accordingly.
+  // `forward: true` keeps mousemove/mouseenter/mouseleave reaching the
+  // renderer even while click-through, so this toggle itself keeps working —
+  // it's also what lets the radial menu buttons that fan out from the icon
+  // (see .overlay-fan-btn in index.css) actually be clickable.
   ipcMain.on('overlay:set-interactive', (_event, interactive: boolean) => {
     if (!overlayWindow || overlayWindow.isDestroyed()) return;
     if (interactive) {
       overlayWindow.setIgnoreMouseEvents(false);
     } else {
+      // While "Deplacer" is running the window must stay fully interactive
+      // no matter what: the icon's own mouseleave can fire on a stray
+      // mismatch between the window chasing the cursor and the last real
+      // mousemove Chromium saw, and if that were allowed to re-enable
+      // click-through here, the drop click would sail straight through to
+      // the game instead of reaching stopOverlayMove.
+      if (overlayMoveInterval) return;
       overlayWindow.setIgnoreMouseEvents(true, { forward: true });
     }
   });
+
+  // The overlay's radial menu: close / move / toggle the chat panel is
+  // handled entirely in the renderer (Overlay.tsx), no IPC needed for that
+  // one.
+  ipcMain.on('overlay:close', closeOverlay);
+  ipcMain.on('overlay:start-move', startOverlayMove);
+  ipcMain.on('overlay:stop-move', stopOverlayMove);
 
   /**
    * Bring the main window back to the foreground after an external browser

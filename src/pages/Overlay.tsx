@@ -1,5 +1,5 @@
 /**
- * In-game overlay: a small AMOKK icon pinned to the top-left of the screen,
+ * In-game overlay: a small AMOKK icon pinned near the top-left of the screen,
  * rendered in a transparent click-through Electron window (see
  * electron/main.ts). Four states, driven by GET /get_overlay_state:
  *
@@ -9,7 +9,7 @@
  *               icon, its amplitude driven by the ACTUAL loudness of the
  *               audio being played
  *   listening — the user holds push-to-talk: a red recording dot on the icon
- *               and the SAME waveform, in red/orange to tell the two audio
+ *               and the SAME waveform, in green to tell the two audio
  *               directions apart at a glance, driven by the loudness
  *               actually captured by the microphone
  *   idle      — plain icon
@@ -18,26 +18,54 @@
  * Configuration > Overlay In-Game tab; when off, that state simply shows the
  * plain icon instead (the overlay itself still appears/disappears normally).
  *
- * An optional live chat panel (also toggled from that tab) shows the recent
- * conversation — the user's questions, AMOKK's answers, and unprompted coach
- * advice — each color-coded by role. It is the one part of this window that
- * is NOT click-through: hovering it flips the native window briefly
- * interactive (see the overlay:set-interactive IPC round-trip below) so the
- * fold button and scrolling work, then hands control back to the game the
- * moment the cursor leaves.
+ * The icon's bounding box (see .overlay-hover-zone in index.css — sized to
+ * cover the icon AND the fanned-out menu, not just the icon's own circle),
+ * and the chat/volume panel once one is open, are the only parts of this
+ * window that are NOT click-through: hovering either flips the native window
+ * briefly interactive (see the overlay:set-interactive IPC round-trip
+ * below), which for the icon reveals the radial menu (four buttons fanning
+ * out from behind it, see .overlay-fan) and makes those buttons clickable.
+ * The menu closes the overlay, starts "move" mode (see startOverlayMove in
+ * electron/main.ts — the window then follows the cursor until the next
+ * left- or right-click drops it), or opens the chat/volume popup below the
+ * icon — plain local state, not a separate window, closed again with its own
+ * X (only one of the two is ever open at a time).
  *
  * The page background MUST stay fully transparent: anything painted here is
  * painted over the game. Sizes are in CSS px at the design resolution; the
  * main process zooms the whole page to match the screen.
  */
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { X, MessageCircle, Move, Volume2, VolumeX, User, Type } from "lucide-react";
 import * as api from "@/lib/api";
 import iconUrl from "../../assets/icon.png";
 
 const POLL_MS = 100;          // the level must feel live, not stepped
 const CHAT_POLL_MS = 1200;    // text changes far less often than audio levels
 const SMOOTHING = 0.45;       // level low-pass, applied on the poll tick
+
+// Chat message text size: user-adjustable (see the header control),
+// persisted per-machine in localStorage since it's a plain viewer
+// preference with no reason to sync anywhere else.
+const CHAT_FONT_SIZE_KEY = "amokk_overlay_chat_font_size";
+const CHAT_FONT_SIZE_MIN = 9;
+const CHAT_FONT_SIZE_MAX = 16;
+const CHAT_FONT_SIZE_DEFAULT = 11;
+// How close to the bottom still counts as "following the conversation" (see
+// isNearBottomRef below) — a little slack so a near-exact scroll still
+// counts, rather than requiring pixel-perfect alignment.
+const CHAT_NEAR_BOTTOM_PX = 24;
+
+function loadStoredNumber(key: string, fallback: number, min: number, max: number): number {
+  try {
+    const raw = Number(localStorage.getItem(key));
+    if (Number.isFinite(raw) && raw >= min && raw <= max) return raw;
+  } catch {
+    // localStorage unavailable (private mode, etc.): just use the default
+  }
+  return fallback;
+}
 
 // Waveform geometry (SVG user units, see the viewBox below).
 const WAVE_W = 120;
@@ -61,6 +89,21 @@ interface ChatMessage {
  * throwing. */
 function setOverlayInteractive(interactive: boolean): void {
   (window as any).api?.overlay?.setInteractive?.(interactive);
+}
+
+function requestOverlayClose(): void {
+  (window as any).api?.overlay?.close?.();
+}
+
+function requestOverlayStartMove(): void {
+  (window as any).api?.overlay?.startMove?.();
+}
+
+/** No-op unless the overlay is currently in "Deplacer" mode (see
+ * electron/main.ts startOverlayMove) — clicking the icon is how that mode
+ * ends and the new position is dropped. */
+function requestOverlayStopMove(): void {
+  (window as any).api?.overlay?.stopMove?.();
 }
 
 /**
@@ -92,18 +135,26 @@ function buildWavePath(level: number, phase: number): string {
 }
 
 const Overlay = () => {
+  const { t } = useTranslation();
   const [state, setState] = useState<OverlayState>("idle");
   const [speakingAnimEnabled, setSpeakingAnimEnabled] = useState(true);
   const [listeningAnimEnabled, setListeningAnimEnabled] = useState(true);
   const [thinkingAnimEnabled, setThinkingAnimEnabled] = useState(true);
-  const [liveChatEnabled, setLiveChatEnabled] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  // Starts folded: the panel should never cover the game with unread text
-  // right as the setting comes on. Re-folded every time the setting goes
-  // from off to on again (see the effect below) — a manual unfold only
-  // lasts for that one activation.
-  const [chatCollapsed, setChatCollapsed] = useState(true);
-  const wasLiveChatEnabledRef = useRef(false);
+  const [chatFontSize, setChatFontSize] = useState(() =>
+    loadStoredNumber(CHAT_FONT_SIZE_KEY, CHAT_FONT_SIZE_DEFAULT, CHAT_FONT_SIZE_MIN, CHAT_FONT_SIZE_MAX)
+  );
+  // Whether the user was scrolled to (near) the bottom right before the last
+  // messages update — updated continuously from onScroll, not from the
+  // messages effect itself, so it always reflects a real user action rather
+  // than wherever the scroll happened to land after auto-scrolling.
+  const isNearBottomRef = useRef(true);
+  const [volumeOpen, setVolumeOpen] = useState(false);
+  const [volume, setVolume] = useState(50);
+  // Last non-zero level, so clicking the speaker to unmute restores whatever
+  // it was before rather than jumping to some arbitrary default.
+  const lastVolumeRef = useRef(50);
 
   // The level lives in a ref, never in React state: only the waveform reads
   // it, and it does so from the animation loop — re-rendering the component
@@ -114,9 +165,7 @@ const Overlay = () => {
   const wavePathRef = useRef<SVGPathElement | null>(null);
   const chatBodyRef = useRef<HTMLDivElement | null>(null);
 
-  // Poll the backend for state + audio level + the animation/chat settings.
-  // The settings rarely change, but riding the same 100ms poll keeps them in
-  // sync without a second request every tick.
+  // Poll the backend for state + audio level + the animation settings.
   useEffect(() => {
     let cancelled = false;
     const applyLevel = (target: number) => {
@@ -131,7 +180,7 @@ const Overlay = () => {
         setSpeakingAnimEnabled(data.speaking_animation_enabled !== false);
         setListeningAnimEnabled(data.listening_animation_enabled !== false);
         setThinkingAnimEnabled(data.thinking_animation_enabled !== false);
-        setLiveChatEnabled(data.live_chat_enabled === true);
+        if (typeof data.tts_volume === "number") setVolume(data.tts_volume);
       } catch {
         // backend down: fall back to the plain icon rather than freezing
         if (!cancelled) {
@@ -148,12 +197,9 @@ const Overlay = () => {
     };
   }, []);
 
-  // Chat transcript: only worth polling while the setting is on.
+  // Chat transcript: only worth polling while the panel is open.
   useEffect(() => {
-    if (!liveChatEnabled) {
-      setMessages([]);
-      return;
-    }
+    if (!chatOpen) return;
     let cancelled = false;
     const poll = async () => {
       try {
@@ -170,27 +216,68 @@ const Overlay = () => {
       cancelled = true;
       clearInterval(id);
     };
-  }, [liveChatEnabled]);
+  }, [chatOpen]);
 
-  // Re-fold on every off -> on transition of the "Live Textual Chat" setting
-  // (including the very first poll response, since wasLiveChatEnabledRef
-  // starts false): whatever the user left it at during a previous
-  // activation, a fresh activation always starts folded.
+  // Re-opening always jumps to (and resumes following) the latest message,
+  // regardless of where the user had scrolled before closing the panel.
   useEffect(() => {
-    if (liveChatEnabled && !wasLiveChatEnabledRef.current) {
-      setChatCollapsed(true);
-    }
-    wasLiveChatEnabledRef.current = liveChatEnabled;
-  }, [liveChatEnabled]);
+    if (chatOpen) isNearBottomRef.current = true;
+  }, [chatOpen]);
 
-  // Auto-scroll to the newest message, unless the panel is folded.
-  useEffect(() => {
-    if (chatCollapsed) return;
+  // Track how close to the bottom the user actually is, from real scroll
+  // events only — this is what the auto-scroll effect below checks before
+  // moving anything, so scrolling up to re-read older messages sticks
+  // instead of snapping back down on the next poll tick a second later.
+  const handleChatScroll = () => {
     const body = chatBodyRef.current;
-    if (body) body.scrollTop = body.scrollHeight;
-  }, [messages, chatCollapsed]);
+    if (!body) return;
+    const distanceFromBottom = body.scrollHeight - body.scrollTop - body.clientHeight;
+    isNearBottomRef.current = distanceFromBottom < CHAT_NEAR_BOTTOM_PX;
+  };
 
-  const toggleChatCollapsed = () => setChatCollapsed((prev) => !prev);
+  // Follow new messages only while the user was already at the bottom.
+  useEffect(() => {
+    if (!chatOpen) return;
+    const body = chatBodyRef.current;
+    if (body && isNearBottomRef.current) body.scrollTop = body.scrollHeight;
+  }, [messages, chatOpen]);
+
+  const applyChatFontSize = (next: number) => {
+    const clamped = Math.min(CHAT_FONT_SIZE_MAX, Math.max(CHAT_FONT_SIZE_MIN, next));
+    setChatFontSize(clamped);
+    try {
+      localStorage.setItem(CHAT_FONT_SIZE_KEY, String(clamped));
+    } catch {
+      // localStorage unavailable: the size just won't survive a restart
+    }
+  };
+
+  useEffect(() => {
+    if (volume > 0) lastVolumeRef.current = volume;
+  }, [volume]);
+
+  const applyVolume = (next: number) => {
+    const clamped = Math.min(100, Math.max(0, Math.round(next)));
+    setVolume(clamped);
+    api.updateVolume(clamped);
+  };
+
+  const toggleMute = () => {
+    applyVolume(volume === 0 ? lastVolumeRef.current || 50 : 0);
+  };
+
+  // Only reachable while the popup is open (it's the only place hovering
+  // makes the window receive wheel events at all — see .overlay-hover-zone
+  // for the same trick on the icon).
+  const handleVolumeWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    applyVolume(volume + (e.deltaY < 0 ? 5 : -5));
+  };
+
+  const handleChatFontSizeWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    applyChatFontSize(chatFontSize + (e.deltaY < 0 ? 1 : -1));
+  };
 
   const showThinking = state === "thinking" && thinkingAnimEnabled;
   // The waveform serves BOTH audio directions: Amokk speaking (TTS loudness)
@@ -209,8 +296,10 @@ const Overlay = () => {
     let raf = 0;
     let phase = 0;
     const tick = () => {
-      // Louder audio ripples faster: the motion reads as "energy"
-      phase += 0.06 + levelRef.current * 0.22;
+      // Louder audio ripples faster: the motion reads as "energy". Kept
+      // gentle on purpose — this used to run 2-3x faster and read as jittery
+      // rather than alive.
+      phase += 0.025 + levelRef.current * 0.09;
       wavePathRef.current?.setAttribute("d", buildWavePath(levelRef.current, phase));
       raf = requestAnimationFrame(tick);
     };
@@ -218,19 +307,85 @@ const Overlay = () => {
     return () => cancelAnimationFrame(raf);
   }, [waveActive]);
 
+  // Faded when idle so it sits quietly in a corner of the screen; kept at
+  // full strength while a popup is open so it doesn't look half-vanished
+  // right above the conversation/slider the user is looking at (the hover
+  // case is handled purely in CSS, see .overlay-stack:has(...)).
+  const isIdle = state === "idle" && !chatOpen && !volumeOpen;
+
   return (
     <div className="overlay-root">
-      <div className="overlay-stack">
-        <div className="overlay-badge">
-          {showThinking && <span className="overlay-spinner" />}
+      <div className={`overlay-stack${isIdle ? " is-idle" : ""}`}>
+        <div className="overlay-badge-wrap">
+          {/* Bounding box around the icon AND the fanned-out menu (see
+              index.css for the geometry): hovering anywhere in it reveals
+              the menu and keeps it open/interactive, icon or fanned-out
+              buttons alike, so crossing the gap to reach a button doesn't
+              collapse it. Deliberately generous rather than tight around the
+              icon — a bigger target is far more reliable to actually hit. */}
+          <div
+            className="overlay-hover-zone"
+            onMouseEnter={() => setOverlayInteractive(true)}
+            onMouseLeave={() => setOverlayInteractive(false)}
+          >
+            <div
+              className="overlay-badge"
+              onClick={requestOverlayStopMove}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                requestOverlayStopMove();
+              }}
+            >
+              {showThinking && <span className="overlay-spinner" />}
 
-          <img src={iconUrl} alt="" className="overlay-icon" draggable={false} />
+              <img src={iconUrl} alt="" className="overlay-icon" draggable={false} />
 
-          {/* Recording dot: the universal "you are on the mic" marker */}
-          {showRecDot && <span className="overlay-rec-dot" />}
+              {/* Recording dot: the universal "you are on the mic" marker */}
+              {showRecDot && <span className="overlay-rec-dot" />}
+            </div>
+
+            {/* Radial menu: fans out from behind the icon on hover, tucks
+                back in the same way on the way out (see .overlay-fan-btn). */}
+            <div className="overlay-fan">
+              <button type="button" className="overlay-fan-btn" onClick={requestOverlayClose}>
+                <X size={16} strokeWidth={2.4} />
+                <span className="overlay-fan-tip">{t("pages.Overlay.close_tip")}</span>
+              </button>
+              <button
+                type="button"
+                className="overlay-fan-btn"
+                onClick={() => {
+                  setChatOpen(true);
+                  setVolumeOpen(false);
+                }}
+              >
+                <MessageCircle size={16} strokeWidth={2.4} />
+                <span className="overlay-fan-tip">{t("pages.Overlay.chat_tip")}</span>
+              </button>
+              <button type="button" className="overlay-fan-btn" onClick={requestOverlayStartMove}>
+                <Move size={16} strokeWidth={2.4} />
+                <span className="overlay-fan-tip">{t("pages.Overlay.move_tip")}</span>
+              </button>
+              <button
+                type="button"
+                className="overlay-fan-btn"
+                onClick={() => {
+                  setVolumeOpen(true);
+                  setChatOpen(false);
+                }}
+              >
+                {volume === 0 ? (
+                  <VolumeX size={16} strokeWidth={2.4} />
+                ) : (
+                  <Volume2 size={16} strokeWidth={2.4} />
+                )}
+                <span className="overlay-fan-tip">{t("pages.Overlay.volume_tip")}</span>
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Waveform, under the icon — cyan for Amokk, red for the user */}
+        {/* Waveform, under the icon — cyan for Amokk, green for the user */}
         <div
           className={`overlay-wave ${waveActive ? "is-active" : ""} ${
             state === "listening" ? "is-listening" : ""
@@ -256,34 +411,126 @@ const Overlay = () => {
         </div>
       </div>
 
-      {liveChatEnabled && (
+      {/* Chat and volume popups: part of this window, not separate ones —
+          siblings of .overlay-stack (not inside it) so their 260px width
+          doesn't recenter the icon/waveform, which are flush against the
+          left edge. Mutually exclusive, see setChatOpen/setVolumeOpen above. */}
+      {chatOpen && (
         <div
-          className="overlay-chat"
+          className="overlay-popup"
           onMouseEnter={() => setOverlayInteractive(true)}
           onMouseLeave={() => setOverlayInteractive(false)}
         >
-          <button
-            type="button"
-            className={`overlay-chat-toggle ${chatCollapsed ? "" : "is-expanded"}`}
-            onClick={toggleChatCollapsed}
-            aria-label="Afficher la conversation"
-          >
-            <MessageCircle strokeWidth={2.2} />
-          </button>
+          <div className="overlay-popup-header">
+            <span className="overlay-popup-title">{t("pages.Overlay.chat_title")}</span>
+            <button
+              type="button"
+              className="overlay-popup-close"
+              onClick={() => setChatOpen(false)}
+              aria-label={t("pages.Overlay.chat_close_label")}
+            >
+              <X size={14} strokeWidth={2.4} />
+            </button>
+          </div>
 
-          {!chatCollapsed && (
-            <div className="overlay-chat-body" ref={chatBodyRef}>
-              {messages.length === 0 ? (
-                <div className="overlay-chat-empty">En attente de conversation...</div>
+          {/* Text size, persisted (see CHAT_FONT_SIZE_KEY above). Draggable
+              like any slider, but also wheel-adjustable while hovering it —
+              see handleChatFontSizeWheel. */}
+          <div className="overlay-chat-controls">
+            <label className="overlay-chat-control" onWheel={handleChatFontSizeWheel}>
+              <Type size={12} strokeWidth={2.2} />
+              <input
+                type="range"
+                className="overlay-mini-slider"
+                min={CHAT_FONT_SIZE_MIN}
+                max={CHAT_FONT_SIZE_MAX}
+                step={1}
+                value={chatFontSize}
+                onChange={(e) => applyChatFontSize(Number(e.target.value))}
+                aria-label={t("pages.Overlay.chat_font_size_label")}
+              />
+              <span className="overlay-mini-value">{chatFontSize}px</span>
+            </label>
+          </div>
+
+          <div
+            className="overlay-chat-body"
+            ref={chatBodyRef}
+            onScroll={handleChatScroll}
+            style={{ fontSize: chatFontSize }}
+          >
+            {messages.length === 0 ? (
+              <div className="overlay-chat-empty">{t("pages.Overlay.chat_empty")}</div>
+            ) : (
+              messages.map((m) => (
+                <div key={m.id} className={`overlay-chat-row role-${m.role}`}>
+                  {/* Avatar: same icon/color for Amokk whether it's
+                      answering a question or volunteering coach advice — the
+                      role class still exists for that distinction, it just
+                      no longer drives the color (see .overlay-chat-bubble in
+                      index.css). */}
+                  <span className="overlay-chat-avatar">
+                    {m.role === "question" ? (
+                      <User size={11} strokeWidth={2.4} />
+                    ) : (
+                      <img src={iconUrl} alt="" />
+                    )}
+                  </span>
+                  <div className={`overlay-chat-bubble role-${m.role}`}>{m.text}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {volumeOpen && (
+        <div
+          className="overlay-popup"
+          onMouseEnter={() => setOverlayInteractive(true)}
+          onMouseLeave={() => setOverlayInteractive(false)}
+          onWheel={handleVolumeWheel}
+        >
+          <div className="overlay-popup-header">
+            <span className="overlay-popup-title">{t("pages.Overlay.volume_title")}</span>
+            <button
+              type="button"
+              className="overlay-popup-close"
+              onClick={() => setVolumeOpen(false)}
+              aria-label={t("pages.Overlay.volume_close_label")}
+            >
+              <X size={14} strokeWidth={2.4} />
+            </button>
+          </div>
+
+          <div className="overlay-volume-body">
+            <button
+              type="button"
+              className="overlay-volume-mute"
+              onClick={toggleMute}
+              aria-label={
+                volume === 0
+                  ? t("pages.Overlay.volume_unmute_label")
+                  : t("pages.Overlay.volume_mute_label")
+              }
+            >
+              {volume === 0 ? (
+                <VolumeX size={16} strokeWidth={2.2} />
               ) : (
-                messages.map((m) => (
-                  <div key={m.id} className={`overlay-chat-bubble role-${m.role}`}>
-                    {m.text}
-                  </div>
-                ))
+                <Volume2 size={16} strokeWidth={2.2} />
               )}
-            </div>
-          )}
+            </button>
+            <input
+              type="range"
+              className="overlay-mini-slider"
+              min={0}
+              max={100}
+              step={1}
+              value={volume}
+              onChange={(e) => applyVolume(Number(e.target.value))}
+            />
+            <span className="overlay-mini-value">{volume}</span>
+          </div>
         </div>
       )}
     </div>

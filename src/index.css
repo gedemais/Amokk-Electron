@@ -156,12 +156,18 @@ html:has(.overlay-root) body {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  /* Top-aligned, not centered: the window is now tall enough to also fit the
-     optional chat panel below the icon, and the icon must stay pinned near
-     the top-left corner regardless of whether the panel is shown/expanded. */
+  /* Left-aligned, not centered: the window is wider than the icon so it has
+     room for the glow and the radial menu's tooltips without clipping, but
+     the content itself must hug the screen's left edge rather than float
+     mid-window. */
+  align-items: flex-start;
   justify-content: flex-start;
-  padding-top: 14px;
+  /* 48, not 14: with 4 radial menu buttons the top one reaches ~37px above
+     the icon at rest, more like ~44px at the peak of its pop-out bounce (see
+     .overlay-hover-zone / .overlay-fan-btn below) — 48 keeps that clear of
+     the window's own top edge instead of getting clipped. */
+  padding-top: 48px;
+  padding-left: 8px;
   background: transparent;
   user-select: none;
   -webkit-user-select: none;
@@ -169,17 +175,62 @@ html:has(.overlay-root) body {
   overflow: hidden;
 }
 
-/* Icon on top, waveform underneath */
+/* Icon on top, waveform underneath. */
 .overlay-stack {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
+  transition: opacity 220ms ease;
+}
+
+/* Fade to reduce visual clutter while nothing is happening (idle, see the
+   is-idle class in Overlay.tsx). Hovering the icon to use its menu always
+   snaps back to full strength regardless of state — :has() rather than a
+   React class, since the hover itself is tracked purely for
+   overlay:set-interactive and doesn't need a re-render of its own. */
+.overlay-stack.is-idle {
+  opacity: 0.5;
+}
+
+.overlay-stack:has(.overlay-hover-zone:hover) {
+  opacity: 1;
+}
+
+/* Plain layout box: still exactly the icon's own footprint, so it stays a
+   normal 52x52 flex item and the waveform below keeps sitting right under
+   the icon. The actual hover/hit area is .overlay-hover-zone below, which
+   is larger and absolutely positioned so it doesn't affect this layout. */
+.overlay-badge-wrap {
+  position: relative;
+  width: 52px;
+  height: 52px;
+}
+
+/* The one non-click-through spot in this window: hovering ANYWHERE in this
+   box (not just tight around the icon — a bigger target is a lot more
+   reliable to actually hit with Electron's forwarded-mousemove hit-testing,
+   which occasionally misses a small one) opens the radial menu and keeps it
+   open while the cursor roams over it, icon or fanned-out buttons alike, so
+   crossing the gap between them doesn't collapse it either. Its `top` here
+   and .overlay-badge/.overlay-fan's `top` below must stay opposite values of
+   each other (-40 / 40) — this box reaches 40px above the badge, so the
+   badge is pushed down by that same 40px to land back at (0,0), i.e. exactly
+   where the plain 52x52 .overlay-badge-wrap above expects it. */
+.overlay-hover-zone {
+  position: absolute;
+  left: 0;
+  top: -40px;
+  width: 108px;
+  height: 132px;
+  pointer-events: auto;
 }
 
 .overlay-badge {
-  position: relative;
+  position: absolute;
+  left: 0;
+  top: 40px;
   width: 52px;
   height: 52px;
   display: flex;
@@ -187,7 +238,142 @@ html:has(.overlay-root) body {
   justify-content: center;
 }
 
+/* --- radial menu: fans out from behind the icon on hover, tucks back in
+   the same way when the cursor leaves. Same 52x52 rect as .overlay-badge
+   (i.e. its own left:50%/top:50% center is the icon's center) so the
+   per-button geometry below reads the same as before .overlay-hover-zone
+   existed. --- */
+.overlay-fan {
+  position: absolute;
+  left: 0;
+  top: 40px;
+  width: 52px;
+  height: 52px;
+  /* This box exactly overlaps .overlay-badge and paints after it (later
+     sibling), so without this it would swallow every click meant for the
+     icon (e.g. the drop-click that ends "Deplacer") even with no visible
+     content of its own. Only the individual buttons opt back into
+     pointer-events below, at their own fanned-out position. */
+  pointer-events: none;
+}
+
+.overlay-fan-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid hsl(var(--border) / 0.8);
+  background: hsl(var(--background) / 0.88);
+  color: hsl(var(--muted-foreground));
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  /* Hidden state: collapsed on the badge's own center, as if tucked behind
+     the icon. The bounce (cubic-bezier overshoot) on the way out is what
+     sells "popping out"; the way back in stays a plain ease so it reads as
+     retracting, not bouncing back in. */
+  transform: translate(-50%, -50%) scale(0.15);
+  transition: transform 200ms ease, opacity 150ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.overlay-fan-btn:hover {
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--accent) / 0.6);
+}
+
+/* Fan out to the right in a ~96 degree arc, 4 buttons evenly spaced at a
+   64px radius — far enough apart at this button size (30px) to leave a
+   clear gap between adjacent buttons instead of them touching.
+   .overlay-hover-zone's box above is sized to this exact sweep. Staggered
+   delays make the four pop out one after the other instead of all at once. */
+.overlay-hover-zone:hover .overlay-fan-btn {
+  opacity: 1;
+  pointer-events: auto;
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.overlay-hover-zone:hover .overlay-fan-btn:nth-child(1) {
+  transform: translate(calc(-50% + 43px), calc(-50% - 48px)) scale(1);
+  transition-delay: 0ms;
+}
+
+.overlay-hover-zone:hover .overlay-fan-btn:nth-child(2) {
+  transform: translate(calc(-50% + 62px), calc(-50% - 18px)) scale(1);
+  transition-delay: 35ms;
+}
+
+.overlay-hover-zone:hover .overlay-fan-btn:nth-child(3) {
+  transform: translate(calc(-50% + 62px), calc(-50% + 18px)) scale(1);
+  transition-delay: 70ms;
+}
+
+.overlay-hover-zone:hover .overlay-fan-btn:nth-child(4) {
+  transform: translate(calc(-50% + 43px), calc(-50% + 48px)) scale(1);
+  transition-delay: 105ms;
+}
+
+/* Retract in reverse order (last one out is first back in) so the motion
+   reads as one continuous sweep rather than four buttons snapping away. */
+.overlay-fan-btn:nth-child(1) {
+  transition-delay: 105ms;
+}
+
+.overlay-fan-btn:nth-child(2) {
+  transition-delay: 70ms;
+}
+
+.overlay-fan-btn:nth-child(3) {
+  transition-delay: 35ms;
+}
+
+.overlay-fan-btn:nth-child(4) {
+  transition-delay: 0ms;
+}
+
+.overlay-fan-tip {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 8px;
+  white-space: nowrap;
+  font-size: 10.5px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: hsl(var(--background) / 0.92);
+  border: 1px solid hsl(var(--border) / 0.6);
+  color: hsl(var(--foreground));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.overlay-fan-btn:hover .overlay-fan-tip {
+  opacity: 1;
+}
+
+/* Background disc behind the icon so it reads clearly over any map/game
+   background instead of floating bare. Same diameter (inset: 4px on the
+   52px badge = 44px) as the thinking spinner ring below, so the two read as
+   the same "size language" whether or not the spinner is currently shown. */
+.overlay-badge::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: hsl(var(--background) / 0.55);
+  z-index: 0;
+}
+
 .overlay-icon {
+  position: relative;
+  z-index: 1;
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -198,6 +384,7 @@ html:has(.overlay-root) body {
 /* --- thinking: a spinner orbiting the icon --- */
 .overlay-spinner {
   position: absolute;
+  z-index: 2;
   inset: 4px;
   border-radius: 50%;
   border: 2.5px solid transparent;
@@ -215,7 +402,7 @@ html:has(.overlay-root) body {
 
 /* --- speaking / listening: a flowing waveform ribbon under the icon.
    Same shape for both audio directions, palette tells them apart:
-   cyan/violet = Amokk speaking, red/orange = the user on the mic. --- */
+   cyan/violet = Amokk speaking, green = the user on the mic. --- */
 .overlay-wave {
   --wave-core: hsl(var(--accent));
   --wave-edge: hsl(var(--primary-glow));
@@ -230,9 +417,9 @@ html:has(.overlay-root) body {
 }
 
 .overlay-wave.is-listening {
-  --wave-core: hsl(0 85% 62%);
-  --wave-edge: hsl(20 90% 58%);
-  --wave-glow: hsl(0 85% 62% / 0.55);
+  --wave-core: hsl(142 70% 50%);
+  --wave-edge: hsl(160 75% 45%);
+  --wave-glow: hsl(142 70% 50% / 0.55);
 }
 
 .overlay-wave.is-active {
@@ -251,6 +438,7 @@ html:has(.overlay-root) body {
    level, this only says "you are on the mic") --- */
 .overlay-rec-dot {
   position: absolute;
+  z-index: 2;
   right: 2px;
   bottom: 2px;
   width: 9px;
@@ -273,71 +461,173 @@ html:has(.overlay-root) body {
   }
 }
 
-/* --- live chat panel: the one interactive island on an otherwise
-   click-through window (see electron/main.ts overlay:set-interactive).
-   pointer-events must be re-enabled explicitly since .overlay-root turns
-   them off for the whole window. --- */
-.overlay-chat {
+/* ==========================================================================
+   Popup shell: shared by the chat panel and the volume popup, both part of
+   the overlay window itself (not a separate window), each toggled by its
+   own radial menu button and closed again with its own X — only one of the
+   two is ever open at a time (Overlay.tsx). Same interactive-island trick as
+   the icon: pointer-events re-enabled and hover flips the native window
+   briefly interactive (see the handlers in Overlay.tsx) since .overlay-root
+   is click-through by default.
+   ========================================================================== */
+.overlay-popup {
   pointer-events: auto;
-  /* Glued right under the icon/waveform — not floating with visible daylight
-     between them. */
-  margin-top: 2px;
-  width: 208px;
+  margin-top: 6px;
+  width: 260px;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  cursor: default;
+  border-radius: 12px;
+  background: hsl(var(--background) / 0.85);
+  border: 1px solid hsl(var(--border) / 0.6);
+  backdrop-filter: blur(2px);
+  overflow: hidden;
 }
 
-/* Round icon button, like a messaging app's conversation bubble icon. */
-.overlay-chat-toggle {
-  align-self: center;
+/* No max-height of its own: it sizes to its header + controls row + the
+   .overlay-chat-body's own max-height (inline style, user-adjustable — see
+   the window-size slider in Overlay.tsx). */
+
+.overlay-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding: 6px 6px 6px 10px;
+  border-bottom: 1px solid hsl(var(--border) / 0.4);
+}
+
+.overlay-popup-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+}
+
+.overlay-popup-close {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 22px;
+  height: 22px;
   padding: 0;
+  border: none;
   border-radius: 50%;
-  border: 1px solid hsl(var(--border) / 0.8);
-  background: hsl(var(--background) / 0.82);
+  background: transparent;
   color: hsl(var(--muted-foreground));
-  backdrop-filter: blur(2px);
-  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+  transition: color 120ms ease, background 120ms ease;
 }
 
-.overlay-chat-toggle:hover {
+.overlay-popup-close:hover {
   color: hsl(var(--foreground));
-  border-color: hsl(var(--accent) / 0.6);
+  background: hsl(var(--border) / 0.4);
 }
 
-.overlay-chat-toggle.is-expanded {
-  color: hsl(var(--accent));
-  border-color: hsl(var(--accent) / 0.6);
-  background: hsl(var(--accent) / 0.12);
+/* --- volume popup content --- */
+.overlay-volume-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 14px;
 }
 
-.overlay-chat-toggle svg {
-  width: 16px;
-  height: 16px;
+.overlay-volume-mute {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.overlay-volume-mute:hover {
+  color: hsl(var(--foreground));
+  background: hsl(var(--border) / 0.4);
+}
+
+/* Native range input, themed to match the rest of the overlay rather than
+   pulling in the app's full Radix slider — these popups are small and plain
+   enough that the extra weight/pointer-capture behavior isn't worth it.
+   Shared by the volume popup and the chat panel's text-size/window-size
+   controls below. */
+.overlay-mini-slider {
+  flex: 1;
+  min-width: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: hsl(var(--border));
+  accent-color: hsl(var(--accent));
+}
+
+.overlay-mini-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: hsl(var(--accent));
+  cursor: pointer;
+}
+
+.overlay-mini-value {
+  min-width: 2.5ch;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Text-size control, a second row under the title/close one. Persists to
+   localStorage (Overlay.tsx) since it's a per-viewer preference, not
+   something that needs to sync anywhere else. Also wheel-adjustable, not
+   just by dragging the slider — see the onWheel handler in Overlay.tsx. */
+.overlay-chat-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-bottom: 1px solid hsl(var(--border) / 0.4);
+}
+
+.overlay-chat-control {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+  color: hsl(var(--muted-foreground));
+  cursor: ns-resize;
 }
 
 .overlay-chat-body {
-  margin-top: 6px;
-  max-height: 172px;
+  flex: 1;
+  max-height: 260px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
   padding: 8px;
-  border-radius: 10px;
-  background: hsl(var(--background) / 0.82);
-  border: 1px solid hsl(var(--border) / 0.6);
-  backdrop-filter: blur(2px);
 }
 
+/* Styling any part of a WebKit scrollbar switches it from the OS's
+   auto-hiding "overlay" style to a classic always-reserved one — this, plus
+   giving the track its own visible color (not just the thumb), is what
+   keeps it there as a permanent, grabbable landmark instead of only
+   flashing up while actively scrolling. */
 .overlay-chat-body::-webkit-scrollbar {
-  width: 5px;
+  width: 7px;
+}
+
+.overlay-chat-body::-webkit-scrollbar-track {
+  background: hsl(var(--border) / 0.2);
+  border-radius: 999px;
 }
 
 .overlay-chat-body::-webkit-scrollbar-thumb {
@@ -345,19 +635,64 @@ html:has(.overlay-root) body {
   border-radius: 999px;
 }
 
-.overlay-chat-empty {
-  font-size: 10.5px;
-  color: hsl(var(--muted-foreground));
-  text-align: center;
-  padding: 6px 2px;
+.overlay-chat-body::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.6);
 }
 
-/* SMS/WhatsApp-style bubbles: the user's own transcribed questions sit on
-   the right, everything AMOKK says (coach advice or a direct answer) sits
-   on the left — role color still tells the two AMOKK message kinds apart. */
-.overlay-chat-bubble {
-  max-width: 84%;
+.overlay-chat-empty {
+  margin: auto;
   font-size: 11px;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Each message is an avatar + bubble pair. The user's own transcribed
+   questions sit on the right, everything AMOKK says (coach advice or a
+   direct answer, same color for both — see .overlay-chat-bubble below) sits
+   on the left, SMS/WhatsApp-style. */
+.overlay-chat-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: 92%;
+}
+
+.overlay-chat-row.role-question {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.overlay-chat-row.role-answer,
+.overlay-chat-row.role-coach {
+  align-self: flex-start;
+}
+
+.overlay-chat-avatar {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.overlay-chat-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* User avatar: a plain person glyph on the same green as their bubble. */
+.overlay-chat-row.role-question .overlay-chat-avatar {
+  background: hsl(142 70% 45% / 0.25);
+  color: hsl(142 65% 42%);
+}
+
+.overlay-chat-bubble {
+  max-width: 100%;
+  /* No font-size here: inherited from .overlay-chat-body's inline style, the
+     user-controlled slider in the header (see Overlay.tsx). */
   line-height: 1.35;
   color: hsl(var(--foreground) / 0.95);
   padding: 6px 10px;
@@ -365,29 +700,21 @@ html:has(.overlay-root) body {
   word-break: break-word;
 }
 
-/* Question: the user's own voice, transcribed — the "outgoing" bubble,
-   right-aligned like your own messages in any chat app. Warm, distinct from
-   the red/orange "listening" wave and the cyan "answer" bubbles. */
+/* Question: the user's own voice, transcribed — green, matching the
+   "listening" wave so the same color means "the user" everywhere in the
+   overlay. */
 .overlay-chat-bubble.role-question {
-  align-self: flex-end;
-  background: hsl(38 92% 58% / 0.28);
-  border: 1px solid hsl(38 92% 58% / 0.45);
+  background: hsl(142 70% 45% / 0.22);
+  border: 1px solid hsl(142 70% 45% / 0.4);
   border-bottom-right-radius: 4px;
 }
 
-/* Answer: AMOKK replying to that question — "incoming", left-aligned, cyan
-   like the speaking wave. */
-.overlay-chat-bubble.role-answer {
-  align-self: flex-start;
-  background: hsl(var(--accent) / 0.22);
-  border: 1px solid hsl(var(--accent) / 0.4);
-  border-bottom-left-radius: 4px;
-}
-
-/* Coach: unprompted advice — also "incoming", the app's primary brand violet. */
+/* Answer and coach: both AMOKK talking, just one prompted and one not — same
+   blue for both, so the color reads as "who's talking", not "what kind of
+   message this is". */
+.overlay-chat-bubble.role-answer,
 .overlay-chat-bubble.role-coach {
-  align-self: flex-start;
-  background: hsl(var(--primary-glow) / 0.22);
-  border: 1px solid hsl(var(--primary-glow) / 0.4);
+  background: hsl(210 90% 58% / 0.22);
+  border: 1px solid hsl(210 90% 58% / 0.4);
   border-bottom-left-radius: 4px;
 }

@@ -18,6 +18,20 @@
       "title": "404",
       "message": "Hoppla! Seite nicht gefunden",
       "link": "Zurück zur Startseite"
+    },
+    "Overlay": {
+      "close_tip": "Overlay schließen",
+      "chat_tip": "Textnachrichten anzeigen",
+      "move_tip": "Overlay verschieben",
+      "volume_tip": "Lautstärke einstellen",
+      "chat_title": "Nachrichten",
+      "chat_close_label": "Nachrichten schließen",
+      "chat_empty": "Warte auf Unterhaltung...",
+      "volume_title": "Lautstärke",
+      "volume_close_label": "Lautstärke schließen",
+      "volume_mute_label": "Stumm schalten",
+      "volume_unmute_label": "Stummschaltung aufheben",
+      "chat_font_size_label": "Textgröße"
     }
   },
   "components": {

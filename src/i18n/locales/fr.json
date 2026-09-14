@@ -18,6 +18,20 @@
       "title": "404",
       "message": "Oops! Page non trouvée",
       "link": "Retourner à l'accueil"
+    },
+    "Overlay": {
+      "close_tip": "Fermer l'overlay",
+      "chat_tip": "Afficher les échanges textuels",
+      "move_tip": "Déplacer l'overlay",
+      "volume_tip": "Régler le volume",
+      "chat_title": "Échanges",
+      "chat_close_label": "Fermer les échanges",
+      "chat_empty": "En attente de conversation...",
+      "volume_title": "Volume",
+      "volume_close_label": "Fermer le volume",
+      "volume_mute_label": "Couper le son",
+      "volume_unmute_label": "Activer le son",
+      "chat_font_size_label": "Taille du texte"
     }
   },
   "components": {
